@@ -7,6 +7,7 @@ const searchResults = document.getElementById("search-results");
 const locationIndicator = document.getElementById("location-indicator");
 const heroTitle = document.getElementById("hero-title");
 const heroSubtitle = document.getElementById("hero-subtitle");
+const outletStats = document.getElementById("outlet-stats");
 
 let searchDebounceTimer = null;
 let currentLocationName = "";
@@ -46,14 +47,21 @@ function renderRestaurants(restaurants) {
       restaurantRow,
       `No outlets listed at ${locationLabel} yet — check back soon.`
     );
+    if (outletStats) outletStats.textContent = "";
     return;
+  }
+
+  const openCount = restaurants.filter((r) => r.is_open_today).length;
+  if (outletStats) {
+    const outletWord = restaurants.length === 1 ? "outlet" : "outlets";
+    outletStats.textContent = `${restaurants.length} ${outletWord} · ${openCount} open right now`;
   }
 
   restaurants.forEach((restaurant) => {
     const card = document.createElement("a");
     card.href = restaurantUrl(restaurant.slug);
     card.className =
-      "group relative block aspect-[3/4] rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-1.5 active:translate-y-0 transition-all duration-300 bg-stone-200";
+      "group relative block aspect-[16/10] sm:aspect-[2/1] rounded-3xl overflow-hidden shadow-md ring-1 ring-black/5 hover:shadow-2xl hover:-translate-y-1.5 active:translate-y-0 transition-all duration-300 bg-stone-200";
 
     const photo = document.createElement("div");
     if (restaurant.logo) {
@@ -72,21 +80,30 @@ function renderRestaurants(restaurants) {
     }
 
     const scrim = document.createElement("div");
-    scrim.className = "absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent";
+    scrim.className = "absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent";
 
     const badge = document.createElement("span");
     badge.className = restaurant.is_open_today
-      ? "absolute top-3 left-3 z-10 inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full shadow-sm bg-white/95 backdrop-blur text-accent-deep"
-      : "absolute top-3 left-3 z-10 inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full shadow-sm bg-white/80 backdrop-blur text-muted";
+      ? "absolute top-4 left-4 z-10 inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide px-3 py-1.5 rounded-full shadow-sm bg-white/95 backdrop-blur text-accent-deep"
+      : "absolute top-4 left-4 z-10 inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide px-3 py-1.5 rounded-full shadow-sm bg-white/80 backdrop-blur text-muted";
     badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full ${restaurant.is_open_today ? "bg-accent" : "bg-muted"}"></span>${restaurant.is_open_today ? "Open" : "Closed today"}`;
 
+    const arrowChip = document.createElement("span");
+    arrowChip.className =
+      "absolute top-4 right-4 z-10 flex items-center justify-center w-9 h-9 rounded-full bg-white/15 border border-white/25 backdrop-blur text-white opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300";
+    arrowChip.innerHTML = `<span class="w-4 h-4">${ICONS.arrowRight}</span>`;
+
     const nameWrap = document.createElement("div");
-    nameWrap.className = "absolute bottom-0 inset-x-0 p-4";
-    nameWrap.innerHTML = `<h3 class="font-bold text-base sm:text-lg leading-snug text-white drop-shadow-md">${escapeHtml(restaurant.name)}</h3>`;
+    nameWrap.className = "absolute bottom-0 inset-x-0 p-5 sm:p-6 flex items-end justify-between gap-3";
+    nameWrap.innerHTML = `
+      <h3 class="font-extrabold text-xl sm:text-2xl leading-snug text-white drop-shadow-md">${escapeHtml(restaurant.name)}</h3>
+      <span class="hidden sm:inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wide text-white/80 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 whitespace-nowrap">View menu &rarr;</span>
+    `;
 
     card.appendChild(photo);
     card.appendChild(scrim);
     card.appendChild(badge);
+    card.appendChild(arrowChip);
     card.appendChild(nameWrap);
     restaurantRow.appendChild(card);
   });

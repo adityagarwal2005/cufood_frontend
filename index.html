@@ -27,37 +27,43 @@
     </div>
   </header>
 
-  <main class="max-w-6xl mx-auto px-6 sm:px-8 py-12 sm:py-16">
-    <section class="relative mb-10">
-      <p class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-accent-deep mb-3">
-        <span class="w-4 h-0.5 rounded bg-gradient-to-r from-accent to-accent-deep"></span>
-        Chandigarh University
-      </p>
-      <h1 id="hero-title" class="text-4xl sm:text-5xl font-extrabold tracking-tight text-ink leading-[1.05] mb-4">Restaurants</h1>
-      <p id="hero-subtitle" class="text-base sm:text-lg text-muted max-w-xl leading-relaxed">Search a dish or browse every outlet.</p>
-    </section>
+  <main class="relative overflow-hidden">
+    <div class="absolute -top-32 -right-24 w-[28rem] h-[28rem] rounded-full bg-accent-soft blur-3xl opacity-70 pointer-events-none"></div>
+    <div class="absolute top-64 -left-24 w-80 h-80 rounded-full bg-accent/10 blur-3xl pointer-events-none"></div>
 
-    <div class="relative mb-12">
-      <span class="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted pointer-events-none">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-      </span>
-      <input
-        type="text"
-        id="search-input"
-        placeholder="Search for restaurant or dish"
-        autocomplete="off"
-        class="w-full rounded-full border-2 border-line bg-white pl-14 pr-6 py-4 text-base font-medium text-ink placeholder:text-muted placeholder:font-normal shadow-sm focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150"
-      >
-    </div>
+    <div class="relative max-w-6xl mx-auto px-6 sm:px-8 py-12 sm:py-16">
+      <section class="relative mb-10">
+        <p class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-accent-deep mb-3">
+          <span class="w-4 h-0.5 rounded bg-gradient-to-r from-accent to-accent-deep"></span>
+          Chandigarh University
+        </p>
+        <h1 id="hero-title" class="text-4xl sm:text-6xl font-extrabold tracking-tight text-ink leading-[1.05] mb-4">Restaurants</h1>
+        <p id="hero-subtitle" class="text-base sm:text-lg text-muted max-w-xl leading-relaxed mb-3">Search a dish or browse every outlet.</p>
+        <p id="outlet-stats" class="text-sm font-bold text-accent-deep"></p>
+      </section>
 
-    <section id="search-results" class="hidden flex flex-col gap-3 mb-12"></section>
-
-    <section id="restaurant-row-section">
-      <h2 class="text-xs font-bold uppercase tracking-widest text-muted mb-5">Outlets</h2>
-      <div id="restaurant-row" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
-        <p class="col-span-full text-sm font-medium text-muted" id="restaurant-status">Loading restaurants...</p>
+      <div class="relative mb-12">
+        <span class="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted pointer-events-none">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        </span>
+        <input
+          type="text"
+          id="search-input"
+          placeholder="Search for restaurant or dish"
+          autocomplete="off"
+          class="w-full rounded-full border-2 border-line bg-white pl-14 pr-6 py-4 text-base font-medium text-ink placeholder:text-muted placeholder:font-normal shadow-lg focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150"
+        >
       </div>
-    </section>
+
+      <section id="search-results" class="hidden flex flex-col gap-3 mb-12"></section>
+
+      <section id="restaurant-row-section">
+        <h2 class="text-xs font-bold uppercase tracking-widest text-muted mb-5">Outlets</h2>
+        <div id="restaurant-row" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <p class="col-span-full text-sm font-medium text-muted" id="restaurant-status">Loading restaurants...</p>
+        </div>
+      </section>
+    </div>
   </main>
 
   <footer class="relative border-t border-line pt-8 pb-10 text-center">
