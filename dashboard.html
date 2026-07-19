@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CUFood — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="tailwind.config.js"></script>
+</head>
+<body class="font-sans bg-cream text-ink antialiased">
+  <header class="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-line shadow-sm">
+    <div class="max-w-6xl mx-auto flex items-center justify-between px-6 sm:px-8 py-4">
+      <a href="index.html" class="flex items-center gap-3">
+        <span class="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-accent to-accent-deep text-white font-extrabold text-sm shadow-accent-glow">CU</span>
+        <span class="flex flex-col leading-tight">
+          <span class="text-lg font-extrabold tracking-tight text-ink">CUFood</span>
+          <span class="text-xs font-medium text-muted hidden sm:block">Owner Dashboard</span>
+        </span>
+      </a>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-6 sm:px-8 py-10 sm:py-12">
+    <div id="page-content">
+      <p class="text-sm font-medium text-muted" id="loading-text">Loading dashboard...</p>
+    </div>
+  </main>
+
+  <script src="icons.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>

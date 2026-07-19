@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CUFood — Outlet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="tailwind.config.js"></script>
+</head>
+<body class="font-sans bg-cream text-ink antialiased">
+  <header class="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-line shadow-sm">
+    <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3 px-6 sm:px-8 py-4">
+      <a href="location-select.html" class="flex items-center gap-3">
+        <span class="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-accent to-accent-deep text-white font-extrabold text-sm shadow-accent-glow">CU</span>
+        <span class="flex flex-col leading-tight">
+          <span class="text-lg font-extrabold tracking-tight text-ink">CUFood</span>
+          <span class="text-xs font-medium text-muted hidden sm:block">Food Republic · Chandigarh University</span>
+        </span>
+      </a>
+      <div class="flex items-center gap-2">
+        <a href="location-select.html" id="location-indicator" class="inline-flex items-center gap-1 text-sm font-semibold text-muted bg-white border border-line rounded-full px-4 py-2 shadow-sm hover:text-accent-deep hover:border-accent-soft hover:bg-accent-soft hover:shadow transition-all duration-150 whitespace-nowrap">Switch location</a>
+        <a href="restaurant-login.html" class="inline-flex items-center gap-1 text-sm font-semibold text-muted bg-white border border-line rounded-full px-4 py-2 shadow-sm hover:text-accent-deep hover:border-accent-soft hover:bg-accent-soft hover:shadow transition-all duration-150 whitespace-nowrap">Restaurant Login</a>
+      </div>
+    </div>
+    <div class="border-t border-line">
+      <div class="max-w-6xl mx-auto px-6 sm:px-8 py-3">
+        <a href="index.html" id="back-link" class="inline-flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-accent-deep hover:gap-2.5 transition-all duration-150">&larr; All outlets</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-6 sm:px-8 py-10 sm:py-12">
+    <div id="page-content">
+      <p class="text-sm font-medium text-muted" id="loading-text">Loading outlet...</p>
+    </div>
+  </main>
+
+  <footer class="relative border-t border-line pt-8 pb-10 text-center">
+    <p class="text-sm font-medium text-muted">CUFood · Chandigarh University Food Republic</p>
+  </footer>
+
+  <script src="icons.js"></script>
+  <script src="restaurant.js"></script>
+</body>
+</html>
