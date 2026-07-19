@@ -23,14 +23,21 @@
     </div>
   </header>
 
-  <main class="min-h-[calc(100vh-69px)] flex flex-col items-center justify-center px-6 py-16 text-center bg-gradient-to-br from-cream via-cream to-accent-soft/40">
-    <div class="flex flex-col items-center mb-12">
+  <main class="relative min-h-[calc(100vh-69px)] flex flex-col items-center justify-center px-6 py-16 text-center bg-gradient-to-br from-cream via-cream to-accent-soft/40 overflow-hidden">
+    <div class="absolute -top-24 -left-20 w-80 h-80 rounded-full bg-accent-soft blur-3xl opacity-70 pointer-events-none"></div>
+    <div class="absolute -bottom-24 -right-16 w-96 h-96 rounded-full bg-accent/10 blur-3xl pointer-events-none"></div>
+
+    <div class="relative flex flex-col items-center mb-12">
       <div class="flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-accent to-accent-deep text-white font-extrabold text-xl shadow-accent-glow mb-6">CU</div>
-      <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight text-ink mb-3">CUFood</h1>
-      <p class="text-base sm:text-lg text-muted">Where are you right now?</p>
+      <p class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-accent-deep mb-3">
+        <span class="w-4 h-0.5 rounded bg-gradient-to-r from-accent to-accent-deep"></span>
+        Chandigarh University
+      </p>
+      <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight text-ink mb-3">Where are you right now?</h1>
+      <p class="text-base sm:text-lg text-muted max-w-md">Pick your outlet cluster to see what's cooking nearby.</p>
     </div>
 
-    <div id="location-list" class="grid grid-cols-2 gap-5 sm:gap-6 w-full max-w-md sm:max-w-lg">
+    <div id="location-list" class="relative grid grid-cols-2 gap-5 sm:gap-6 w-full max-w-md sm:max-w-lg">
       <p class="col-span-2 text-sm font-medium text-muted" id="location-status">Loading locations...</p>
     </div>
   </main>

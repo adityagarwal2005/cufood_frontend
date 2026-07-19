@@ -53,10 +53,7 @@ function renderRestaurants(restaurants) {
     const card = document.createElement("a");
     card.href = restaurantUrl(restaurant.slug);
     card.className =
-      "group block rounded-2xl overflow-hidden bg-white border border-line shadow-sm hover:shadow-xl hover:-translate-y-1.5 active:translate-y-0 transition-all duration-300";
-
-    const media = document.createElement("div");
-    media.className = "relative aspect-video overflow-hidden bg-stone-100";
+      "group relative block aspect-[3/4] rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-1.5 active:translate-y-0 transition-all duration-300 bg-stone-200";
 
     const photo = document.createElement("div");
     if (restaurant.logo) {
@@ -69,31 +66,28 @@ function renderRestaurants(restaurants) {
         "absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted" +
         (restaurant.is_open_today ? "" : " grayscale opacity-60");
       photo.innerHTML = `
-        <span class="w-8 h-8 opacity-60">${ICONS.plate}</span>
+        <span class="w-10 h-10 opacity-60">${ICONS.plate}</span>
         <span class="text-xs font-semibold">No photo</span>
       `;
     }
 
+    const scrim = document.createElement("div");
+    scrim.className = "absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent";
+
     const badge = document.createElement("span");
     badge.className = restaurant.is_open_today
-      ? "absolute top-2.5 left-2.5 z-10 inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full shadow-sm bg-white text-accent-deep"
-      : "absolute top-2.5 left-2.5 z-10 inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full shadow-sm bg-stone-100 text-muted";
+      ? "absolute top-3 left-3 z-10 inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full shadow-sm bg-white/95 backdrop-blur text-accent-deep"
+      : "absolute top-3 left-3 z-10 inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full shadow-sm bg-white/80 backdrop-blur text-muted";
     badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full ${restaurant.is_open_today ? "bg-accent" : "bg-muted"}"></span>${restaurant.is_open_today ? "Open" : "Closed today"}`;
 
-    media.appendChild(photo);
-    media.appendChild(badge);
+    const nameWrap = document.createElement("div");
+    nameWrap.className = "absolute bottom-0 inset-x-0 p-4";
+    nameWrap.innerHTML = `<h3 class="font-bold text-base sm:text-lg leading-snug text-white drop-shadow-md">${escapeHtml(restaurant.name)}</h3>`;
 
-    const body = document.createElement("div");
-    body.className = "p-4";
-
-    const name = document.createElement("h3");
-    name.className = "font-bold text-sm leading-snug " + (restaurant.is_open_today ? "text-ink" : "text-muted");
-    name.textContent = restaurant.name;
-
-    body.appendChild(name);
-
-    card.appendChild(media);
-    card.appendChild(body);
+    card.appendChild(photo);
+    card.appendChild(scrim);
+    card.appendChild(badge);
+    card.appendChild(nameWrap);
     restaurantRow.appendChild(card);
   });
 }
