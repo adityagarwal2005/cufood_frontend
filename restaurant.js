@@ -161,8 +161,10 @@ function renderMenuSection(items) {
   }
 
   const groups = groupItemsByCategory(items);
+  const itemWord = items.length === 1 ? "item" : "items";
+  const categoryWord = groups.size === 1 ? "category" : "categories";
   let html = `
-    <div class="relative mb-6">
+    <div class="relative mb-3">
       <span class="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted pointer-events-none">${ICONS.search}</span>
       <input
         type="text"
@@ -172,6 +174,7 @@ function renderMenuSection(items) {
         class="w-full rounded-full border-2 border-line bg-white pl-14 pr-6 py-4 text-base font-medium text-ink placeholder:text-muted placeholder:font-normal shadow-sm focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150"
       >
     </div>
+    <p class="text-sm font-bold text-accent-deep mb-6">${items.length} ${itemWord} · ${groups.size} ${categoryWord}</p>
     <div data-category-list>
   `;
 

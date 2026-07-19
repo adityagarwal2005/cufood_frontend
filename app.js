@@ -8,9 +8,12 @@ const locationIndicator = document.getElementById("location-indicator");
 const heroTitle = document.getElementById("hero-title");
 const heroSubtitle = document.getElementById("hero-subtitle");
 const outletStats = document.getElementById("outlet-stats");
+const openOnlyToggle = document.getElementById("open-only-toggle");
 
 let searchDebounceTimer = null;
 let currentLocationName = "";
+let allRestaurants = [];
+let openOnlyFilter = false;
 
 function escapeHtml(text) {
   const div = document.createElement("div");
@@ -38,6 +41,28 @@ function renderEmptyState(container, message) {
   `;
 }
 
+function updateOutletStats(restaurants) {
+  if (!outletStats) return;
+  if (restaurants.length === 0) {
+    outletStats.textContent = "";
+    return;
+  }
+  const openCount = restaurants.filter((r) => r.is_open_today).length;
+  const outletWord = restaurants.length === 1 ? "outlet" : "outlets";
+  outletStats.textContent = `${restaurants.length} ${outletWord} · ${openCount} open right now`;
+}
+
+function applyRestaurantFilter() {
+  const filtered = openOnlyFilter ? allRestaurants.filter((r) => r.is_open_today) : allRestaurants;
+
+  if (allRestaurants.length > 0 && filtered.length === 0) {
+    renderEmptyState(restaurantRow, "No outlets are open right now — try again later.");
+    return;
+  }
+
+  renderRestaurants(filtered);
+}
+
 function renderRestaurants(restaurants) {
   restaurantRow.innerHTML = "";
 
@@ -47,14 +72,7 @@ function renderRestaurants(restaurants) {
       restaurantRow,
       `No outlets listed at ${locationLabel} yet — check back soon.`
     );
-    if (outletStats) outletStats.textContent = "";
     return;
-  }
-
-  const openCount = restaurants.filter((r) => r.is_open_today).length;
-  if (outletStats) {
-    const outletWord = restaurants.length === 1 ? "outlet" : "outlets";
-    outletStats.textContent = `${restaurants.length} ${outletWord} · ${openCount} open right now`;
   }
 
   restaurants.forEach((restaurant) => {
@@ -115,12 +133,27 @@ async function loadRestaurants() {
       `${API_BASE_URL}/api/restaurants/?location=${encodeURIComponent(currentLocation)}`
     );
     if (!response.ok) throw new Error(`Request failed: ${response.status}`);
-    const restaurants = await response.json();
-    renderRestaurants(restaurants);
+    allRestaurants = await response.json();
+    updateOutletStats(allRestaurants);
+    applyRestaurantFilter();
   } catch (err) {
     renderEmptyState(restaurantRow, "Could not load restaurants. Is the backend running?");
     console.error(err);
   }
+}
+
+if (openOnlyToggle) {
+  openOnlyToggle.addEventListener("click", () => {
+    openOnlyFilter = !openOnlyFilter;
+    openOnlyToggle.classList.toggle("bg-gradient-to-br", openOnlyFilter);
+    openOnlyToggle.classList.toggle("from-accent", openOnlyFilter);
+    openOnlyToggle.classList.toggle("to-accent-deep", openOnlyFilter);
+    openOnlyToggle.classList.toggle("text-white", openOnlyFilter);
+    openOnlyToggle.classList.toggle("shadow-accent-glow", openOnlyFilter);
+    openOnlyToggle.classList.toggle("bg-white", !openOnlyFilter);
+    openOnlyToggle.classList.toggle("text-ink", !openOnlyFilter);
+    applyRestaurantFilter();
+  });
 }
 
 function renderSearchResults(results) {
@@ -135,10 +168,17 @@ function renderSearchResults(results) {
   results.forEach((result) => {
     const item = document.createElement("a");
     item.className =
-      "block rounded-2xl bg-white border border-line shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 px-5 py-4 text-[15px] text-ink";
+      "group flex items-center gap-4 rounded-2xl bg-white border border-line shadow-sm hover:shadow-lg hover:-translate-y-0.5 hover:border-accent-soft transition-all duration-200 px-5 py-4";
     item.href = restaurantUrl(result.restaurant_slug);
     const itemWord = result.matching_item_count === 1 ? "item" : "items";
-    item.innerHTML = `<strong class="font-bold text-accent-deep">${result.restaurant_name}</strong> — ${result.matching_item_count} matching ${itemWord}`;
+    item.innerHTML = `
+      <span class="flex items-center justify-center w-10 h-10 rounded-xl bg-accent-soft text-accent-deep flex-shrink-0 p-2.5">${ICONS.plate}</span>
+      <span class="flex-1 min-w-0 text-[15px] text-ink">
+        <strong class="font-bold text-ink">${escapeHtml(result.restaurant_name)}</strong>
+        <span class="text-muted"> — ${result.matching_item_count} matching ${itemWord}</span>
+      </span>
+      <span class="w-4 h-4 text-muted flex-shrink-0 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200">${ICONS.arrowRight}</span>
+    `;
     searchResults.appendChild(item);
   });
 }

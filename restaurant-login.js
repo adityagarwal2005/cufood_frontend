@@ -4,6 +4,20 @@ const API_BASE_URL = "https://cufood-backend.onrender.com";
 const loginForm = document.getElementById("login-form");
 const loginError = document.getElementById("login-error");
 const loginSubmit = document.getElementById("login-submit");
+const usernameIcon = document.getElementById("username-icon");
+const passwordIcon = document.getElementById("password-icon");
+const passwordInput = document.getElementById("password");
+const passwordToggle = document.getElementById("password-toggle");
+
+usernameIcon.innerHTML = ICONS.user;
+passwordIcon.innerHTML = ICONS.lock;
+passwordToggle.innerHTML = ICONS.eye;
+
+passwordToggle.addEventListener("click", () => {
+  const isHidden = passwordInput.type === "password";
+  passwordInput.type = isHidden ? "text" : "password";
+  passwordToggle.innerHTML = isHidden ? ICONS.eyeOff : ICONS.eye;
+});
 
 function getCookie(name) {
   const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));

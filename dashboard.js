@@ -146,28 +146,43 @@ function renderDashboard() {
     ? `<span class="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-full bg-accent-soft text-accent-deep"><span class="w-1.5 h-1.5 rounded-full bg-accent"></span>Open today</span>`
     : `<span class="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-full bg-stone-100 text-muted"><span class="w-1.5 h-1.5 rounded-full bg-muted"></span>Closed today</span>`;
 
+  const items = restaurantData.menu_items || [];
+  const availableCount = items.filter((i) => i.is_available_today).length;
+  const itemWord = items.length === 1 ? "item" : "items";
+  const initial = restaurantData.name ? restaurantData.name.charAt(0).toUpperCase() : "R";
+
   pageContent.innerHTML = `
     <div class="relative bg-white border border-line rounded-2xl shadow-lg p-6 sm:p-7 mb-8 overflow-hidden">
       <div class="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-accent to-accent-deep"></div>
       <div class="flex flex-wrap items-center justify-between gap-4">
         <div class="flex flex-wrap items-center gap-4">
-          <h1 class="text-2xl sm:text-3xl font-extrabold text-ink">${escapeHtml(restaurantData.name)}</h1>
-          ${statusPill}
+          <span class="flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-accent to-accent-deep text-white font-extrabold text-lg shadow-accent-glow flex-shrink-0">${escapeHtml(initial)}</span>
+          <div class="flex flex-col gap-1">
+            <div class="flex flex-wrap items-center gap-3">
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-ink leading-tight">${escapeHtml(restaurantData.name)}</h1>
+              ${statusPill}
+            </div>
+            <p class="text-sm font-semibold text-muted">${items.length} ${itemWord} · ${availableCount} available today</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-4">
           <div class="flex items-center gap-2.5 pl-4 border-l border-line">
             <span class="text-sm font-semibold text-muted">Open today</span>
             ${toggleSwitchHtml({ id: "open-toggle", checked: restaurantData.is_open_today })}
           </div>
+          <button type="button" id="logout-btn" class="inline-flex items-center gap-1.5 text-sm font-semibold text-muted bg-cream border border-line rounded-full px-5 py-2.5 hover:text-accent-deep hover:border-accent-soft transition-all duration-150">
+            <span class="w-3.5 h-3.5">${ICONS.logout}</span>Log out
+          </button>
         </div>
-        <button type="button" id="logout-btn" class="inline-flex items-center gap-1.5 text-sm font-semibold text-muted bg-cream border border-line rounded-full px-5 py-2.5 hover:text-accent-deep hover:border-accent-soft transition-all duration-150">
-          <span class="w-3.5 h-3.5">${ICONS.logout}</span>Log out
-        </button>
       </div>
     </div>
 
     <div id="error-banner" class="hidden text-sm font-medium text-error bg-error-soft rounded-xl px-4 py-3 mb-6"></div>
 
     <div class="bg-cream-alt border border-line rounded-2xl shadow-sm p-6 sm:p-7 mb-8">
-      <h2 class="text-xs font-bold uppercase tracking-widest text-muted mb-4">Add new item</h2>
+      <h2 class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted mb-4">
+        <span class="w-3.5 h-3.5 text-accent-deep">${ICONS.plus}</span>Add new item
+      </h2>
       <form id="add-item-form" class="flex flex-wrap gap-3.5 items-end">
         <div class="flex flex-col gap-1.5 flex-1 min-w-[140px]">
           <label class="text-xs font-semibold text-muted" for="item-name">Name</label>
@@ -191,6 +206,9 @@ function renderDashboard() {
     </div>
 
     <section id="menu-section" class="bg-cream-alt border border-line rounded-2xl shadow-sm p-6 sm:p-7">
+      <h2 class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted mb-5">
+        <span class="w-3.5 h-3.5 text-accent-deep">${ICONS.utensils}</span>Your menu
+      </h2>
       ${renderMenuItemsHtml(restaurantData.menu_items || [])}
     </section>
   `;
