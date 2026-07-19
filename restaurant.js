@@ -5,10 +5,14 @@ const pageContent = document.getElementById("page-content");
 const backLink = document.getElementById("back-link");
 const locationIndicator = document.getElementById("location-indicator");
 
+// Escapes for both HTML text-node and attribute-value contexts — the
+// div.textContent/innerHTML round-trip alone only escapes &, <, > and
+// leaves quotes untouched, which is unsafe when the result is later
+// concatenated into a quoted HTML attribute (e.g. data-item-name="...").
 function escapeHtml(text) {
   const div = document.createElement("div");
   div.textContent = text;
-  return div.innerHTML;
+  return div.innerHTML.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
 
 function getSlugFromUrl() {

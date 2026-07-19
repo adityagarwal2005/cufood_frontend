@@ -15,10 +15,14 @@ let currentLocationName = "";
 let allRestaurants = [];
 let openOnlyFilter = false;
 
+// Escapes for both HTML text-node and attribute-value contexts — the
+// div.textContent/innerHTML round-trip alone only escapes &, <, > and
+// leaves quotes untouched, which is unsafe when the result is later
+// concatenated into a quoted HTML attribute (e.g. data-item-name="...").
 function escapeHtml(text) {
   const div = document.createElement("div");
   div.textContent = text;
-  return div.innerHTML;
+  return div.innerHTML.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
 
 const currentLocation = new URLSearchParams(window.location.search).get("location");

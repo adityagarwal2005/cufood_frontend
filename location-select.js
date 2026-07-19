@@ -14,10 +14,14 @@ const CARD_THEMES = [
   "from-[#3d372f] to-ink",
 ];
 
+// Escapes for both HTML text-node and attribute-value contexts — the
+// div.textContent/innerHTML round-trip alone only escapes &, <, > and
+// leaves quotes untouched, which is unsafe when the result is later
+// concatenated into a quoted HTML attribute.
 function escapeHtml(text) {
   const div = document.createElement("div");
   div.textContent = text;
-  return div.innerHTML;
+  return div.innerHTML.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
 
 async function loadLocationStat(slug, statEl) {
