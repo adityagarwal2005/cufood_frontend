@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://localhost:8000";
+const API_BASE_URL = "https://cufood-backend.onrender.com";
 
 const restaurantRow = document.getElementById("restaurant-row");
 const restaurantRowSection = document.getElementById("restaurant-row-section");
