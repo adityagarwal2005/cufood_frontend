@@ -23,32 +23,53 @@
     </div>
   </header>
 
-  <main class="relative min-h-[calc(100vh-69px)] flex flex-col items-center justify-center px-6 py-16 text-center bg-gradient-to-br from-cream via-cream to-accent-soft/40 overflow-hidden">
-    <div class="absolute inset-0 opacity-[0.4] pointer-events-none [background-image:radial-gradient(circle,#d9531e_1px,transparent_1px)] [background-size:28px_28px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_40%,black,transparent)]"></div>
-    <div class="absolute -top-24 -left-20 w-80 h-80 rounded-full bg-accent-soft blur-3xl opacity-70 pointer-events-none"></div>
-    <div class="absolute -bottom-24 -right-16 w-96 h-96 rounded-full bg-accent/10 blur-3xl pointer-events-none"></div>
+  <main class="relative min-h-[calc(100vh-69px)] px-6 py-14 sm:py-20 bg-gradient-to-br from-cream via-cream to-accent-soft/40 overflow-hidden">
+    <div class="absolute inset-0 opacity-[0.4] pointer-events-none [background-image:radial-gradient(circle,#d9531e_1px,transparent_1px)] [background-size:28px_28px] [mask-image:radial-gradient(ellipse_70%_45%_at_50%_18%,black,transparent)]"></div>
+    <div class="absolute -top-28 -left-20 w-96 h-96 rounded-full bg-accent-soft blur-3xl opacity-70 pointer-events-none"></div>
+    <div class="absolute top-40 -right-24 w-[26rem] h-[26rem] rounded-full bg-accent/10 blur-3xl pointer-events-none"></div>
 
     <div aria-hidden="true" class="absolute inset-0 pointer-events-none select-none">
-      <span class="absolute top-[12%] left-[8%] text-5xl opacity-[0.12] blur-[1px] -rotate-12">🍔</span>
-      <span class="absolute top-[18%] right-[10%] text-6xl opacity-[0.12] blur-[1px] rotate-12">🍕</span>
-      <span class="absolute bottom-[16%] left-[12%] text-5xl opacity-[0.12] blur-[1px] rotate-6">🥟</span>
-      <span class="absolute bottom-[10%] right-[14%] text-6xl opacity-[0.12] blur-[1px] -rotate-6">🍜</span>
-      <span class="absolute top-[48%] left-[4%] text-4xl opacity-[0.1] blur-[1px] rotate-12">☕</span>
-      <span class="absolute top-[44%] right-[5%] text-4xl opacity-[0.1] blur-[1px] -rotate-12">🧋</span>
+      <span class="absolute top-[10%] left-[7%] text-5xl opacity-[0.1] blur-[1px] -rotate-12">🍔</span>
+      <span class="absolute top-[14%] right-[9%] text-6xl opacity-[0.1] blur-[1px] rotate-12">🍕</span>
+      <span class="absolute bottom-[12%] left-[10%] text-5xl opacity-[0.1] blur-[1px] rotate-6">🥟</span>
+      <span class="absolute bottom-[8%] right-[12%] text-6xl opacity-[0.1] blur-[1px] -rotate-6">🍜</span>
     </div>
 
-    <div class="relative flex flex-col items-center mb-12">
-      <div class="flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-accent to-accent-deep text-white font-extrabold text-xl shadow-accent-glow mb-6">CU</div>
-      <p class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-accent-deep mb-3">
+    <div class="relative max-w-3xl mx-auto">
+      <div class="flex flex-col items-center text-center mb-9">
+        <span class="inline-flex items-center gap-2 rounded-full bg-white/70 backdrop-blur border border-line shadow-sm px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-accent-deep mb-6">
+          <span class="relative flex w-2 h-2">
+            <span class="absolute inline-flex w-full h-full rounded-full bg-accent opacity-70 animate-ping"></span>
+            <span class="relative inline-flex w-2 h-2 rounded-full bg-accent"></span>
+          </span>
+          Live · Chandigarh University
+        </span>
+        <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-ink mb-4 leading-[1.05]">Good food,<br class="hidden sm:block"> right where you are.</h1>
+        <p class="text-base sm:text-lg text-muted max-w-md">Pick your spot on campus and see what's cooking — live availability, updated by the outlets themselves.</p>
+      </div>
+
+      <div id="stat-bar" class="flex items-stretch justify-center divide-x divide-line rounded-2xl bg-white/70 backdrop-blur border border-line shadow-sm max-w-lg mx-auto mb-12">
+        <div class="flex-1 px-4 py-4 text-center">
+          <p id="stat-locations" class="text-2xl sm:text-3xl font-extrabold text-ink tabular-nums">—</p>
+          <p class="text-[11px] font-bold uppercase tracking-wide text-muted mt-0.5">Locations</p>
+        </div>
+        <div class="flex-1 px-4 py-4 text-center">
+          <p id="stat-outlets" class="text-2xl sm:text-3xl font-extrabold text-ink tabular-nums">—</p>
+          <p class="text-[11px] font-bold uppercase tracking-wide text-muted mt-0.5">Outlets</p>
+        </div>
+        <div class="flex-1 px-4 py-4 text-center">
+          <p id="stat-open" class="text-2xl sm:text-3xl font-extrabold text-accent-deep tabular-nums">—</p>
+          <p class="text-[11px] font-bold uppercase tracking-wide text-muted mt-0.5">Open now</p>
+        </div>
+      </div>
+
+      <p class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted mb-5">
         <span class="w-4 h-0.5 rounded bg-gradient-to-r from-accent to-accent-deep"></span>
-        Chandigarh University
+        Choose your spot
       </p>
-      <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-ink mb-3 leading-[1.05]">Where are you right now?</h1>
-      <p class="text-base sm:text-lg text-muted max-w-md">Pick your outlet cluster to see what's cooking nearby.</p>
-    </div>
-
-    <div id="location-list" class="relative grid grid-cols-2 gap-5 sm:gap-6 w-full max-w-md sm:max-w-2xl">
-      <p class="col-span-2 text-sm font-medium text-muted" id="location-status">Loading locations...</p>
+      <div id="location-list" class="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
+        <p class="col-span-full text-sm font-medium text-muted" id="location-status">Loading locations...</p>
+      </div>
     </div>
   </main>
 
@@ -59,6 +80,7 @@
     </p>
   </footer>
 
+  <script src="icons.js"></script>
   <script src="location-select.js"></script>
 </body>
 </html>
