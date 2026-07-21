@@ -50,6 +50,23 @@ function renderItemPrice(item) {
   return price ? `<span class="text-[15px] font-bold text-accent-deep whitespace-nowrap">${escapeHtml(price)}</span>` : "";
 }
 
+function hasPriceTiers(item) {
+  return !!item.price_tiers && Object.keys(item.price_tiers).length > 0;
+}
+
+// Renders each size/price pair (e.g. Regular/Medium/Large/Giant) as a pill.
+// Sizes with no price yet (still being filled in) are skipped.
+function renderTierPills(tiers) {
+  const pills = Object.entries(tiers)
+    .map(([label, value]) => {
+      const price = formatPrice(value);
+      if (!price) return "";
+      return `<span class="inline-flex items-center gap-1 text-xs font-semibold text-accent-deep bg-accent-soft rounded-full pl-2.5 pr-3 py-1 whitespace-nowrap"><span class="text-muted font-semibold">${escapeHtml(label)}</span>${escapeHtml(price)}</span>`;
+    })
+    .join("");
+  return pills;
+}
+
 function groupItemsByCategory(items) {
   const groups = new Map();
   items.forEach((item) => {
@@ -119,11 +136,12 @@ function renderMenuItemsHtml(items) {
     </h2>`;
     html += `<div class="flex flex-col gap-2.5">`;
     groupItems.forEach((item) => {
+      const tiered = hasPriceTiers(item);
       html += `
         <div class="flex items-center gap-4 bg-white border border-line border-l-4 border-l-transparent rounded-xl shadow-sm px-5 py-4 hover:shadow-md hover:-translate-y-0.5 hover:border-l-accent transition-all duration-200">
-          <div class="flex-1 flex flex-wrap items-baseline gap-3 min-w-0">
+          <div class="flex-1 flex flex-wrap items-baseline gap-2 min-w-0">
             <span class="text-[15px] font-semibold text-ink">${escapeHtml(item.name)}</span>
-            ${renderItemPrice(item)}
+            ${tiered ? renderTierPills(item.price_tiers) : renderItemPrice(item)}
             ${!item.is_permanently_active ? `<span class="text-[11px] font-semibold text-muted bg-stone-100 px-2.5 py-0.5 rounded-full">Inactive</span>` : ""}
           </div>
           <div class="flex items-center gap-4 flex-shrink-0">

@@ -62,6 +62,8 @@ function formatPrice(price) {
 
 // Items with price_half/price_full set (e.g. rice dishes sold by portion)
 // take priority over the plain price field, which is null in that case.
+// Call hasPriceTiers(item) first — price_tiers (3+ sizes) takes priority
+// over this and is rendered separately via renderTierPills().
 function renderItemPrice(item) {
   const half = formatPrice(item.price_half);
   const full = formatPrice(item.price_full);
@@ -73,6 +75,23 @@ function renderItemPrice(item) {
   }
   const price = formatPrice(item.price);
   return price ? `<span class="text-[15px] font-bold text-accent-deep whitespace-nowrap">${escapeHtml(price)}</span>` : "";
+}
+
+function hasPriceTiers(item) {
+  return !!item.price_tiers && Object.keys(item.price_tiers).length > 0;
+}
+
+// Renders each size/price pair (e.g. Regular/Medium/Large/Giant) as a pill.
+// Sizes with no price yet (still being filled in) are skipped.
+function renderTierPills(tiers) {
+  const pills = Object.entries(tiers)
+    .map(([label, value]) => {
+      const price = formatPrice(value);
+      if (!price) return "";
+      return `<span class="inline-flex items-center gap-1 text-xs font-semibold text-accent-deep bg-accent-soft rounded-full pl-2.5 pr-3 py-1 whitespace-nowrap"><span class="text-muted font-semibold">${escapeHtml(label)}</span>${escapeHtml(price)}</span>`;
+    })
+    .join("");
+  return pills ? `<div class="flex flex-wrap gap-1.5 mt-0.5">${pills}</div>` : "";
 }
 
 function stateMessage({ icon, message, showBackLink }) {
@@ -124,14 +143,18 @@ function groupItemsByCategory(items) {
 // (never re-render) so the CSS grid-rows transition stays smooth.
 function renderCategoryBlock(category, groupItems) {
   const itemsHtml = groupItems
-    .map(
-      (item) => `
-        <div class="flex items-center justify-between gap-4 py-4 px-5 border-b border-line last:border-b-0 hover:bg-cream-alt transition-colors duration-150" data-menu-item data-item-name="${escapeHtml(item.name.toLowerCase())}">
-          <span class="text-[15px] font-semibold text-ink">${escapeHtml(item.name)}</span>
-          ${renderItemPrice(item)}
+    .map((item) => {
+      const tiered = hasPriceTiers(item);
+      return `
+        <div class="flex flex-col gap-1 py-4 px-5 border-b border-line last:border-b-0 hover:bg-cream-alt transition-colors duration-150" data-menu-item data-item-name="${escapeHtml(item.name.toLowerCase())}">
+          <div class="flex items-center justify-between gap-4">
+            <span class="text-[15px] font-semibold text-ink">${escapeHtml(item.name)}</span>
+            ${tiered ? "" : renderItemPrice(item)}
+          </div>
+          ${tiered ? renderTierPills(item.price_tiers) : ""}
         </div>
-      `
-    )
+      `;
+    })
     .join("");
 
   return `
