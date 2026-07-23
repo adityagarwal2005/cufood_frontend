@@ -4,6 +4,11 @@ const API_BASE_URL = "https://cufood-backend.onrender.com";
 const pageContent = document.getElementById("page-content");
 const backLink = document.getElementById("back-link");
 const locationIndicator = document.getElementById("location-indicator");
+const cartBarContainer = document.getElementById("cart-bar-container");
+
+// Set once in renderRestaurant() and read by the cart helpers below, so
+// they don't need the restaurant threaded through every render call.
+let currentRestaurant = null;
 
 // Escapes for both HTML text-node and attribute-value contexts — the
 // div.textContent/innerHTML round-trip alone only escapes &, <, > and
@@ -60,38 +65,69 @@ function formatPrice(price) {
   return Number.isInteger(value) ? `₹${value}` : `₹${value.toFixed(2)}`;
 }
 
-// Items with price_half/price_full set (e.g. rice dishes sold by portion)
-// take priority over the plain price field, which is null in that case.
-// Call hasPriceTiers(item) first — price_tiers (3+ sizes) takes priority
-// over this and is rendered separately via renderTierPills().
-function renderItemPrice(item) {
-  const half = formatPrice(item.price_half);
-  const full = formatPrice(item.price_full);
-  if (half || full) {
-    const parts = [];
-    if (half) parts.push(`Half ${half}`);
-    if (full) parts.push(`Full ${full}`);
-    return `<span class="text-[15px] font-bold text-accent-deep whitespace-nowrap">${escapeHtml(parts.join(" / "))}</span>`;
+// Returns every purchasable {sizeLabel, price} pair for an item — one for a
+// plain-price item, two for Half/Full, N for price_tiers. sizeLabel is ""
+// for plain items. Sizes with no price set yet are skipped.
+function getPurchasableVariants(item) {
+  if (item.price_tiers && Object.keys(item.price_tiers).length > 0) {
+    return Object.entries(item.price_tiers)
+      .filter(([, price]) => price !== null && price !== undefined)
+      .map(([sizeLabel, price]) => ({ sizeLabel, price }));
   }
-  const price = formatPrice(item.price);
-  return price ? `<span class="text-[15px] font-bold text-accent-deep whitespace-nowrap">${escapeHtml(price)}</span>` : "";
+  if (item.price_half !== null || item.price_full !== null) {
+    const variants = [];
+    if (item.price_half !== null) variants.push({ sizeLabel: "Half", price: item.price_half });
+    if (item.price_full !== null) variants.push({ sizeLabel: "Full", price: item.price_full });
+    return variants;
+  }
+  if (item.price !== null && item.price !== undefined) {
+    return [{ sizeLabel: "", price: item.price }];
+  }
+  return [];
 }
 
-function hasPriceTiers(item) {
-  return !!item.price_tiers && Object.keys(item.price_tiers).length > 0;
+// One variant's add-to-cart control: a pill showing "[Size] ₹price +" when
+// not in the cart, or a "- N +" stepper once it is. Re-rendered in place
+// (via its data-variant-control wrapper, which carries all the identifying
+// data so either button works regardless of which was clicked) after every
+// cart change rather than re-rendering the whole menu, so scroll position
+// never jumps.
+function renderVariantControl(itemId, sizeLabel, price) {
+  const qty = getCartLineQuantity(itemId, sizeLabel);
+  const priceLabel = formatPrice(price);
+  const sizePrefix = sizeLabel ? `${escapeHtml(sizeLabel)} ` : "";
+
+  if (qty === 0) {
+    return `
+      <button type="button" class="cart-add-btn inline-flex items-center gap-1.5 text-xs font-bold text-accent-deep bg-accent-soft hover:bg-accent hover:text-white rounded-full pl-3 pr-2.5 py-1.5 transition-colors duration-150 whitespace-nowrap">
+        ${sizePrefix}${escapeHtml(priceLabel)}<span class="w-3.5 h-3.5">${ICONS.plus}</span>
+      </button>
+    `;
+  }
+  return `
+    <div class="inline-flex items-center gap-2.5 bg-accent text-white rounded-full pl-1 pr-1 py-1 whitespace-nowrap">
+      <button type="button" class="cart-remove-btn w-6 h-6 flex-shrink-0 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors duration-150">
+        <span class="w-3 h-3">${ICONS.minus}</span>
+      </button>
+      <span class="text-xs font-bold min-w-[1rem] text-center">${sizePrefix}${qty}</span>
+      <button type="button" class="cart-add-btn w-6 h-6 flex-shrink-0 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors duration-150">
+        <span class="w-3 h-3">${ICONS.plus}</span>
+      </button>
+    </div>
+  `;
 }
 
-// Renders each size/price pair (e.g. Regular/Medium/Large/Giant) as a pill.
-// Sizes with no price yet (still being filled in) are skipped.
-function renderTierPills(tiers) {
-  const pills = Object.entries(tiers)
-    .map(([label, value]) => {
-      const price = formatPrice(value);
-      if (!price) return "";
-      return `<span class="inline-flex items-center gap-1 text-xs font-semibold text-accent-deep bg-accent-soft rounded-full pl-2.5 pr-3 py-1 whitespace-nowrap"><span class="text-muted font-semibold">${escapeHtml(label)}</span>${escapeHtml(price)}</span>`;
-    })
+function renderItemVariants(item) {
+  const variants = getPurchasableVariants(item);
+  if (variants.length === 0) return "";
+  const pills = variants
+    .map(({ sizeLabel, price }) => `
+      <span data-variant-control data-item-id="${item.id}" data-size-label="${escapeHtml(sizeLabel)}" data-cart-item-name="${escapeHtml(item.name)}" data-unit-price="${price}">
+        ${renderVariantControl(item.id, sizeLabel, price)}
+      </span>
+    `)
     .join("");
-  return pills ? `<div class="flex flex-wrap gap-1.5 mt-0.5">${pills}</div>` : "";
+  return `<div class="flex flex-wrap gap-2 mt-2">${pills}</div>`;
 }
 
 function stateMessage({ icon, message, showBackLink }) {
@@ -138,20 +174,35 @@ function groupItemsByCategory(items) {
   return groups;
 }
 
+// Read-only price display (no add-to-cart) used when the restaurant is
+// closed today — ordering is disabled entirely rather than letting a
+// student build a cart that will fail at checkout.
+function renderStaticPrice(item) {
+  const variants = getPurchasableVariants(item);
+  if (variants.length === 0) return "";
+  if (variants.length === 1 && variants[0].sizeLabel === "") {
+    return `<span class="text-[15px] font-bold text-muted whitespace-nowrap">${escapeHtml(formatPrice(variants[0].price))}</span>`;
+  }
+  const pills = variants
+    .map(({ sizeLabel, price }) => `<span class="inline-flex items-center gap-1 text-xs font-semibold text-muted bg-cream-alt rounded-full pl-2.5 pr-3 py-1 whitespace-nowrap">${escapeHtml(sizeLabel)} ${escapeHtml(formatPrice(price))}</span>`)
+    .join("");
+  return `<div class="flex flex-wrap gap-1.5 mt-1 w-full">${pills}</div>`;
+}
+
 // Builds one collapsible category block. Starts collapsed (grid-rows-[0fr]);
 // toggleCategory()/applyMenuSearch() below mutate these elements directly
 // (never re-render) so the CSS grid-rows transition stays smooth.
 function renderCategoryBlock(category, groupItems) {
+  const canOrder = currentRestaurant && currentRestaurant.is_open_today;
   const itemsHtml = groupItems
     .map((item) => {
-      const tiered = hasPriceTiers(item);
       return `
         <div class="flex flex-col gap-1 py-4 px-5 border-b border-line last:border-b-0 hover:bg-cream-alt transition-colors duration-150" data-menu-item data-item-name="${escapeHtml(item.name.toLowerCase())}">
-          <div class="flex items-center justify-between gap-4">
+          <div class="flex items-center justify-between gap-4 flex-wrap">
             <span class="text-[15px] font-semibold text-ink">${escapeHtml(item.name)}</span>
-            ${tiered ? "" : renderItemPrice(item)}
+            ${canOrder ? "" : renderStaticPrice(item)}
           </div>
-          ${tiered ? renderTierPills(item.price_tiers) : ""}
+          ${canOrder ? renderItemVariants(item) : ""}
         </div>
       `;
     })
@@ -287,9 +338,93 @@ function initMenuInteractivity() {
   if (searchInput) {
     searchInput.addEventListener("input", () => applyMenuSearch(searchInput.value));
   }
+
+  initCartInteractivity();
+}
+
+function updateCartBar() {
+  if (!cartBarContainer) return;
+  const cart = getCart();
+  const count = currentRestaurant && cart && cart.restaurantSlug === currentRestaurant.slug
+    ? getCartItemCount(cart)
+    : 0;
+
+  if (count === 0) {
+    cartBarContainer.innerHTML = "";
+    return;
+  }
+
+  const total = getCartTotal(cart);
+  const itemWord = count === 1 ? "item" : "items";
+  cartBarContainer.innerHTML = `
+    <div class="fixed bottom-4 inset-x-4 sm:inset-x-auto sm:right-6 sm:left-6 sm:max-w-md sm:mx-auto z-30">
+      <a href="checkout.html" class="flex items-center justify-between gap-4 bg-ink text-white rounded-2xl shadow-2xl px-5 py-4 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200">
+        <span class="flex items-center gap-3 min-w-0">
+          <span class="flex items-center justify-center w-9 h-9 rounded-xl bg-white/15 flex-shrink-0">
+            <span class="w-4 h-4">${ICONS.cart}</span>
+          </span>
+          <span class="flex flex-col min-w-0 text-left">
+            <span class="text-sm font-bold">${count} ${itemWord}</span>
+            <span class="text-xs text-white/70">${escapeHtml(formatPrice(total))}</span>
+          </span>
+        </span>
+        <span class="inline-flex items-center gap-1.5 text-sm font-bold flex-shrink-0">
+          View Cart<span class="w-4 h-4">${ICONS.arrowRight}</span>
+        </span>
+      </a>
+    </div>
+  `;
+}
+
+function initCartInteractivity() {
+  const categoryList = document.querySelector("[data-category-list]");
+  if (!categoryList) return;
+
+  categoryList.addEventListener("click", (event) => {
+    const btn = event.target.closest(".cart-add-btn, .cart-remove-btn");
+    if (!btn) return;
+
+    const wrapper = btn.closest("[data-variant-control]");
+    if (!wrapper) return;
+
+    const itemId = parseInt(wrapper.dataset.itemId, 10);
+    const sizeLabel = wrapper.dataset.sizeLabel || "";
+    const itemName = wrapper.dataset.cartItemName;
+    const unitPrice = parseFloat(wrapper.dataset.unitPrice);
+
+    if (btn.classList.contains("cart-add-btn")) {
+      const existingCart = getCart();
+      if (
+        existingCart &&
+        existingCart.restaurantSlug !== currentRestaurant.slug &&
+        getCartItemCount(existingCart) > 0
+      ) {
+        const confirmed = window.confirm(
+          `Your cart has items from ${existingCart.restaurantName}. You can only order from one outlet at a time — adding this will clear that cart. Continue?`
+        );
+        if (!confirmed) return;
+        clearCart();
+      }
+      addToCart({
+        restaurantSlug: currentRestaurant.slug,
+        restaurantName: currentRestaurant.name,
+        menuItemId: itemId,
+        name: itemName,
+        sizeLabel,
+        unitPrice,
+      });
+    } else {
+      removeFromCart(itemId, sizeLabel);
+    }
+
+    wrapper.innerHTML = renderVariantControl(itemId, sizeLabel, unitPrice);
+    updateCartBar();
+  });
 }
 
 function renderRestaurant(restaurant) {
+  currentRestaurant = restaurant;
+
   const photoStyle = restaurant.logo
     ? ` style="background-image: url('${escapeHtml(restaurant.logo)}')"`
     : "";
@@ -328,6 +463,7 @@ function renderRestaurant(restaurant) {
   `;
 
   initMenuInteractivity();
+  updateCartBar();
 }
 
 async function loadRestaurant() {

@@ -3,40 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CUFood — Outlet</title>
+  <title>CUFood — Checkout</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="tailwind.config.js"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
 <body class="font-sans bg-cream text-ink antialiased">
   <header class="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-line shadow-sm">
-    <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3 px-6 sm:px-8 py-4">
+    <div class="max-w-6xl mx-auto flex items-center justify-between px-6 sm:px-8 py-4">
       <a href="location-select.html" class="flex items-center gap-3">
         <span class="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-accent to-accent-deep text-white font-extrabold text-sm shadow-accent-glow">CU</span>
         <span class="flex flex-col leading-tight">
           <span class="text-lg font-extrabold tracking-tight text-ink">CUFood</span>
-          <span class="text-xs font-medium text-muted hidden sm:block">Food Republic · Chandigarh University</span>
+          <span class="text-xs font-medium text-muted hidden sm:block">Checkout</span>
         </span>
       </a>
-      <div class="flex items-center gap-2">
-        <a href="location-select.html" id="location-indicator" class="inline-flex items-center gap-1 text-sm font-semibold text-muted bg-white border border-line rounded-full px-4 py-2 shadow-sm hover:text-accent-deep hover:border-accent-soft hover:bg-accent-soft hover:shadow transition-all duration-150 whitespace-nowrap">Switch location</a>
-        <a href="restaurant-login.html" class="inline-flex items-center gap-1 text-sm font-semibold text-muted bg-white border border-line rounded-full px-4 py-2 shadow-sm hover:text-accent-deep hover:border-accent-soft hover:bg-accent-soft hover:shadow transition-all duration-150 whitespace-nowrap">Restaurant Login</a>
-      </div>
-    </div>
-    <div class="border-t border-line">
-      <div class="max-w-6xl mx-auto px-6 sm:px-8 py-3">
-        <a href="index.html" id="back-link" class="inline-flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-accent-deep hover:gap-2.5 transition-all duration-150">&larr; All outlets</a>
-      </div>
+      <a href="#" id="back-link" class="inline-flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-accent-deep transition-all duration-150">&larr; Back to menu</a>
     </div>
   </header>
 
-  <main class="relative overflow-hidden bg-gradient-to-br from-cream via-cream to-accent-soft/20">
+  <main class="relative overflow-hidden bg-gradient-to-br from-cream via-cream to-accent-soft/20 min-h-[calc(100vh-69px)]">
     <div class="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-accent-soft blur-3xl opacity-50 pointer-events-none"></div>
-    <div class="relative max-w-4xl mx-auto px-6 sm:px-8 py-10 sm:py-12 pb-28">
+    <div class="relative max-w-2xl mx-auto px-6 sm:px-8 py-10 sm:py-12">
       <div id="page-content">
-        <p class="text-sm font-medium text-muted" id="loading-text">Loading outlet...</p>
+        <p class="text-sm font-medium text-muted">Loading your cart...</p>
       </div>
     </div>
   </main>
@@ -54,10 +47,8 @@
     </div>
   </footer>
 
-  <div id="cart-bar-container"></div>
-
   <script src="icons.js"></script>
   <script src="cart.js"></script>
-  <script src="restaurant.js"></script>
+  <script src="checkout.js"></script>
 </body>
 </html>
