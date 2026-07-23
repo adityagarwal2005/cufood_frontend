@@ -385,6 +385,15 @@ async function loadDashboard() {
       return;
     }
 
+    if (response.status === 404) {
+      pageContent.innerHTML = stateMessage({
+        icon: ICONS.warning,
+        message: "Your account isn't linked to a restaurant yet. Contact the CUFood admin to get this set up.",
+        card: true,
+      });
+      return;
+    }
+
     if (!response.ok) throw new Error(`Request failed: ${response.status}`);
 
     restaurantData = await response.json();
