@@ -4,6 +4,9 @@ const API_BASE_URL = "https://cufood-backend.onrender.com";
 const pageContent = document.getElementById("page-content");
 
 let restaurantData = null;
+let ordersData = null;
+let ordersPollTimer = null;
+const ORIGINAL_TITLE = document.title;
 
 function getCookie(name) {
   const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
@@ -163,6 +166,183 @@ function renderMenuItemsHtml(items) {
   return html;
 }
 
+const ORDER_STATUS_META = {
+  placed: { label: "New order", pillClass: "bg-accent-soft text-accent-deep" },
+  accepted: { label: "Preparing", pillClass: "bg-accent-soft text-accent-deep" },
+  rejected: { label: "Rejected & refunded", pillClass: "bg-stone-100 text-muted" },
+  ready: { label: "Ready for pickup", pillClass: "bg-accent-soft text-accent-deep" },
+  completed: { label: "Completed", pillClass: "bg-stone-100 text-muted" },
+  payment_pending: { label: "Awaiting payment", pillClass: "bg-stone-100 text-muted" },
+};
+
+function timeAgo(isoString) {
+  const diffMin = Math.round((new Date() - new Date(isoString)) / 60000);
+  if (diffMin < 1) return "just now";
+  if (diffMin === 1) return "1 min ago";
+  if (diffMin < 60) return `${diffMin} min ago`;
+  const diffHr = Math.round(diffMin / 60);
+  return `${diffHr} hr ago`;
+}
+
+function renderOrderActions(order) {
+  if (order.status === "placed") {
+    return `
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <button type="button" class="order-reject-btn inline-flex items-center gap-1.5 text-sm font-semibold text-error bg-error-soft rounded-xl px-4 py-2 hover:opacity-80 transition-opacity duration-150" data-code="${escapeHtml(order.order_code)}">Reject</button>
+        <button type="button" class="order-accept-btn inline-flex items-center gap-1.5 text-sm font-bold text-white bg-gradient-to-br from-accent to-accent-deep rounded-xl px-4 py-2 shadow-accent-glow hover:shadow-lg transition-all duration-150" data-code="${escapeHtml(order.order_code)}">Accept</button>
+      </div>
+    `;
+  }
+  if (order.status === "accepted") {
+    return `
+      <button type="button" class="order-ready-btn inline-flex items-center gap-1.5 text-sm font-bold text-white bg-gradient-to-br from-accent to-accent-deep rounded-xl px-4 py-2 shadow-accent-glow hover:shadow-lg transition-all duration-150 flex-shrink-0" data-code="${escapeHtml(order.order_code)}">Mark ready</button>
+    `;
+  }
+  if (order.status === "ready") {
+    return `
+      <button type="button" class="order-complete-btn inline-flex items-center gap-1.5 text-sm font-bold text-white bg-gradient-to-br from-accent to-accent-deep rounded-xl px-4 py-2 shadow-accent-glow hover:shadow-lg transition-all duration-150 flex-shrink-0" data-code="${escapeHtml(order.order_code)}">Picked up</button>
+    `;
+  }
+  return "";
+}
+
+function renderOrderCard(order) {
+  const meta = ORDER_STATUS_META[order.status] || ORDER_STATUS_META.placed;
+  const itemsSummary = order.items
+    .map((item) => `${item.quantity}x ${escapeHtml(item.name)}${item.size_label ? ` (${escapeHtml(item.size_label)})` : ""}`)
+    .join(", ");
+  const etaText = order.status === "accepted" && order.estimated_ready_at
+    ? `<p class="text-xs text-muted mt-1">Ready by ${escapeHtml(new Date(order.estimated_ready_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }))}</p>`
+    : "";
+
+  return `
+    <div class="border border-line rounded-xl p-4 sm:p-5 mb-3 last:mb-0 bg-white" data-order-card>
+      <div class="flex items-start justify-between gap-3 flex-wrap">
+        <div class="min-w-0">
+          <div class="flex items-center gap-2 flex-wrap mb-1">
+            <span class="text-sm font-extrabold text-ink">#${escapeHtml(order.order_code)}</span>
+            <span class="text-[11px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${meta.pillClass}">${meta.label}</span>
+          </div>
+          <p class="text-xs text-muted">${escapeHtml(order.student_name)} · ${escapeHtml(order.student_uid)} · ${timeAgo(order.created_at)}</p>
+          <p class="text-sm text-ink mt-2">${itemsSummary}</p>
+          <p class="text-sm font-bold text-accent-deep mt-1">${escapeHtml(formatPrice(order.total_amount))}</p>
+          ${etaText}
+        </div>
+        ${renderOrderActions(order)}
+      </div>
+    </div>
+  `;
+}
+
+function renderOrders(orders) {
+  // null means "not fetched yet" — leave the "Loading orders..." placeholder
+  // alone rather than flashing an incorrect "no orders" state.
+  if (orders === null) return;
+  ordersData = orders;
+  const container = document.getElementById("orders-list");
+  if (!container) return;
+
+  const active = orders.filter((o) => ["placed", "accepted", "ready"].includes(o.status));
+  const history = orders.filter((o) => ["rejected", "completed"].includes(o.status)).slice(0, 5);
+
+  if (active.length === 0 && history.length === 0) {
+    container.innerHTML = stateMessage({
+      icon: ICONS.cart,
+      message: "No orders yet — they'll show up here the moment a student pays.",
+      card: false,
+    });
+  } else {
+    let html = "";
+    if (active.length > 0) {
+      html += active.map(renderOrderCard).join("");
+    } else {
+      html += `<p class="text-sm text-muted py-2">No active orders right now.</p>`;
+    }
+    if (history.length > 0) {
+      html += `<p class="text-xs font-bold uppercase tracking-widest text-muted mt-5 mb-3">Recent</p>`;
+      html += history.map(renderOrderCard).join("");
+    }
+    container.innerHTML = html;
+  }
+
+  attachOrderListeners();
+
+  // Lightweight "notification": prefix the tab title with a count so an
+  // owner with the dashboard open in a background tab still notices.
+  const pendingCount = orders.filter((o) => o.status === "placed").length;
+  document.title = pendingCount > 0 ? `(${pendingCount}) ${ORIGINAL_TITLE}` : ORIGINAL_TITLE;
+
+  const badge = document.getElementById("orders-pending-badge");
+  if (badge) {
+    if (pendingCount > 0) {
+      badge.textContent = `${pendingCount} new`;
+      badge.classList.remove("hidden");
+    } else {
+      badge.classList.add("hidden");
+    }
+  }
+}
+
+function attachOrderListeners() {
+  document.querySelectorAll(".order-accept-btn").forEach((btn) => {
+    btn.addEventListener("click", () => handleOrderAction(btn.dataset.code, "accept", btn));
+  });
+  document.querySelectorAll(".order-reject-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (!window.confirm("Reject this order? The student is refunded automatically.")) return;
+      handleOrderAction(btn.dataset.code, "reject", btn);
+    });
+  });
+  document.querySelectorAll(".order-ready-btn").forEach((btn) => {
+    btn.addEventListener("click", () => handleOrderAction(btn.dataset.code, "ready", btn));
+  });
+  document.querySelectorAll(".order-complete-btn").forEach((btn) => {
+    btn.addEventListener("click", () => handleOrderAction(btn.dataset.code, "complete", btn));
+  });
+}
+
+async function handleOrderAction(orderCode, action, triggerBtn) {
+  hideError();
+  const card = triggerBtn.closest("[data-order-card]");
+  const buttons = card ? card.querySelectorAll("button") : [triggerBtn];
+  buttons.forEach((b) => (b.disabled = true));
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/me/orders/${orderCode}/${action}/`, {
+      method: "PATCH",
+      credentials: "include",
+      headers: csrfHeaders(),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      showError(data.detail || "Could not update this order. Please try again.");
+      buttons.forEach((b) => (b.disabled = false));
+      return;
+    }
+    await loadOrders();
+  } catch (err) {
+    showError("Could not reach the server. Please try again.");
+    console.error(err);
+    buttons.forEach((b) => (b.disabled = false));
+  }
+}
+
+async function loadOrders() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/me/orders/`, { credentials: "include" });
+    if (!response.ok) throw new Error(`Request failed: ${response.status}`);
+    const orders = await response.json();
+    renderOrders(orders);
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function startOrderPolling() {
+  clearInterval(ordersPollTimer);
+  ordersPollTimer = setInterval(loadOrders, 12000);
+}
+
 function renderDashboard() {
   const statusPill = restaurantData.is_open_today
     ? `<span class="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-full bg-accent-soft text-accent-deep"><span class="w-1.5 h-1.5 rounded-full bg-accent"></span>Open today</span>`
@@ -201,6 +381,18 @@ function renderDashboard() {
 
     <div id="error-banner" class="hidden text-sm font-medium text-error bg-error-soft rounded-xl px-4 py-3 mb-6"></div>
 
+    <section class="bg-white border border-line rounded-2xl shadow-sm p-6 sm:p-7 mb-8">
+      <div class="flex items-center justify-between gap-3 mb-5">
+        <h2 class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted">
+          <span class="w-3.5 h-3.5 text-accent-deep">${ICONS.cart}</span>Orders
+        </h2>
+        <span id="orders-pending-badge" class="hidden text-xs font-bold text-white bg-accent rounded-full px-2.5 py-1"></span>
+      </div>
+      <div id="orders-list">
+        <p class="text-sm text-muted py-2">Loading orders...</p>
+      </div>
+    </section>
+
     <div class="bg-cream-alt border border-line rounded-2xl shadow-sm p-6 sm:p-7 mb-8">
       <h2 class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted mb-4">
         <span class="w-3.5 h-3.5 text-accent-deep">${ICONS.plus}</span>Add new item
@@ -236,6 +428,10 @@ function renderDashboard() {
   `;
 
   attachEventListeners();
+  // Menu actions (add/delete/toggle item) re-render this whole page, which
+  // would otherwise flash "Loading orders..." on every one of them — repaint
+  // the orders section from cache immediately; polling refreshes it for real.
+  renderOrders(ordersData);
 }
 
 function attachEventListeners() {
@@ -399,6 +595,8 @@ async function loadDashboard() {
     restaurantData = await response.json();
     await ensureCsrfCookie();
     renderDashboard();
+    loadOrders();
+    startOrderPolling();
   } catch (err) {
     pageContent.innerHTML = stateMessage({
       icon: ICONS.warning,
