@@ -219,11 +219,11 @@ function renderMenuItemsHtml(items) {
 
 const ORDER_STATUS_META = {
   placed: { label: "New order", pillClass: "bg-accent-soft text-accent-deep" },
-  accepted: { label: "Awaiting payment", pillClass: "bg-stone-100 text-muted" },
-  preparing: { label: "Preparing", pillClass: "bg-accent-soft text-accent-deep" },
-  rejected: { label: "Rejected", pillClass: "bg-stone-100 text-muted" },
+  accepted: { label: "Preparing", pillClass: "bg-accent-soft text-accent-deep" },
+  rejected: { label: "Rejected & refunded", pillClass: "bg-stone-100 text-muted" },
   ready: { label: "Ready for pickup", pillClass: "bg-accent-soft text-accent-deep" },
   completed: { label: "Completed", pillClass: "bg-stone-100 text-muted" },
+  payment_pending: { label: "Awaiting payment", pillClass: "bg-stone-100 text-muted" },
 };
 
 function timeAgo(isoString) {
@@ -245,14 +245,6 @@ function renderOrderActions(order) {
     `;
   }
   if (order.status === "accepted") {
-    if (order.payment_status === "claimed") {
-      return `
-        <button type="button" class="order-confirm-payment-btn inline-flex items-center gap-1.5 text-sm font-bold text-white bg-gradient-to-br from-accent to-accent-deep rounded-xl px-4 py-2 shadow-accent-glow hover:shadow-lg transition-all duration-150 flex-shrink-0" data-code="${escapeHtml(order.order_code)}">Confirm payment & start</button>
-      `;
-    }
-    return `<p class="text-xs text-muted flex-shrink-0">Waiting for student to pay</p>`;
-  }
-  if (order.status === "preparing") {
     return `
       <button type="button" class="order-ready-btn inline-flex items-center gap-1.5 text-sm font-bold text-white bg-gradient-to-br from-accent to-accent-deep rounded-xl px-4 py-2 shadow-accent-glow hover:shadow-lg transition-all duration-150 flex-shrink-0" data-code="${escapeHtml(order.order_code)}">Mark ready</button>
     `;
@@ -270,11 +262,8 @@ function renderOrderCard(order) {
   const itemsSummary = order.items
     .map((item) => `${item.quantity}x ${escapeHtml(item.name)}${item.size_label ? ` (${escapeHtml(item.size_label)})` : ""}`)
     .join(", ");
-  const etaText = order.status === "preparing" && order.estimated_ready_at
+  const etaText = order.status === "accepted" && order.estimated_ready_at
     ? `<p class="text-xs text-muted mt-1">Ready by ${escapeHtml(new Date(order.estimated_ready_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }))}</p>`
-    : "";
-  const paidClaimText = order.status === "accepted" && order.payment_status === "claimed"
-    ? `<p class="text-xs font-semibold text-accent-deep mt-1">Student says they've paid — check your UPI app</p>`
     : "";
 
   return `
@@ -289,7 +278,6 @@ function renderOrderCard(order) {
           <p class="text-sm text-ink mt-2">${itemsSummary}</p>
           <p class="text-sm font-bold text-accent-deep mt-1">${escapeHtml(formatPrice(order.total_amount))}</p>
           ${etaText}
-          ${paidClaimText}
         </div>
         ${renderOrderActions(order)}
       </div>
@@ -306,13 +294,13 @@ function renderOrders(orders) {
   const container = document.getElementById("orders-list");
   if (!container) return;
 
-  const active = orders.filter((o) => ["placed", "accepted", "preparing", "ready"].includes(o.status));
+  const active = orders.filter((o) => ["placed", "accepted", "ready"].includes(o.status));
   const history = orders.filter((o) => ["rejected", "completed"].includes(o.status)).slice(0, 5);
 
   if (active.length === 0 && history.length === 0) {
     container.innerHTML = stateMessage({
       icon: ICONS.cart,
-      message: "No orders yet — they'll show up here the moment a student places one.",
+      message: "No orders yet — they'll show up here the moment a student pays.",
       card: false,
     });
   } else {
@@ -353,12 +341,9 @@ function attachOrderListeners() {
   });
   document.querySelectorAll(".order-reject-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
-      if (!window.confirm("Reject this order? The student hasn't paid, so nothing needs refunding.")) return;
+      if (!window.confirm("Reject this order? The student is refunded automatically.")) return;
       handleOrderAction(btn.dataset.code, "reject", btn);
     });
-  });
-  document.querySelectorAll(".order-confirm-payment-btn").forEach((btn) => {
-    btn.addEventListener("click", () => handleOrderAction(btn.dataset.code, "confirm-payment", btn));
   });
   document.querySelectorAll(".order-ready-btn").forEach((btn) => {
     btn.addEventListener("click", () => handleOrderAction(btn.dataset.code, "ready", btn));
@@ -448,28 +433,6 @@ function renderDashboard() {
 
     <div id="error-banner" class="hidden text-sm font-medium text-error bg-error-soft rounded-xl px-4 py-3 mb-6"></div>
 
-    ${!restaurantData.upi_id ? `
-      <div class="flex items-center gap-3 bg-error-soft border border-error/20 rounded-2xl px-5 py-4 mb-6">
-        <span class="w-5 h-5 text-error flex-shrink-0">${ICONS.warning}</span>
-        <p class="text-sm font-semibold text-error">Set your UPI ID below so students can pay you once you accept their orders.</p>
-      </div>
-    ` : ""}
-
-    <section class="bg-white border border-line rounded-2xl shadow-sm p-6 sm:p-7 mb-8">
-      <h2 class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted mb-4">
-        <span class="w-3.5 h-3.5 text-accent-deep">${ICONS.cart}</span>Payment settings
-      </h2>
-      <form id="upi-form" class="flex flex-wrap gap-3.5 items-end">
-        <div class="flex flex-col gap-1.5 flex-1 min-w-[200px]">
-          <label class="text-xs font-semibold text-muted" for="upi-id-input">Your UPI ID</label>
-          <input type="text" id="upi-id-input" placeholder="yourname@bank" value="${escapeHtml(restaurantData.upi_id || "")}"
-            class="rounded-xl border-2 border-line bg-white px-3.5 py-2.5 text-sm text-ink focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150">
-        </div>
-        <button type="submit" id="upi-save-btn" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-accent to-accent-deep text-white font-bold text-sm px-5 py-2.5 shadow-accent-glow hover:shadow-lg transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed">Save</button>
-      </form>
-      <p class="text-xs text-muted mt-3">Shown to students right after you accept their order, so they can pay you directly.</p>
-    </section>
-
     <section class="bg-white border border-line rounded-2xl shadow-sm p-6 sm:p-7 mb-8">
       <div class="flex items-center justify-between gap-3 mb-5">
         <h2 class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted">
@@ -532,7 +495,6 @@ function attachEventListeners() {
   document.getElementById("logout-btn").addEventListener("click", handleLogout);
   document.getElementById("open-toggle").addEventListener("change", handleToggleOpen);
   document.getElementById("add-item-form").addEventListener("submit", handleAddItem);
-  document.getElementById("upi-form").addEventListener("submit", handleUpdateUpiId);
 
   const notifyBtn = document.getElementById("enable-notifications-btn");
   if (notifyBtn) {
@@ -569,39 +531,6 @@ async function handleToggleOpen(event) {
     checkbox.checked = previousValue;
     showError("Could not update open/closed status. Please try again.");
     console.error(err);
-  }
-}
-
-async function handleUpdateUpiId(event) {
-  event.preventDefault();
-  hideError();
-
-  const saveBtn = document.getElementById("upi-save-btn");
-  const upiId = document.getElementById("upi-id-input").value.trim();
-  saveBtn.disabled = true;
-
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/me/restaurant/upi-id/`, {
-      method: "PATCH",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-        ...csrfHeaders(),
-      },
-      body: JSON.stringify({ upi_id: upiId }),
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      showError(data.detail || "Could not save your UPI ID. Please try again.");
-      return;
-    }
-    restaurantData.upi_id = data.upi_id;
-    renderDashboard();
-  } catch (err) {
-    showError("Could not reach the server. Please try again.");
-    console.error(err);
-  } finally {
-    saveBtn.disabled = false;
   }
 }
 

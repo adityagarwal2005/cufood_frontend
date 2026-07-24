@@ -52,6 +52,12 @@ function renderLookupForm(errorMessage) {
 }
 
 const STATUS_META = {
+  payment_pending: {
+    label: "Payment pending",
+    color: "text-muted",
+    icon: ICONS.clock,
+    message: "Waiting for payment to be confirmed.",
+  },
   placed: {
     label: "Waiting for confirmation",
     color: "text-accent-deep",
@@ -59,22 +65,16 @@ const STATUS_META = {
     message: "The restaurant hasn't responded yet. This page updates automatically.",
   },
   accepted: {
-    label: "Accepted — pay to confirm",
-    color: "text-accent-deep",
-    icon: ICONS.check,
-    message: null,
-  },
-  preparing: {
-    label: "Preparing",
+    label: "Accepted",
     color: "text-accent-deep",
     icon: ICONS.check,
     message: null,
   },
   rejected: {
-    label: "Rejected",
+    label: "Rejected & refunded",
     color: "text-error",
     icon: ICONS.warning,
-    message: "The restaurant couldn't take this order. Nothing was charged.",
+    message: "The restaurant couldn't take this order. Your payment has been refunded.",
   },
   ready: {
     label: "Ready for pickup",
@@ -98,55 +98,9 @@ function formatEta(estimatedReadyAt) {
   return `in about ${diffMin} min`;
 }
 
-function buildUpiLink(order) {
-  const params = new URLSearchParams({
-    pa: order.restaurant_upi_id,
-    pn: order.restaurant_name,
-    am: String(order.total_amount),
-    cu: "INR",
-    tn: `CUFood order ${order.order_code}`,
-  });
-  return `upi://pay?${params.toString()}`;
-}
-
-function renderPaymentSection(order) {
-  if (order.payment_status === "claimed") {
-    return `
-      <div class="border-t border-line pt-4 mt-4">
-        <div class="flex items-center gap-3 bg-accent-soft rounded-xl px-4 py-3.5">
-          <span class="w-5 h-5 text-accent-deep flex-shrink-0">${ICONS.clock}</span>
-          <p class="text-sm font-semibold text-accent-deep">You said you've paid — waiting for the restaurant to confirm.</p>
-        </div>
-      </div>
-    `;
-  }
-
-  if (!order.restaurant_upi_id) {
-    return `
-      <div class="border-t border-line pt-4 mt-4">
-        <p class="text-sm text-muted">This restaurant hasn't set up UPI payments yet — please pay at the counter when you arrive.</p>
-      </div>
-    `;
-  }
-
-  return `
-    <div class="border-t border-line pt-4 mt-4">
-      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">Pay to confirm your order</p>
-      <div class="bg-cream-alt rounded-xl p-4 mb-3">
-        <p class="text-xs text-muted mb-1">Pay via UPI to</p>
-        <p class="text-base font-extrabold text-ink break-all">${escapeHtml(order.restaurant_upi_id)}</p>
-        <p class="text-sm font-bold text-accent-deep mt-1">${escapeHtml(formatPrice(order.total_amount))}</p>
-      </div>
-      <a href="${buildUpiLink(order)}" class="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-accent to-accent-deep text-white font-bold text-base px-5 py-3.5 shadow-accent-glow hover:shadow-lg transition-all duration-150 mb-2.5">Open UPI app to pay</a>
-      <button type="button" id="ive-paid-btn" class="w-full rounded-xl border-2 border-line bg-white text-ink font-bold text-sm px-5 py-3 hover:border-accent-soft transition-all duration-150">I've paid</button>
-      <p class="text-xs text-muted text-center mt-2">Only tap "I've paid" after the money has actually left your account.</p>
-    </div>
-  `;
-}
-
 function renderOrder(order) {
   const meta = STATUS_META[order.status] || STATUS_META.placed;
-  const eta = order.status === "preparing" ? formatEta(order.estimated_ready_at) : null;
+  const eta = order.status === "accepted" ? formatEta(order.estimated_ready_at) : null;
 
   const itemsHtml = order.items
     .map(
@@ -182,7 +136,6 @@ function renderOrder(order) {
             <span class="text-lg font-extrabold text-ink">${escapeHtml(formatPrice(order.total_amount))}</span>
           </div>
         </div>
-        ${order.status === "accepted" ? renderPaymentSection(order) : ""}
         <div class="pt-4 mt-2 border-t border-line text-xs text-muted">
           ${escapeHtml(order.student_name)} · ${escapeHtml(order.student_uid)}
         </div>
@@ -190,32 +143,6 @@ function renderOrder(order) {
     </div>
     <a href="restaurant.html?slug=${encodeURIComponent(order.restaurant_slug)}" class="block text-center text-accent-deep font-bold hover:underline">Order again from ${escapeHtml(order.restaurant_name)}</a>
   `;
-
-  const ivePaidBtn = document.getElementById("ive-paid-btn");
-  if (ivePaidBtn) {
-    ivePaidBtn.addEventListener("click", () => claimPayment(order.order_code));
-  }
-}
-
-async function claimPayment(code) {
-  const btn = document.getElementById("ive-paid-btn");
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = "Confirming...";
-  }
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/orders/${encodeURIComponent(code)}/claim-payment/`, {
-      method: "PATCH",
-    });
-    if (!response.ok) throw new Error(`Request failed: ${response.status}`);
-    loadOrder(code);
-  } catch (err) {
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = "I've paid";
-    }
-    console.error(err);
-  }
 }
 
 async function loadOrder(code) {
@@ -231,7 +158,7 @@ async function loadOrder(code) {
 
     // Keep polling while the order is still moving through its lifecycle,
     // so a student can leave this page open and watch it update live.
-    const activeStatuses = ["placed", "accepted", "preparing", "ready"];
+    const activeStatuses = ["payment_pending", "placed", "accepted", "ready"];
     clearTimeout(pollTimer);
     if (activeStatuses.includes(order.status)) {
       pollTimer = setTimeout(() => loadOrder(code), 8000);
