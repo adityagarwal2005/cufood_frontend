@@ -82,9 +82,9 @@ function renderCheckout(cart) {
           <p class="text-xs text-muted">Show this + your order code at pickup.</p>
         </div>
         <button type="submit" id="pay-btn" class="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-accent to-accent-deep text-white font-bold text-base px-5 py-3.5 shadow-accent-glow hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 mt-1">
-          Pay ${escapeHtml(formatPrice(total))}
+          Place order — ${escapeHtml(formatPrice(total))}
         </button>
-        <p class="text-xs text-muted text-center leading-relaxed">Prepaid only — no cash on delivery. If the restaurant can't take your order, you're refunded automatically. Ready in ~15 min after they accept.</p>
+        <p class="text-xs text-muted text-center leading-relaxed">No payment yet — the restaurant confirms they can make it first. You'll pay by UPI once they accept.</p>
       </form>
     </div>
   `;
@@ -145,12 +145,12 @@ function showError(message) {
   banner.classList.remove("hidden");
 }
 
-function resetPayButton() {
+function resetPlaceOrderButton() {
   const payBtn = document.getElementById("pay-btn");
   const cart = getCart();
   if (!payBtn || !cart) return;
   payBtn.disabled = false;
-  payBtn.textContent = `Pay ${formatPrice(getCartTotal(cart))}`;
+  payBtn.textContent = `Place order — ${formatPrice(getCartTotal(cart))}`;
 }
 
 async function handleCheckoutSubmit(event) {
@@ -172,7 +172,7 @@ async function handleCheckoutSubmit(event) {
 
   const payBtn = document.getElementById("pay-btn");
   payBtn.disabled = true;
-  payBtn.textContent = "Starting payment...";
+  payBtn.textContent = "Placing order...";
 
   const items = Object.values(cart.items).map((line) => ({
     menu_item_id: line.menuItemId,
@@ -181,7 +181,7 @@ async function handleCheckoutSubmit(event) {
   }));
 
   try {
-    const response = await fetch(`${API_BASE_URL}/api/orders/create-payment/`, {
+    const response = await fetch(`${API_BASE_URL}/api/orders/create/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -193,78 +193,16 @@ async function handleCheckoutSubmit(event) {
     });
     const data = await response.json();
     if (!response.ok) {
-      showError(data.detail || "Could not start payment. Please try again.");
-      resetPayButton();
-      return;
-    }
-    openRazorpayCheckout(data, studentName);
-  } catch (err) {
-    showError("Could not reach the server. Please try again.");
-    console.error(err);
-    resetPayButton();
-  }
-}
-
-function openRazorpayCheckout(paymentData, studentName) {
-  if (typeof Razorpay === "undefined") {
-    showError("Could not load the payment window. Please refresh and try again.");
-    resetPayButton();
-    return;
-  }
-
-  const rzp = new Razorpay({
-    key: paymentData.razorpay_key_id,
-    amount: paymentData.amount,
-    currency: paymentData.currency,
-    order_id: paymentData.razorpay_order_id,
-    name: "CUFood",
-    description: paymentData.restaurant_name,
-    prefill: { name: studentName },
-    theme: { color: "#d9531e" },
-    handler: function (response) {
-      verifyPayment(response, paymentData.order_code);
-    },
-    modal: {
-      ondismiss: function () {
-        resetPayButton();
-        showError("Payment cancelled. Your cart is still here — try again when ready.");
-      },
-    },
-  });
-
-  rzp.on("payment.failed", function () {
-    resetPayButton();
-    showError("Payment failed. Please try again.");
-  });
-
-  rzp.open();
-}
-
-async function verifyPayment(razorpayResponse, orderCode) {
-  const payBtn = document.getElementById("pay-btn");
-  if (payBtn) payBtn.textContent = "Confirming payment...";
-
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/orders/verify-payment/`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        razorpay_order_id: razorpayResponse.razorpay_order_id,
-        razorpay_payment_id: razorpayResponse.razorpay_payment_id,
-        razorpay_signature: razorpayResponse.razorpay_signature,
-      }),
-    });
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      showError(data.detail || "Payment could not be verified. If money was deducted, contact support.");
-      resetPayButton();
+      showError(data.detail || "Could not place your order. Please try again.");
+      resetPlaceOrderButton();
       return;
     }
     clearCart();
-    window.location.href = `order-status.html?code=${encodeURIComponent(orderCode)}`;
+    window.location.href = `order-status.html?code=${encodeURIComponent(data.order_code)}`;
   } catch (err) {
-    showError("Payment succeeded but we couldn't confirm it. If money was deducted, contact support.");
+    showError("Could not reach the server. Please try again.");
     console.error(err);
+    resetPlaceOrderButton();
   }
 }
 
