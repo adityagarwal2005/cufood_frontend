@@ -58,12 +58,6 @@ const STATUS_META = {
     icon: ICONS.clock,
     message: "The restaurant hasn't responded yet. This page updates automatically.",
   },
-  accepted: {
-    label: "Accepted — pay to confirm",
-    color: "text-accent-deep",
-    icon: ICONS.check,
-    message: null,
-  },
   preparing: {
     label: "Preparing",
     color: "text-accent-deep",
@@ -114,8 +108,8 @@ function renderPaymentSection(order) {
     return `
       <div class="border-t border-line pt-4 mt-4">
         <div class="flex items-center gap-3 bg-accent-soft rounded-xl px-4 py-3.5">
-          <span class="w-5 h-5 text-accent-deep flex-shrink-0">${ICONS.clock}</span>
-          <p class="text-sm font-semibold text-accent-deep">You said you've paid — waiting for the restaurant to confirm.</p>
+          <span class="w-5 h-5 text-accent-deep flex-shrink-0">${ICONS.check}</span>
+          <p class="text-sm font-semibold text-accent-deep">Thanks — noted that you've paid.</p>
         </div>
       </div>
     `;
@@ -182,7 +176,7 @@ function renderOrder(order) {
             <span class="text-lg font-extrabold text-ink">${escapeHtml(formatPrice(order.total_amount))}</span>
           </div>
         </div>
-        ${order.status === "accepted" ? renderPaymentSection(order) : ""}
+        ${["preparing", "ready"].includes(order.status) ? renderPaymentSection(order) : ""}
         <div class="pt-4 mt-2 border-t border-line text-xs text-muted">
           ${escapeHtml(order.student_name)} · ${escapeHtml(order.student_uid)}
         </div>
@@ -201,7 +195,7 @@ async function claimPayment(code) {
   const btn = document.getElementById("ive-paid-btn");
   if (btn) {
     btn.disabled = true;
-    btn.textContent = "Confirming...";
+    btn.textContent = "Saving...";
   }
   try {
     const response = await fetch(`${API_BASE_URL}/api/orders/${encodeURIComponent(code)}/claim-payment/`, {
@@ -231,7 +225,7 @@ async function loadOrder(code) {
 
     // Keep polling while the order is still moving through its lifecycle,
     // so a student can leave this page open and watch it update live.
-    const activeStatuses = ["placed", "accepted", "preparing", "ready"];
+    const activeStatuses = ["placed", "preparing", "ready"];
     clearTimeout(pollTimer);
     if (activeStatuses.includes(order.status)) {
       pollTimer = setTimeout(() => loadOrder(code), 8000);

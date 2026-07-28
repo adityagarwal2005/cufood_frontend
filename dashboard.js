@@ -219,7 +219,6 @@ function renderMenuItemsHtml(items) {
 
 const ORDER_STATUS_META = {
   placed: { label: "New order", pillClass: "bg-accent-soft text-accent-deep" },
-  accepted: { label: "Awaiting payment", pillClass: "bg-stone-100 text-muted" },
   preparing: { label: "Preparing", pillClass: "bg-accent-soft text-accent-deep" },
   rejected: { label: "Rejected", pillClass: "bg-stone-100 text-muted" },
   ready: { label: "Ready for pickup", pillClass: "bg-accent-soft text-accent-deep" },
@@ -244,14 +243,6 @@ function renderOrderActions(order) {
       </div>
     `;
   }
-  if (order.status === "accepted") {
-    if (order.payment_status === "claimed") {
-      return `
-        <button type="button" class="order-confirm-payment-btn inline-flex items-center gap-1.5 text-sm font-bold text-white bg-gradient-to-br from-accent to-accent-deep rounded-xl px-4 py-2 shadow-accent-glow hover:shadow-lg transition-all duration-150 flex-shrink-0" data-code="${escapeHtml(order.order_code)}">Confirm payment & start</button>
-      `;
-    }
-    return `<p class="text-xs text-muted flex-shrink-0">Waiting for student to pay</p>`;
-  }
   if (order.status === "preparing") {
     return `
       <button type="button" class="order-ready-btn inline-flex items-center gap-1.5 text-sm font-bold text-white bg-gradient-to-br from-accent to-accent-deep rounded-xl px-4 py-2 shadow-accent-glow hover:shadow-lg transition-all duration-150 flex-shrink-0" data-code="${escapeHtml(order.order_code)}">Mark ready</button>
@@ -273,8 +264,8 @@ function renderOrderCard(order) {
   const etaText = order.status === "preparing" && order.estimated_ready_at
     ? `<p class="text-xs text-muted mt-1">Ready by ${escapeHtml(new Date(order.estimated_ready_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }))}</p>`
     : "";
-  const paidClaimText = order.status === "accepted" && order.payment_status === "claimed"
-    ? `<p class="text-xs font-semibold text-accent-deep mt-1">Student says they've paid — check your UPI app</p>`
+  const paidClaimText = order.payment_status === "claimed"
+    ? `<p class="text-xs font-semibold text-accent-deep mt-1">Student says they've paid</p>`
     : "";
 
   return `
@@ -306,7 +297,7 @@ function renderOrders(orders) {
   const container = document.getElementById("orders-list");
   if (!container) return;
 
-  const active = orders.filter((o) => ["placed", "accepted", "preparing", "ready"].includes(o.status));
+  const active = orders.filter((o) => ["placed", "preparing", "ready"].includes(o.status));
   const history = orders.filter((o) => ["rejected", "completed"].includes(o.status)).slice(0, 5);
 
   if (active.length === 0 && history.length === 0) {
@@ -356,9 +347,6 @@ function attachOrderListeners() {
       if (!window.confirm("Reject this order? The student hasn't paid, so nothing needs refunding.")) return;
       handleOrderAction(btn.dataset.code, "reject", btn);
     });
-  });
-  document.querySelectorAll(".order-confirm-payment-btn").forEach((btn) => {
-    btn.addEventListener("click", () => handleOrderAction(btn.dataset.code, "confirm-payment", btn));
   });
   document.querySelectorAll(".order-ready-btn").forEach((btn) => {
     btn.addEventListener("click", () => handleOrderAction(btn.dataset.code, "ready", btn));
