@@ -3,6 +3,38 @@ const API_BASE_URL = "https://cufood-backend.onrender.com";
 const pageContent = document.getElementById("page-content");
 const backLink = document.getElementById("back-link");
 
+// Kept outside renderCheckout() so it survives cart-quantity re-renders —
+// a student shouldn't have to retake their photo just because they bumped
+// an item's quantity.
+let studentPhotoDataUrl = null;
+
+// Downscales + re-encodes the picked photo to a small JPEG (max ~480px on
+// the long edge) so it stays a quick upload and a reasonable amount of text
+// to store, while still being clear enough for a restaurant to recognize a
+// face against.
+function readAndCompressPhoto(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(reader.error);
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("Could not read that image."));
+      img.onload = () => {
+        const maxDim = 480;
+        const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.7));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 function escapeHtml(text) {
   const div = document.createElement("div");
   div.textContent = text;
@@ -81,6 +113,21 @@ function renderCheckout(cart) {
             class="rounded-xl border-2 border-line bg-white px-4 py-3 text-[15px] text-ink focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150">
           <p class="text-xs text-muted">Show this + your order code at pickup.</p>
         </div>
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-muted" for="student-photo-input">Your photo</label>
+          <div class="flex items-center gap-3">
+            <div id="photo-preview" class="w-16 h-16 rounded-xl bg-white border-2 ${studentPhotoDataUrl ? "border-accent" : "border-dashed border-line"} flex items-center justify-center text-muted flex-shrink-0 overflow-hidden">
+              ${studentPhotoDataUrl
+                ? `<img src="${studentPhotoDataUrl}" class="w-full h-full object-cover" alt="Your photo">`
+                : `<span class="w-6 h-6">${ICONS.camera}</span>`}
+            </div>
+            <label id="photo-picker-label" for="student-photo-input" class="inline-flex items-center gap-1.5 text-sm font-semibold text-accent-deep bg-accent-soft rounded-xl px-4 py-2.5 cursor-pointer hover:opacity-80 transition-opacity duration-150">
+              ${studentPhotoDataUrl ? "Retake photo" : "Take / choose photo"}
+            </label>
+            <input type="file" id="student-photo-input" accept="image/*" capture="user" class="hidden">
+          </div>
+          <p class="text-xs text-muted">So the restaurant knows who to hand the order to at pickup.</p>
+        </div>
         <button type="submit" id="pay-btn" class="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-accent to-accent-deep text-white font-bold text-base px-5 py-3.5 shadow-accent-glow hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 mt-1">
           Place order — ${escapeHtml(formatPrice(total))}
         </button>
@@ -122,6 +169,30 @@ function attachCheckoutListeners() {
 
   const form = document.getElementById("checkout-form");
   if (form) form.addEventListener("submit", handleCheckoutSubmit);
+
+  const photoInput = document.getElementById("student-photo-input");
+  if (photoInput) {
+    photoInput.addEventListener("change", async () => {
+      const file = photoInput.files && photoInput.files[0];
+      if (!file) return;
+      try {
+        studentPhotoDataUrl = await readAndCompressPhoto(file);
+        hideError();
+      } catch (err) {
+        showError("Could not read that photo. Please try again.");
+        console.error(err);
+        return;
+      }
+      const preview = document.getElementById("photo-preview");
+      if (preview) {
+        preview.classList.remove("border-dashed", "border-line");
+        preview.classList.add("border-accent");
+        preview.innerHTML = `<img src="${studentPhotoDataUrl}" class="w-full h-full object-cover" alt="Your photo">`;
+      }
+      const label = document.getElementById("photo-picker-label");
+      if (label) label.textContent = "Retake photo";
+    });
+  }
 }
 
 function refresh() {
@@ -169,6 +240,10 @@ async function handleCheckoutSubmit(event) {
     showError("Please fill in your name and UID.");
     return;
   }
+  if (!studentPhotoDataUrl) {
+    showError("Please add a photo so the restaurant can identify you at pickup.");
+    return;
+  }
 
   const payBtn = document.getElementById("pay-btn");
   payBtn.disabled = true;
@@ -188,6 +263,7 @@ async function handleCheckoutSubmit(event) {
         restaurant_slug: cart.restaurantSlug,
         student_name: studentName,
         student_uid: studentUid,
+        student_photo: studentPhotoDataUrl,
         items,
       }),
     });
