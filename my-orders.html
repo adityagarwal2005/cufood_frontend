@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CUFood — Order Status</title>
+  <title>CUFood — My Orders</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -20,21 +20,20 @@
         <span class="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-accent to-accent-deep text-white font-extrabold text-sm shadow-accent-glow">CU</span>
         <span class="flex flex-col leading-tight">
           <span class="text-lg font-extrabold tracking-tight text-ink">CUFood</span>
-          <span class="text-xs font-medium text-muted hidden sm:block">Order status</span>
+          <span class="text-xs font-medium text-muted hidden sm:block">My orders</span>
         </span>
       </a>
-      <div class="flex items-center gap-4">
-        <a href="my-orders.html" class="text-sm font-semibold text-muted hover:text-accent-deep transition-all duration-150">My orders</a>
-        <a href="location-select.html" class="inline-flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-accent-deep transition-all duration-150">&larr; Browse outlets</a>
-      </div>
+      <a href="location-select.html" class="inline-flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-accent-deep transition-all duration-150">&larr; Browse outlets</a>
     </div>
   </header>
 
   <main class="relative overflow-hidden bg-gradient-to-br from-cream via-cream to-accent-soft/20 min-h-[calc(100vh-69px)]">
     <div class="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-accent-soft blur-3xl opacity-50 pointer-events-none"></div>
     <div class="relative max-w-lg mx-auto px-6 sm:px-8 py-10 sm:py-12">
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-ink mb-1">My orders</h1>
+      <p class="text-sm text-muted mb-6">Orders you've placed from this device.</p>
       <div id="page-content">
-        <p class="text-sm font-medium text-muted">Loading order...</p>
+        <p class="text-sm font-medium text-muted">Loading...</p>
       </div>
     </div>
   </main>
@@ -53,6 +52,6 @@
   </footer>
 
   <script src="icons.js"></script>
-  <script src="order-status.js"></script>
+  <script src="my-orders.js"></script>
 </body>
 </html>

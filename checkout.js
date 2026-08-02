@@ -3,6 +3,23 @@ const API_BASE_URL = "https://cufood-backend.onrender.com";
 const pageContent = document.getElementById("page-content");
 const backLink = document.getElementById("back-link");
 
+// So my-orders.html can list past orders without a student account —
+// read by my-orders.js under the same key.
+const MY_ORDERS_KEY = "cufood_my_orders";
+const MAX_TRACKED_ORDERS = 10;
+
+function rememberMyOrder(code, restaurantName) {
+  let list = [];
+  try {
+    list = JSON.parse(localStorage.getItem(MY_ORDERS_KEY)) || [];
+  } catch (err) {
+    list = [];
+  }
+  list = list.filter((entry) => entry.code !== code);
+  list.unshift({ code, restaurantName, placedAt: new Date().toISOString() });
+  localStorage.setItem(MY_ORDERS_KEY, JSON.stringify(list.slice(0, MAX_TRACKED_ORDERS)));
+}
+
 function escapeHtml(text) {
   const div = document.createElement("div");
   div.textContent = text;
@@ -201,6 +218,7 @@ async function handleCheckoutSubmit(event) {
       resetPlaceOrderButton();
       return;
     }
+    rememberMyOrder(data.order_code, cart.restaurantName);
     clearCart();
     window.location.href = `order-status.html?code=${encodeURIComponent(data.order_code)}`;
   } catch (err) {

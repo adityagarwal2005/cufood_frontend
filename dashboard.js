@@ -169,6 +169,39 @@ function stateMessage({ icon, message, card }) {
   `;
 }
 
+// Tracks which item's row is showing the inline edit form, if any.
+let editingItemId = null;
+
+function renderEditItemRow(item) {
+  // Tiered/half-full items keep their pricing structure untouched here —
+  // only name/category are editable for them, since a single "price"
+  // field doesn't represent their pricing shape. Plain-priced items get
+  // a price field too, matching what the "Add item" form can create.
+  const simplePriced = !hasPriceTiers(item) && item.price_half == null && item.price_full == null;
+  return `
+    <div class="flex flex-wrap items-end gap-3 bg-white border-2 border-accent-soft rounded-xl px-5 py-4" data-edit-row="${item.id}">
+      <div class="flex flex-col gap-1 flex-1 min-w-[140px]">
+        <label class="text-[11px] font-semibold text-muted">Name</label>
+        <input type="text" class="edit-item-name rounded-lg border-2 border-line bg-white px-3 py-2 text-sm text-ink focus:outline-none focus:border-accent" value="${escapeHtml(item.name)}">
+      </div>
+      <div class="flex flex-col gap-1 flex-1 min-w-[120px]">
+        <label class="text-[11px] font-semibold text-muted">Category</label>
+        <input type="text" class="edit-item-category rounded-lg border-2 border-line bg-white px-3 py-2 text-sm text-ink focus:outline-none focus:border-accent" value="${escapeHtml(item.category || "")}">
+      </div>
+      ${simplePriced ? `
+        <div class="flex flex-col gap-1 w-24">
+          <label class="text-[11px] font-semibold text-muted">Price</label>
+          <input type="number" min="0" step="0.01" class="edit-item-price rounded-lg border-2 border-line bg-white px-3 py-2 text-sm text-ink focus:outline-none focus:border-accent" value="${item.price !== null ? item.price : ""}">
+        </div>
+      ` : ""}
+      <div class="flex items-center gap-2">
+        <button type="button" class="btn-save-edit inline-flex items-center gap-1.5 text-sm font-bold text-white bg-gradient-to-br from-accent to-accent-deep rounded-lg px-3.5 py-2" data-item-id="${item.id}">Save</button>
+        <button type="button" class="btn-cancel-edit inline-flex items-center gap-1.5 text-sm font-semibold text-muted bg-white border border-line rounded-lg px-3.5 py-2">Cancel</button>
+      </div>
+    </div>
+  `;
+}
+
 function renderMenuItemsHtml(items) {
   if (items.length === 0) {
     return stateMessage({
@@ -189,6 +222,10 @@ function renderMenuItemsHtml(items) {
     </h2>`;
     html += `<div class="flex flex-col gap-2.5">`;
     groupItems.forEach((item) => {
+      if (item.id === editingItemId) {
+        html += renderEditItemRow(item);
+        return;
+      }
       const tiered = hasPriceTiers(item);
       html += `
         <div class="flex items-center gap-4 bg-white border border-line border-l-4 border-l-transparent rounded-xl shadow-sm px-5 py-4 hover:shadow-md hover:-translate-y-0.5 hover:border-l-accent transition-all duration-200">
@@ -203,6 +240,9 @@ function renderMenuItemsHtml(items) {
               checked: item.is_available_today,
               dataAttrs: `data-item-id="${item.id}"`,
             })}
+            <button type="button" class="btn-edit inline-flex items-center gap-1.5 text-sm font-semibold text-muted bg-white border border-line rounded-xl px-3.5 py-2 hover:text-accent-deep hover:border-accent-soft hover:bg-accent-soft transition-all duration-150" data-item-id="${item.id}">
+              <span class="w-3.5 h-3.5">${ICONS.edit}</span>Edit
+            </button>
             <button type="button" class="btn-delete inline-flex items-center gap-1.5 text-sm font-semibold text-muted bg-white border border-line rounded-xl px-3.5 py-2 hover:text-error hover:border-error-soft hover:bg-error-soft transition-all duration-150" data-item-id="${item.id}">
               <span class="w-3.5 h-3.5">${ICONS.trash}</span>Delete
             </button>
@@ -287,12 +327,47 @@ function renderOrderCard(order) {
   `;
 }
 
+// Orders paid today, excluding rejected ones (nothing was actually
+// fulfilled for those). MyOrdersView caps at the 100 most recent orders,
+// so on a very high-volume day this undercounts — acceptable for a quick
+// pulse check, not meant as an authoritative sales report.
+function renderTodayStats(orders) {
+  const el = document.getElementById("today-stats");
+  if (!el) return;
+
+  const todayStr = new Date().toDateString();
+  const todaysOrders = orders.filter(
+    (o) => o.status !== "rejected" && new Date(o.created_at).toDateString() === todayStr
+  );
+
+  if (todaysOrders.length === 0) {
+    el.innerHTML = "";
+    return;
+  }
+
+  const revenue = todaysOrders.reduce((sum, o) => sum + parseFloat(o.total_amount), 0);
+  el.innerHTML = `
+    <div class="flex items-center gap-5 bg-cream-alt rounded-xl px-4 py-3 mb-4">
+      <div>
+        <p class="text-xl font-extrabold text-ink leading-none">${todaysOrders.length}</p>
+        <p class="text-[11px] font-semibold text-muted uppercase tracking-wide mt-1">Orders today</p>
+      </div>
+      <div class="w-px h-8 bg-line"></div>
+      <div>
+        <p class="text-xl font-extrabold text-accent-deep leading-none">${escapeHtml(formatPrice(revenue))}</p>
+        <p class="text-[11px] font-semibold text-muted uppercase tracking-wide mt-1">Revenue today</p>
+      </div>
+    </div>
+  `;
+}
+
 function renderOrders(orders) {
   // null means "not fetched yet" — leave the "Loading orders..." placeholder
   // alone rather than flashing an incorrect "no orders" state.
   if (orders === null) return;
   checkForNewOrders(orders);
   ordersData = orders;
+  renderTodayStats(orders);
   const container = document.getElementById("orders-list");
   if (!container) return;
 
@@ -468,6 +543,7 @@ function renderDashboard() {
           <span id="orders-pending-badge" class="hidden text-xs font-bold text-white bg-accent rounded-full px-2.5 py-1"></span>
         </div>
       </div>
+      <div id="today-stats"></div>
       <div id="orders-list">
         <p class="text-sm text-muted py-2">Loading orders...</p>
       </div>
@@ -533,6 +609,24 @@ function attachEventListeners() {
 
   document.querySelectorAll(".btn-delete").forEach((el) => {
     el.addEventListener("click", (e) => handleDeleteItem(e.currentTarget.dataset.itemId));
+  });
+
+  document.querySelectorAll(".btn-edit").forEach((el) => {
+    el.addEventListener("click", (e) => {
+      editingItemId = Number(e.currentTarget.dataset.itemId);
+      renderDashboard();
+    });
+  });
+
+  document.querySelectorAll(".btn-cancel-edit").forEach((el) => {
+    el.addEventListener("click", () => {
+      editingItemId = null;
+      renderDashboard();
+    });
+  });
+
+  document.querySelectorAll(".btn-save-edit").forEach((el) => {
+    el.addEventListener("click", (e) => handleSaveEditItem(e.currentTarget.dataset.itemId));
   });
 }
 
@@ -607,6 +701,55 @@ async function handleToggleItem(itemId, checkbox) {
     checkbox.checked = previousValue;
     showError("Could not update item availability. Please try again.");
     console.error(err);
+  }
+}
+
+async function handleSaveEditItem(itemId) {
+  hideError();
+  const row = document.querySelector(`[data-edit-row="${itemId}"]`);
+  if (!row) return;
+
+  const name = row.querySelector(".edit-item-name").value.trim();
+  const category = row.querySelector(".edit-item-category").value.trim();
+  const priceInput = row.querySelector(".edit-item-price");
+
+  if (!name) {
+    showError("Item name can't be empty.");
+    return;
+  }
+
+  const body = { name, category };
+  if (priceInput) {
+    const priceValue = priceInput.value.trim();
+    body.price = priceValue === "" ? null : priceValue;
+  }
+
+  const saveBtn = row.querySelector(".btn-save-edit");
+  saveBtn.disabled = true;
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/me/menu-items/${itemId}/`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders(),
+      },
+      body: JSON.stringify(body),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      showError(data.detail || "Could not save changes. Please try again.");
+      saveBtn.disabled = false;
+      return;
+    }
+    const item = restaurantData.menu_items.find((i) => String(i.id) === String(itemId));
+    if (item) Object.assign(item, data);
+    editingItemId = null;
+    renderDashboard();
+  } catch (err) {
+    showError("Could not reach the server. Please try again.");
+    console.error(err);
+    saveBtn.disabled = false;
   }
 }
 
