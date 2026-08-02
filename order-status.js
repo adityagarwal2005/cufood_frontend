@@ -66,7 +66,7 @@ const STATUS_META = {
     label: "Ready for pickup",
     color: "text-accent-deep",
     icon: ICONS.check,
-    message: "Go collect it! Show your code + UID at the counter.",
+    message: "Go collect it! Show your code at the counter.",
   },
   completed: {
     label: "Completed",
@@ -206,7 +206,7 @@ function renderOrder(order) {
         </div>
         ${order.status === "placed" && order.payment_status !== "claimed" ? renderPaymentSection(order) : ""}
         <div class="pt-4 mt-2 border-t border-line text-xs text-muted">
-          ${escapeHtml(order.student_name)} · ${escapeHtml(order.student_uid)}
+          ${escapeHtml(order.student_name)}
         </div>
       </div>
     </div>

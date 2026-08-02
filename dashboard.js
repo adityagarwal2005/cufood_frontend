@@ -267,26 +267,19 @@ function renderOrderCard(order) {
     ? `<a href="${order.refund_upi_link}" class="inline-flex items-center gap-1.5 text-xs font-bold text-error bg-error-soft rounded-full px-3 py-1.5 mt-2 hover:opacity-80 transition-opacity duration-150">Send refund via UPI</a>`
     : "";
 
-  const photoThumb = order.student_photo
-    ? `<img src="${order.student_photo}" alt="${escapeHtml(order.student_name)}" class="w-12 h-12 rounded-full object-cover border border-line flex-shrink-0">`
-    : `<span class="w-12 h-12 rounded-full bg-cream-alt border border-line flex items-center justify-center text-muted flex-shrink-0"><span class="w-5 h-5">${ICONS.camera}</span></span>`;
-
   return `
     <div class="border border-line rounded-xl p-4 sm:p-5 mb-3 last:mb-0 bg-white" data-order-card>
       <div class="flex items-start justify-between gap-3 flex-wrap">
-        <div class="flex items-start gap-3 min-w-0">
-          ${photoThumb}
-          <div class="min-w-0">
-            <div class="flex items-center gap-2 flex-wrap mb-1">
-              <span class="text-sm font-extrabold text-ink">#${escapeHtml(order.order_code)}</span>
-              <span class="text-[11px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${meta.pillClass}">${meta.label}</span>
-            </div>
-            <p class="text-xs text-muted">${escapeHtml(order.student_name)} · ${escapeHtml(order.student_uid)} · ${timeAgo(order.created_at)}</p>
-            <p class="text-sm text-ink mt-2">${itemsSummary}</p>
-            <p class="text-sm font-bold text-accent-deep mt-1">${escapeHtml(formatPrice(order.total_amount))}</p>
-            ${etaText}
-            ${refundLinkHtml}
+        <div class="min-w-0">
+          <div class="flex items-center gap-2 flex-wrap mb-1">
+            <span class="text-sm font-extrabold text-ink">#${escapeHtml(order.order_code)}</span>
+            <span class="text-[11px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${meta.pillClass}">${meta.label}</span>
           </div>
+          <p class="text-xs text-muted">${escapeHtml(order.student_name)} · ${timeAgo(order.created_at)}</p>
+          <p class="text-sm text-ink mt-2">${itemsSummary}</p>
+          <p class="text-sm font-bold text-accent-deep mt-1">${escapeHtml(formatPrice(order.total_amount))}</p>
+          ${etaText}
+          ${refundLinkHtml}
         </div>
         ${renderOrderActions(order)}
       </div>
