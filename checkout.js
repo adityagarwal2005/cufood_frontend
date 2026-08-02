@@ -128,10 +128,16 @@ function renderCheckout(cart) {
           </div>
           <p class="text-xs text-muted">So the restaurant knows who to hand the order to at pickup.</p>
         </div>
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-muted" for="student-upi-id">Your UPI ID</label>
+          <input type="text" id="student-upi-id" placeholder="yourname@bank" required
+            class="rounded-xl border-2 border-line bg-white px-4 py-3 text-[15px] text-ink focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150">
+          <p class="text-xs text-muted">Only used to refund you directly if the restaurant can't take your order.</p>
+        </div>
         <button type="submit" id="pay-btn" class="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-accent to-accent-deep text-white font-bold text-base px-5 py-3.5 shadow-accent-glow hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 mt-1">
-          Place order — ${escapeHtml(formatPrice(total))}
+          Continue to pay — ${escapeHtml(formatPrice(total))}
         </button>
-        <p class="text-xs text-muted text-center leading-relaxed">No payment yet — the restaurant confirms they can make it first. You'll pay by UPI once they accept.</p>
+        <p class="text-xs text-muted text-center leading-relaxed">You'll pay the restaurant by UPI next. They start preparing as soon as your payment lands.</p>
       </form>
     </div>
   `;
@@ -221,7 +227,7 @@ function resetPlaceOrderButton() {
   const cart = getCart();
   if (!payBtn || !cart) return;
   payBtn.disabled = false;
-  payBtn.textContent = `Place order — ${formatPrice(getCartTotal(cart))}`;
+  payBtn.textContent = `Continue to pay — ${formatPrice(getCartTotal(cart))}`;
 }
 
 async function handleCheckoutSubmit(event) {
@@ -236,12 +242,17 @@ async function handleCheckoutSubmit(event) {
 
   const studentName = document.getElementById("student-name").value.trim();
   const studentUid = document.getElementById("student-uid").value.trim();
+  const studentUpiId = document.getElementById("student-upi-id").value.trim();
   if (!studentName || !studentUid) {
     showError("Please fill in your name and UID.");
     return;
   }
   if (!studentPhotoDataUrl) {
     showError("Please add a photo so the restaurant can identify you at pickup.");
+    return;
+  }
+  if (!studentUpiId || !studentUpiId.includes("@")) {
+    showError("Please enter a valid UPI ID (looks like yourname@bank).");
     return;
   }
 
@@ -264,6 +275,7 @@ async function handleCheckoutSubmit(event) {
         student_name: studentName,
         student_uid: studentUid,
         student_photo: studentPhotoDataUrl,
+        student_upi_id: studentUpiId,
         items,
       }),
     });

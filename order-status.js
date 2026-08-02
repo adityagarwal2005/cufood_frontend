@@ -51,24 +51,16 @@ function renderLookupForm(errorMessage) {
   });
 }
 
+// Payment now happens before the restaurant ever sees the order, so
+// "placed" and "rejected" each split into two messages depending on
+// payment_status — everything from "preparing" onward is only reachable
+// once payment_status is already "claimed", so those don't need to check it.
 const STATUS_META = {
-  placed: {
-    label: "Waiting for confirmation",
-    color: "text-accent-deep",
-    icon: ICONS.clock,
-    message: "The restaurant hasn't responded yet. This page updates automatically.",
-  },
   preparing: {
     label: "Preparing",
     color: "text-accent-deep",
     icon: ICONS.check,
     message: null,
-  },
-  rejected: {
-    label: "Rejected",
-    color: "text-error",
-    icon: ICONS.warning,
-    message: "The restaurant couldn't take this order. Nothing was charged.",
   },
   ready: {
     label: "Ready for pickup",
@@ -83,6 +75,42 @@ const STATUS_META = {
     message: "Picked up. Enjoy!",
   },
 };
+
+function getStatusMeta(order) {
+  if (order.status === "placed") {
+    if (order.payment_status !== "claimed") {
+      return {
+        label: "Pay to confirm your order",
+        color: "text-accent-deep",
+        icon: ICONS.clock,
+        message: "The restaurant starts as soon as your payment is in.",
+      };
+    }
+    return {
+      label: "Payment received",
+      color: "text-accent-deep",
+      icon: ICONS.clock,
+      message: "Waiting for the restaurant to accept. This page updates automatically.",
+    };
+  }
+  if (order.status === "rejected") {
+    if (order.payment_status === "claimed") {
+      return {
+        label: "Rejected — refund on the way",
+        color: "text-error",
+        icon: ICONS.warning,
+        message: "The restaurant couldn't take this order. They'll refund you via UPI shortly.",
+      };
+    }
+    return {
+      label: "Rejected",
+      color: "text-error",
+      icon: ICONS.warning,
+      message: "The restaurant couldn't take this order.",
+    };
+  }
+  return STATUS_META[order.status] || STATUS_META.preparing;
+}
 
 function formatEta(estimatedReadyAt) {
   if (!estimatedReadyAt) return null;
@@ -139,7 +167,7 @@ function renderPaymentSection(order) {
 }
 
 function renderOrder(order) {
-  const meta = STATUS_META[order.status] || STATUS_META.placed;
+  const meta = getStatusMeta(order);
   const eta = order.status === "preparing" ? formatEta(order.estimated_ready_at) : null;
 
   const itemsHtml = order.items
@@ -176,7 +204,7 @@ function renderOrder(order) {
             <span class="text-lg font-extrabold text-ink">${escapeHtml(formatPrice(order.total_amount))}</span>
           </div>
         </div>
-        ${["preparing", "ready"].includes(order.status) ? renderPaymentSection(order) : ""}
+        ${order.status === "placed" && order.payment_status !== "claimed" ? renderPaymentSection(order) : ""}
         <div class="pt-4 mt-2 border-t border-line text-xs text-muted">
           ${escapeHtml(order.student_name)} · ${escapeHtml(order.student_uid)}
         </div>

@@ -239,7 +239,7 @@ function renderOrderActions(order) {
     return `
       <div class="flex items-center gap-2 flex-shrink-0">
         <button type="button" class="order-reject-btn inline-flex items-center gap-1.5 text-sm font-semibold text-error bg-error-soft rounded-xl px-4 py-2 hover:opacity-80 transition-opacity duration-150" data-code="${escapeHtml(order.order_code)}">Reject</button>
-        <button type="button" class="order-accept-btn inline-flex items-center gap-1.5 text-sm font-bold text-white bg-gradient-to-br from-accent to-accent-deep rounded-xl px-4 py-2 shadow-accent-glow hover:shadow-lg transition-all duration-150" data-code="${escapeHtml(order.order_code)}">Accept</button>
+        <button type="button" class="order-accept-btn inline-flex items-center gap-1.5 text-sm font-bold text-white bg-gradient-to-br from-accent to-accent-deep rounded-xl px-4 py-2 shadow-accent-glow hover:shadow-lg transition-all duration-150" data-code="${escapeHtml(order.order_code)}">Accept & start</button>
       </div>
     `;
   }
@@ -264,8 +264,8 @@ function renderOrderCard(order) {
   const etaText = order.status === "preparing" && order.estimated_ready_at
     ? `<p class="text-xs text-muted mt-1">Ready by ${escapeHtml(new Date(order.estimated_ready_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }))}</p>`
     : "";
-  const paidClaimText = order.payment_status === "claimed"
-    ? `<p class="text-xs font-semibold text-accent-deep mt-1">Student says they've paid</p>`
+  const refundLinkHtml = order.status === "rejected" && order.refund_upi_link
+    ? `<a href="${order.refund_upi_link}" class="inline-flex items-center gap-1.5 text-xs font-bold text-error bg-error-soft rounded-full px-3 py-1.5 mt-2 hover:opacity-80 transition-opacity duration-150">Send refund via UPI</a>`
     : "";
 
   const photoThumb = order.student_photo
@@ -286,7 +286,7 @@ function renderOrderCard(order) {
             <p class="text-sm text-ink mt-2">${itemsSummary}</p>
             <p class="text-sm font-bold text-accent-deep mt-1">${escapeHtml(formatPrice(order.total_amount))}</p>
             ${etaText}
-            ${paidClaimText}
+            ${refundLinkHtml}
           </div>
         </div>
         ${renderOrderActions(order)}
@@ -351,7 +351,7 @@ function attachOrderListeners() {
   });
   document.querySelectorAll(".order-reject-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
-      if (!window.confirm("Reject this order? The student hasn't paid, so nothing needs refunding.")) return;
+      if (!window.confirm("Reject this order? The student has already paid — you'll need to refund them via UPI. A pre-filled refund link will appear on the order once you reject it.")) return;
       handleOrderAction(btn.dataset.code, "reject", btn);
     });
   });
@@ -446,7 +446,7 @@ function renderDashboard() {
     ${!restaurantData.upi_id ? `
       <div class="flex items-center gap-3 bg-error-soft border border-error/20 rounded-2xl px-5 py-4 mb-6">
         <span class="w-5 h-5 text-error flex-shrink-0">${ICONS.warning}</span>
-        <p class="text-sm font-semibold text-error">Set your UPI ID below so students can pay you once you accept their orders.</p>
+        <p class="text-sm font-semibold text-error">Set your UPI ID below so students can pay you right after they place an order.</p>
       </div>
     ` : ""}
 
@@ -462,7 +462,7 @@ function renderDashboard() {
         </div>
         <button type="submit" id="upi-save-btn" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-accent to-accent-deep text-white font-bold text-sm px-5 py-2.5 shadow-accent-glow hover:shadow-lg transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed">Save</button>
       </form>
-      <p class="text-xs text-muted mt-3">Shown to students right after you accept their order, so they can pay you directly.</p>
+      <p class="text-xs text-muted mt-3">Shown to students right after they place an order, so they can pay you directly before you ever see it.</p>
     </section>
 
     <section class="bg-white border border-line rounded-2xl shadow-sm p-6 sm:p-7 mb-8">
