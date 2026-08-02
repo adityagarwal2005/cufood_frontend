@@ -59,17 +59,16 @@ function checkForNewOrders(orders) {
   hasLoadedOrdersOnce = true;
 }
 
-function getCookie(name) {
-  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
-  return match ? decodeURIComponent(match[1]) : null;
-}
+const TOKEN_KEY = "cufood_owner_token";
 
-async function ensureCsrfCookie() {
-  await fetch(`${API_BASE_URL}/api/csrf/`, { credentials: "include" });
-}
-
-function csrfHeaders() {
-  return { "X-CSRFToken": getCookie("csrftoken") };
+// Bearer token, not session+CSRF cookie: the frontend (Vercel) and this
+// backend (Render) are different domains, so JS here can never read a
+// CSRF cookie the backend set — cookies are scoped to the domain that
+// set them, no matter what SameSite says. That silently 403'd every
+// mutation (toggle item, accept/reject order, etc.) while GETs still
+// worked. A token sent as a normal header has no such dependency.
+function authHeaders() {
+  return { Authorization: `Token ${localStorage.getItem(TOKEN_KEY)}` };
 }
 
 // Escapes for both HTML text-node and attribute-value contexts — the
@@ -372,8 +371,7 @@ async function handleOrderAction(orderCode, action, triggerBtn) {
   try {
     const response = await fetch(`${API_BASE_URL}/api/me/orders/${orderCode}/${action}/`, {
       method: "PATCH",
-      credentials: "include",
-      headers: csrfHeaders(),
+      headers: authHeaders(),
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
@@ -391,7 +389,7 @@ async function handleOrderAction(orderCode, action, triggerBtn) {
 
 async function loadOrders() {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/me/orders/`, { credentials: "include" });
+    const response = await fetch(`${API_BASE_URL}/api/me/orders/`, { headers: authHeaders() });
     if (!response.ok) throw new Error(`Request failed: ${response.status}`);
     const orders = await response.json();
     renderOrders(orders);
@@ -553,8 +551,7 @@ async function handleToggleOpen(event) {
   try {
     const response = await fetch(`${API_BASE_URL}/api/me/restaurant/toggle-open/`, {
       method: "PATCH",
-      credentials: "include",
-      headers: csrfHeaders(),
+      headers: authHeaders(),
     });
     if (!response.ok) throw new Error(`Request failed: ${response.status}`);
     const data = await response.json();
@@ -578,10 +575,9 @@ async function handleUpdateUpiId(event) {
   try {
     const response = await fetch(`${API_BASE_URL}/api/me/restaurant/upi-id/`, {
       method: "PATCH",
-      credentials: "include",
       headers: {
         "Content-Type": "application/json",
-        ...csrfHeaders(),
+        ...authHeaders(),
       },
       body: JSON.stringify({ upi_id: upiId }),
     });
@@ -608,8 +604,7 @@ async function handleToggleItem(itemId, checkbox) {
   try {
     const response = await fetch(`${API_BASE_URL}/api/me/menu-items/${itemId}/toggle-today/`, {
       method: "PATCH",
-      credentials: "include",
-      headers: csrfHeaders(),
+      headers: authHeaders(),
     });
     if (!response.ok) throw new Error(`Request failed: ${response.status}`);
     const data = await response.json();
@@ -631,8 +626,7 @@ async function handleDeleteItem(itemId) {
   try {
     const response = await fetch(`${API_BASE_URL}/api/me/menu-items/${itemId}/`, {
       method: "DELETE",
-      credentials: "include",
-      headers: csrfHeaders(),
+      headers: authHeaders(),
     });
     if (!response.ok) throw new Error(`Request failed: ${response.status}`);
     restaurantData.menu_items = restaurantData.menu_items.filter(
@@ -663,10 +657,9 @@ async function handleAddItem(event) {
   try {
     const response = await fetch(`${API_BASE_URL}/api/me/menu-items/`, {
       method: "POST",
-      credentials: "include",
       headers: {
         "Content-Type": "application/json",
-        ...csrfHeaders(),
+        ...authHeaders(),
       },
       body: JSON.stringify({ name, category, price }),
     });
@@ -690,23 +683,29 @@ async function handleLogout() {
   try {
     await fetch(`${API_BASE_URL}/api/logout/`, {
       method: "POST",
-      credentials: "include",
-      headers: csrfHeaders(),
+      headers: authHeaders(),
     });
   } catch (err) {
     console.error(err);
   } finally {
+    localStorage.removeItem(TOKEN_KEY);
     window.location.href = "restaurant-login.html";
   }
 }
 
 async function loadDashboard() {
+  if (!localStorage.getItem(TOKEN_KEY)) {
+    window.location.href = "restaurant-login.html";
+    return;
+  }
+
   try {
     const response = await fetch(`${API_BASE_URL}/api/me/restaurant/`, {
-      credentials: "include",
+      headers: authHeaders(),
     });
 
     if (response.status === 401 || response.status === 403) {
+      localStorage.removeItem(TOKEN_KEY);
       window.location.href = "restaurant-login.html";
       return;
     }
@@ -723,7 +722,6 @@ async function loadDashboard() {
     if (!response.ok) throw new Error(`Request failed: ${response.status}`);
 
     restaurantData = await response.json();
-    await ensureCsrfCookie();
     renderDashboard();
     loadOrders();
     startOrderPolling();

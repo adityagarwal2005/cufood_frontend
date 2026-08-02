@@ -1,5 +1,6 @@
 // Kept in sync with the API_BASE_URL constant in app.js.
 const API_BASE_URL = "https://cufood-backend.onrender.com";
+const TOKEN_KEY = "cufood_owner_token";
 
 const loginForm = document.getElementById("login-form");
 const loginError = document.getElementById("login-error");
@@ -19,15 +20,6 @@ passwordToggle.addEventListener("click", () => {
   passwordToggle.innerHTML = isHidden ? ICONS.eyeOff : ICONS.eye;
 });
 
-function getCookie(name) {
-  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
-  return match ? decodeURIComponent(match[1]) : null;
-}
-
-async function ensureCsrfCookie() {
-  await fetch(`${API_BASE_URL}/api/csrf/`, { credentials: "include" });
-}
-
 function showError(message) {
   loginError.textContent = message;
   loginError.classList.remove("hidden");
@@ -38,9 +30,11 @@ function hideError() {
 }
 
 async function checkAlreadyLoggedIn() {
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (!token) return;
   try {
     const response = await fetch(`${API_BASE_URL}/api/me/restaurant/`, {
-      credentials: "include",
+      headers: { Authorization: `Token ${token}` },
     });
     if (response.ok) {
       window.location.href = "dashboard.html";
@@ -59,23 +53,20 @@ loginForm.addEventListener("submit", async (event) => {
   const password = document.getElementById("password").value;
 
   try {
-    await ensureCsrfCookie();
     const response = await fetch(`${API_BASE_URL}/api/login/`, {
       method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": getCookie("csrftoken"),
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
     });
 
+    const data = await response.json().catch(() => ({}));
+
     if (response.ok) {
+      localStorage.setItem(TOKEN_KEY, data.token);
       window.location.href = "dashboard.html";
       return;
     }
 
-    const data = await response.json().catch(() => ({}));
     showError(data.detail || "Invalid username or password.");
   } catch (err) {
     showError("Could not reach the server. Is the backend running?");
