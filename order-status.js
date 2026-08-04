@@ -2,6 +2,9 @@ const API_BASE_URL = "https://cufood-backend.onrender.com";
 
 const pageContent = document.getElementById("page-content");
 let pollTimer = null;
+// Survives the periodic re-render triggered by polling (see loadOrder),
+// so opening the QR to scan doesn't get silently closed mid-scan.
+let qrVisible = false;
 
 function escapeHtml(text) {
   const div = document.createElement("div");
@@ -131,6 +134,18 @@ function buildUpiLink(order) {
   return `upi://pay?${params.toString()}`;
 }
 
+// Some UPI apps show extra caution on deep-link payments (the "Open UPI
+// app to pay" button above) to a payee the student hasn't paid before,
+// and suggest scanning a QR code instead — but give no way to actually
+// get one. This renders the identical payment request as a real,
+// scannable QR (via the vendored qrcode-lib.js) so that fallback exists.
+function buildQrSvg(uri) {
+  const qr = qrcode(0, "M");
+  qr.addData(uri);
+  qr.make();
+  return qr.createSvgTag(4, 8);
+}
+
 function renderPaymentSection(order) {
   if (order.payment_status === "claimed") {
     return `
@@ -160,6 +175,11 @@ function renderPaymentSection(order) {
         <p class="text-sm font-bold text-accent-deep mt-1">${escapeHtml(formatPrice(order.total_amount))}</p>
       </div>
       <a href="${buildUpiLink(order)}" class="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-accent to-accent-deep text-white font-bold text-base px-5 py-3.5 shadow-accent-glow hover:shadow-lg transition-all duration-150 mb-2.5">Open UPI app to pay</a>
+      <button type="button" id="toggle-qr-btn" class="w-full text-center text-xs font-bold text-accent-deep hover:underline mb-3">${qrVisible ? "Hide QR code" : "If that shows a warning, scan a QR code instead"}</button>
+      <div id="qr-wrapper" class="${qrVisible ? "flex" : "hidden"} flex-col items-center gap-2 mb-3" style="${qrVisible ? "display:flex" : ""}">
+        <div class="w-40 h-40 [&_svg]:w-full [&_svg]:h-full">${buildQrSvg(buildUpiLink(order))}</div>
+        <p class="text-xs text-muted text-center">Scan with any UPI app</p>
+      </div>
       <button type="button" id="ive-paid-btn" class="w-full rounded-xl border-2 border-line bg-white text-ink font-bold text-sm px-5 py-3 hover:border-accent-soft transition-all duration-150">I've paid</button>
       <p class="text-xs text-muted text-center mt-2">Only tap "I've paid" after the money has actually left your account.</p>
     </div>
@@ -216,6 +236,21 @@ function renderOrder(order) {
   const ivePaidBtn = document.getElementById("ive-paid-btn");
   if (ivePaidBtn) {
     ivePaidBtn.addEventListener("click", () => claimPayment(order.order_code));
+  }
+
+  const toggleQrBtn = document.getElementById("toggle-qr-btn");
+  const qrWrapper = document.getElementById("qr-wrapper");
+  if (toggleQrBtn && qrWrapper) {
+    toggleQrBtn.addEventListener("click", () => {
+      // qrVisible is a module-level flag, not just local DOM state — the
+      // page polls every 8s while an order is active and re-renders from
+      // scratch (see loadOrder), which would otherwise silently close the
+      // QR mid-scan.
+      qrVisible = !qrVisible;
+      qrWrapper.classList.toggle("hidden", !qrVisible);
+      qrWrapper.style.display = qrVisible ? "flex" : "";
+      toggleQrBtn.textContent = qrVisible ? "Hide QR code" : "If that shows a warning, scan a QR code instead";
+    });
   }
 }
 
