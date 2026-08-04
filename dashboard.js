@@ -71,15 +71,6 @@ function authHeaders() {
   return { Authorization: `Token ${localStorage.getItem(TOKEN_KEY)}` };
 }
 
-// Renders a UPI payment request as a scannable QR (via the vendored
-// qrcode-lib.js), for the refund link — see the note above it.
-function buildQrSvg(uri) {
-  const qr = qrcode(0, "M");
-  qr.addData(uri);
-  qr.make();
-  return qr.createSvgTag(4, 4);
-}
-
 // Escapes for both HTML text-node and attribute-value contexts — the
 // div.textContent/innerHTML round-trip alone only escapes &, <, > and
 // leaves quotes untouched, which is unsafe when the result is later
@@ -312,15 +303,16 @@ function renderOrderCard(order) {
   const etaText = order.status === "preparing" && order.estimated_ready_at
     ? `<p class="text-xs text-muted mt-1">Ready by ${escapeHtml(new Date(order.estimated_ready_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }))}</p>`
     : "";
-  // A small always-visible QR (rather than a per-card toggle, which would
-  // need its own listener wiring for every order in the list) — some UPI
-  // apps show extra caution on deep-link payments and suggest scanning a
-  // QR instead, so this gives that a working fallback right here too.
-  const refundLinkHtml = order.status === "rejected" && order.refund_upi_link
+  // No UPI deep-link parameter exists for "pay by mobile number" (the
+  // spec only supports payee VPA, pa=), so unlike restaurant_upi_id this
+  // can't be a tap-to-pay link or QR — just the number, for the owner to
+  // enter manually via their UPI app's "Pay via Mobile Number" option.
+  const refundLinkHtml = order.status === "rejected" && order.student_phone_number
     ? `
-      <div class="flex items-center gap-3 mt-2">
-        <a href="${order.refund_upi_link}" class="inline-flex items-center gap-1.5 text-xs font-bold text-error bg-error-soft rounded-full px-3 py-1.5 hover:opacity-80 transition-opacity duration-150">Send refund via UPI</a>
-        <div class="w-12 h-12 flex-shrink-0 [&_svg]:w-full [&_svg]:h-full" title="Scan to send the refund">${buildQrSvg(order.refund_upi_link)}</div>
+      <div class="mt-2 bg-error-soft rounded-xl px-3 py-2">
+        <p class="text-xs font-semibold text-error">Refund this number via UPI:</p>
+        <a href="tel:${escapeHtml(order.student_phone_number)}" class="text-sm font-bold text-error underline">${escapeHtml(order.student_phone_number)}</a>
+        <p class="text-[11px] text-error/80 mt-0.5">Use "Pay via Mobile Number" in your UPI app.</p>
       </div>
     `
     : "";

@@ -93,8 +93,8 @@ function renderCheckout(cart) {
             class="rounded-xl border-2 border-line bg-white px-4 py-3 text-[15px] text-ink focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150">
         </div>
         <div class="flex flex-col gap-1.5">
-          <label class="text-xs font-semibold text-muted" for="student-upi-id">Your UPI ID</label>
-          <input type="text" id="student-upi-id" placeholder="yourname@bank" required
+          <label class="text-xs font-semibold text-muted" for="student-phone">Your phone number</label>
+          <input type="tel" id="student-phone" placeholder="98765 43210" required
             class="rounded-xl border-2 border-line bg-white px-4 py-3 text-[15px] text-ink focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150">
           <p class="text-xs text-muted">Only used to refund you directly if the restaurant can't take your order.</p>
         </div>
@@ -181,13 +181,13 @@ async function handleCheckoutSubmit(event) {
   }
 
   const studentName = document.getElementById("student-name").value.trim();
-  const studentUpiId = document.getElementById("student-upi-id").value.trim();
+  const studentPhone = document.getElementById("student-phone").value.trim();
   if (!studentName) {
     showError("Please fill in your name.");
     return;
   }
-  if (!studentUpiId || !studentUpiId.includes("@")) {
-    showError("Please enter a valid UPI ID (looks like yourname@bank).");
+  if (studentPhone.replace(/\D/g, "").length < 10) {
+    showError("Please enter a valid phone number.");
     return;
   }
 
@@ -208,7 +208,7 @@ async function handleCheckoutSubmit(event) {
       body: JSON.stringify({
         restaurant_slug: cart.restaurantSlug,
         student_name: studentName,
-        student_upi_id: studentUpiId,
+        student_phone_number: studentPhone,
         items,
       }),
     });
