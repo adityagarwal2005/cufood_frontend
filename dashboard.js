@@ -428,7 +428,7 @@ function attachOrderListeners() {
   });
   document.querySelectorAll(".order-reject-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
-      if (!window.confirm("Reject this order? The student has already paid — you'll need to refund them via UPI. A pre-filled refund link will appear on the order once you reject it.")) return;
+      if (!window.confirm("Reject this order? The student has already paid — you'll need to refund them via UPI. Their phone number will appear on the order once you reject it.")) return;
       handleOrderAction(btn.dataset.code, "reject", btn);
     });
   });

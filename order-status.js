@@ -146,18 +146,10 @@ function buildQrSvg(uri) {
   return qr.createSvgTag(4, 8);
 }
 
+// Only ever called for status "placed" with payment_status !== "claimed"
+// (see the call site in renderOrder) — the payment prompt is meaningless
+// once payment's already been claimed.
 function renderPaymentSection(order) {
-  if (order.payment_status === "claimed") {
-    return `
-      <div class="border-t border-line pt-4 mt-4">
-        <div class="flex items-center gap-3 bg-accent-soft rounded-xl px-4 py-3.5">
-          <span class="w-5 h-5 text-accent-deep flex-shrink-0">${ICONS.check}</span>
-          <p class="text-sm font-semibold text-accent-deep">Thanks — noted that you've paid.</p>
-        </div>
-      </div>
-    `;
-  }
-
   if (!order.restaurant_upi_id) {
     return `
       <div class="border-t border-line pt-4 mt-4">

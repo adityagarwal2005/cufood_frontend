@@ -63,14 +63,6 @@ function removeFromCart(menuItemId, sizeLabel) {
   return cart;
 }
 
-function removeCartLine(menuItemId, sizeLabel) {
-  const cart = getCart();
-  if (!cart) return null;
-  delete cart.items[cartLineKey(menuItemId, sizeLabel)];
-  saveCart(cart);
-  return cart;
-}
-
 function getCartLineQuantity(menuItemId, sizeLabel) {
   const cart = getCart();
   if (!cart) return 0;
