@@ -85,7 +85,8 @@ function renderLocations(locations) {
 
     const card = document.createElement("a");
     card.className =
-      `group relative flex flex-col overflow-hidden ${hasPhoto ? "bg-stone-800" : `bg-gradient-to-br ${theme}`} rounded-3xl shadow-lg ring-1 ring-black/5 hover:shadow-2xl hover:-translate-y-1.5 active:translate-y-0 transition-all duration-300 p-5 sm:p-6 h-40 sm:h-44 text-inherit no-underline`;
+      `group relative flex flex-col overflow-hidden ${hasPhoto ? "bg-stone-800" : `bg-gradient-to-br ${theme}`} rounded-3xl shadow-lg ring-1 ring-black/5 hover:shadow-2xl hover:-translate-y-1.5 active:translate-y-0 transition-all duration-300 p-5 sm:p-6 h-40 sm:h-44 text-inherit no-underline opacity-0 animate-fade-in-up`;
+    card.style.animationDelay = `${index * 60}ms`;
     card.href = `index.html?location=${encodeURIComponent(location.slug)}`;
 
     const photoLayer = hasPhoto

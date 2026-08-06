@@ -33,6 +33,40 @@ function formatPrice(price) {
   return Number.isInteger(value) ? `₹${value}` : `₹${value.toFixed(2)}`;
 }
 
+function formatSlotTime(date) {
+  return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
+
+// Mirrors the backend's MIN_SCHEDULE_LEAD_MINUTES / MAX_SCHEDULE_LEAD_HOURS
+// (see CreateOrderView.parse_scheduled_for) — kept in sync manually since
+// this is a plain static site with no shared config between frontend/backend.
+const MIN_SCHEDULE_LEAD_MINUTES = 10;
+const MAX_SCHEDULE_LEAD_HOURS = 4;
+const SLOT_INTERVAL_MINUTES = 15;
+
+// Generates pickup slots every 15 min, starting from the next slot that's
+// safely past the minimum lead time, through the scheduling window.
+function generateTimeSlots() {
+  const now = new Date();
+  const earliest = new Date(now.getTime() + MIN_SCHEDULE_LEAD_MINUTES * 60000);
+  const latest = new Date(now.getTime() + MAX_SCHEDULE_LEAD_HOURS * 3600000);
+
+  const first = new Date(earliest);
+  const remainder = first.getMinutes() % SLOT_INTERVAL_MINUTES;
+  if (remainder !== 0) first.setMinutes(first.getMinutes() + (SLOT_INTERVAL_MINUTES - remainder));
+  first.setSeconds(0, 0);
+
+  const slots = [];
+  for (let t = new Date(first); t <= latest; t.setMinutes(t.getMinutes() + SLOT_INTERVAL_MINUTES)) {
+    slots.push(new Date(t));
+  }
+  return slots;
+}
+
+// null = "as soon as possible" (the default). Set to a Date when the
+// student picks a slot; survives re-render since it's module-level.
+let selectedSlot = null;
+
 function emptyCartView() {
   pageContent.innerHTML = `
     <div class="text-center bg-white border border-line rounded-2xl shadow-sm px-7 py-14">
@@ -84,6 +118,21 @@ function renderCheckout(cart) {
       </div>
     </div>
 
+    <div class="bg-white border border-line rounded-2xl shadow-sm p-5 sm:p-6 mb-6">
+      <h2 class="text-xs font-bold uppercase tracking-widest text-muted mb-4">When?</h2>
+      <div class="grid grid-cols-2 gap-2.5 mb-1">
+        <button type="button" id="when-asap-btn" class="rounded-xl border-2 px-4 py-3 text-sm font-bold transition-all duration-150 ${selectedSlot === null ? "border-accent bg-accent-soft text-accent-deep" : "border-line bg-white text-muted hover:border-accent-soft"}">
+          Now
+          <span class="block text-xs font-medium ${selectedSlot === null ? "text-accent-deep/70" : "text-muted"} mt-0.5">Pay now, cooked right away</span>
+        </button>
+        <button type="button" id="when-schedule-btn" class="rounded-xl border-2 px-4 py-3 text-sm font-bold transition-all duration-150 ${selectedSlot !== null ? "border-accent bg-accent-soft text-accent-deep" : "border-line bg-white text-muted hover:border-accent-soft"}">
+          Schedule
+          <span class="block text-xs font-medium ${selectedSlot !== null ? "text-accent-deep/70" : "text-muted"} mt-0.5">${selectedSlot ? `Pickup ~${escapeHtml(formatSlotTime(selectedSlot))}` : "Pick a pickup time"}</span>
+        </button>
+      </div>
+      <div id="slot-picker" class="${selectedSlot !== null ? "flex" : "hidden"} flex-wrap gap-2 pt-4 mt-3 border-t border-line"></div>
+    </div>
+
     <div class="bg-cream-alt border border-line rounded-2xl shadow-sm p-5 sm:p-6 mb-6">
       <h2 class="text-xs font-bold uppercase tracking-widest text-muted mb-4">Your details</h2>
       <form id="checkout-form" class="flex flex-col gap-4">
@@ -101,15 +150,59 @@ function renderCheckout(cart) {
         <button type="submit" id="pay-btn" class="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-accent to-accent-deep text-white font-bold text-base px-5 py-3.5 shadow-accent-glow hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 mt-1">
           Continue to pay — ${escapeHtml(formatPrice(total))}
         </button>
-        <p class="text-xs text-muted text-center leading-relaxed">You'll pay the restaurant by UPI next. They start preparing as soon as your payment lands.</p>
+        <p class="text-xs text-muted text-center leading-relaxed">${selectedSlot ? `You'll pay the restaurant by UPI next. They'll have your order ready around ${escapeHtml(formatSlotTime(selectedSlot))}.` : "You'll pay the restaurant by UPI next. They start preparing as soon as your payment lands."}</p>
       </form>
     </div>
   `;
 
+  renderSlotPicker();
   attachCheckoutListeners();
 }
 
+function renderSlotPicker() {
+  const wrapper = document.getElementById("slot-picker");
+  if (!wrapper) return;
+  const slots = generateTimeSlots();
+  if (slots.length === 0) {
+    wrapper.innerHTML = `<p class="text-xs text-muted">No slots left in the next ${MAX_SCHEDULE_LEAD_HOURS} hours — try "Now" instead.</p>`;
+    return;
+  }
+  wrapper.innerHTML = slots
+    .map((slot) => {
+      const isSelected = selectedSlot && slot.getTime() === selectedSlot.getTime();
+      return `
+        <button type="button" class="slot-btn rounded-full border-2 px-4 py-2 text-sm font-bold transition-all duration-150 ${isSelected ? "border-accent bg-accent text-white" : "border-line bg-white text-ink hover:border-accent-soft"}" data-time="${slot.getTime()}">
+          ${escapeHtml(formatSlotTime(slot))}
+        </button>
+      `;
+    })
+    .join("");
+}
+
 function attachCheckoutListeners() {
+  const asapBtn = document.getElementById("when-asap-btn");
+  if (asapBtn) {
+    asapBtn.addEventListener("click", () => {
+      selectedSlot = null;
+      renderCheckout(getCart());
+    });
+  }
+
+  const scheduleBtn = document.getElementById("when-schedule-btn");
+  if (scheduleBtn) {
+    scheduleBtn.addEventListener("click", () => {
+      if (selectedSlot === null) selectedSlot = generateTimeSlots()[0] || null;
+      renderCheckout(getCart());
+    });
+  }
+
+  document.querySelectorAll(".slot-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      selectedSlot = new Date(Number(btn.dataset.time));
+      renderCheckout(getCart());
+    });
+  });
+
   document.querySelectorAll(".cart-line-add").forEach((btn) => {
     btn.addEventListener("click", () => {
       const cart = getCart();
@@ -209,6 +302,7 @@ async function handleCheckoutSubmit(event) {
         restaurant_slug: cart.restaurantSlug,
         student_name: studentName,
         student_phone_number: studentPhone,
+        scheduled_for: selectedSlot ? selectedSlot.toISOString() : null,
         items,
       }),
     });

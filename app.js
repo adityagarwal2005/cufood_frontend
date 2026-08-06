@@ -79,11 +79,12 @@ function renderRestaurants(restaurants) {
     return;
   }
 
-  restaurants.forEach((restaurant) => {
+  restaurants.forEach((restaurant, index) => {
     const card = document.createElement("a");
     card.href = restaurantUrl(restaurant.slug);
     card.className =
-      "group relative block aspect-[16/10] sm:aspect-[2/1] rounded-3xl overflow-hidden shadow-md ring-1 ring-black/5 hover:shadow-2xl hover:-translate-y-1.5 active:translate-y-0 transition-all duration-300 bg-stone-200";
+      "group relative block aspect-[16/10] sm:aspect-[2/1] rounded-3xl overflow-hidden shadow-md ring-1 ring-black/5 hover:shadow-2xl hover:-translate-y-1.5 active:translate-y-0 transition-all duration-300 bg-stone-200 opacity-0 animate-fade-in-up";
+    card.style.animationDelay = `${index * 50}ms`;
 
     const photo = document.createElement("div");
     if (restaurant.logo) {

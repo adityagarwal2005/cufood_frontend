@@ -344,6 +344,13 @@ function renderOrderCard(order) {
   const etaText = order.status === "preparing" && order.estimated_ready_at
     ? `<p class="text-xs text-muted mt-1">Ready by ${escapeHtml(new Date(order.estimated_ready_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }))}</p>`
     : "";
+  // Only meaningful before the order's actually being prepped — once
+  // it's preparing/ready, etaText above (driven by estimated_ready_at,
+  // which mark_preparing() sets from scheduled_for when relevant) is the
+  // more current signal, so this badge would be redundant there.
+  const scheduledBadge = order.scheduled_for && ["placed", "rejected"].includes(order.status)
+    ? `<span class="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-accent-soft text-accent-deep"><span class="w-3 h-3">${ICONS.clock}</span>${escapeHtml(new Date(order.scheduled_for).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }))}</span>`
+    : "";
   // No UPI deep-link parameter exists for "pay by mobile number" (the
   // spec only supports payee VPA, pa=), so unlike restaurant_upi_id this
   // can't be a tap-to-pay link or QR — just the number, for the owner to
@@ -370,6 +377,7 @@ function renderOrderCard(order) {
           <div class="flex items-center gap-2 flex-wrap mb-1">
             <span class="text-sm font-extrabold text-ink">#${escapeHtml(order.order_code)}</span>
             <span class="text-[11px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${meta.pillClass}">${meta.label}</span>
+            ${scheduledBadge}
           </div>
           <p class="text-xs text-muted">${escapeHtml(order.student_name)} · ${timeAgo(order.created_at)}</p>
           <p class="text-sm text-ink mt-2">${itemsSummary}</p>
