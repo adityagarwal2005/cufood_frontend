@@ -1,7 +1,6 @@
-// Shared Tailwind CDN config, loaded on every page after the CDN <script>.
-// Extends Tailwind's defaults with CUFood's existing warm palette as named
-// colors, plus one custom shadow for the accent glow used on primary actions.
-tailwind.config = {
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: ["./*.html", "./*.js"],
   theme: {
     extend: {
       colors: {
@@ -24,4 +23,5 @@ tailwind.config = {
       },
     },
   },
+  plugins: [],
 };
