@@ -88,6 +88,47 @@ function formatPrice(price) {
   return Number.isInteger(value) ? `₹${value}` : `₹${value.toFixed(2)}`;
 }
 
+// Falls back to a hidden textarea + execCommand for browsers/contexts where
+// navigator.clipboard isn't available.
+async function copyToClipboard(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (err) {
+      // fall through to the execCommand fallback below
+    }
+  }
+  try {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    document.execCommand("copy");
+    document.body.removeChild(textarea);
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+// Delegated once on the document so it keeps working across renderDashboard()
+// / renderOrders() re-renders without needing to be re-bound to new .copy-btn
+// elements every time.
+document.addEventListener("click", async (event) => {
+  const btn = event.target.closest(".copy-btn");
+  if (!btn) return;
+  const ok = await copyToClipboard(btn.dataset.copyValue);
+  const original = btn.innerHTML;
+  btn.innerHTML = `<span class="w-full h-full pointer-events-none">${ICONS.check}</span>`;
+  setTimeout(() => {
+    btn.innerHTML = original;
+  }, 1500);
+});
+
 // Items with price_half/price_full set (e.g. rice dishes sold by portion)
 // take priority over the plain price field, which is null in that case.
 function renderItemPrice(item) {
@@ -311,7 +352,12 @@ function renderOrderCard(order) {
     ? `
       <div class="mt-2 bg-error-soft rounded-xl px-3 py-2">
         <p class="text-xs font-semibold text-error">Refund this number via UPI:</p>
-        <a href="tel:${escapeHtml(order.student_phone_number)}" class="text-sm font-bold text-error underline">${escapeHtml(order.student_phone_number)}</a>
+        <div class="flex items-center gap-1.5">
+          <a href="tel:${escapeHtml(order.student_phone_number)}" class="text-sm font-bold text-error underline">${escapeHtml(order.student_phone_number)}</a>
+          <button type="button" class="copy-btn flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-lg text-error hover:bg-white/60 transition-colors duration-150" data-copy-value="${escapeHtml(order.student_phone_number)}" aria-label="Copy phone number">
+            <span class="w-3.5 h-3.5 pointer-events-none">${ICONS.copy}</span>
+          </button>
+        </div>
         <p class="text-[11px] text-error/80 mt-0.5">Use "Pay via Mobile Number" in your UPI app.</p>
       </div>
     `
@@ -533,8 +579,15 @@ function renderDashboard() {
       <form id="upi-form" class="flex flex-wrap gap-3.5 items-end">
         <div class="flex flex-col gap-1.5 flex-1 min-w-[200px]">
           <label class="text-xs font-semibold text-muted" for="upi-id-input">Your UPI ID</label>
-          <input type="text" id="upi-id-input" placeholder="yourname@bank" value="${escapeHtml(restaurantData.upi_id || "")}"
-            class="rounded-xl border-2 border-line bg-white px-3.5 py-2.5 text-sm text-ink focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150">
+          <div class="flex items-center gap-2">
+            <input type="text" id="upi-id-input" placeholder="yourname@bank" value="${escapeHtml(restaurantData.upi_id || "")}"
+              class="flex-1 rounded-xl border-2 border-line bg-white px-3.5 py-2.5 text-sm text-ink focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150">
+            ${restaurantData.upi_id ? `
+              <button type="button" class="copy-btn flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-xl border-2 border-line text-muted hover:text-accent-deep hover:border-accent-soft transition-colors duration-150" data-copy-value="${escapeHtml(restaurantData.upi_id)}" aria-label="Copy UPI ID">
+                <span class="w-4 h-4 pointer-events-none">${ICONS.copy}</span>
+              </button>
+            ` : ""}
+          </div>
         </div>
         <button type="submit" id="upi-save-btn" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-accent to-accent-deep text-white font-bold text-sm px-5 py-2.5 shadow-accent-glow hover:shadow-lg transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed">Save</button>
       </form>

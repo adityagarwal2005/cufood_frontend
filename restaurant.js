@@ -105,12 +105,12 @@ function renderVariantControl(itemId, sizeLabel, price) {
     `;
   }
   return `
-    <div class="inline-flex items-center gap-2.5 bg-accent text-white rounded-full pl-1 pr-1 py-1 whitespace-nowrap">
-      <button type="button" class="cart-remove-btn w-6 h-6 flex-shrink-0 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors duration-150">
+    <div class="inline-flex items-center gap-1 bg-accent text-white rounded-full pl-1 pr-1 py-1 whitespace-nowrap">
+      <button type="button" class="cart-remove-btn w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors duration-150">
         <span class="w-3 h-3">${ICONS.minus}</span>
       </button>
       <span class="text-xs font-bold min-w-[1rem] text-center">${sizePrefix}${qty}</span>
-      <button type="button" class="cart-add-btn w-6 h-6 flex-shrink-0 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors duration-150">
+      <button type="button" class="cart-add-btn w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors duration-150">
         <span class="w-3 h-3">${ICONS.plus}</span>
       </button>
     </div>
@@ -419,6 +419,20 @@ function initCartInteractivity() {
 
     wrapper.innerHTML = renderVariantControl(itemId, sizeLabel, unitPrice);
     updateCartBar();
+
+    // The cart bar is fixed to the bottom of the screen and only appears once
+    // something's in the cart — if the control the student just tapped ends up
+    // sitting underneath it (common on short menus/near the top of the page),
+    // their next tap on the same +/- would silently hit the cart bar instead.
+    // Nudge that control back into clear view so it stays reachable.
+    const cartBar = cartBarContainer.querySelector("a");
+    if (cartBar) {
+      const barRect = cartBar.getBoundingClientRect();
+      const wrapperRect = wrapper.getBoundingClientRect();
+      if (wrapperRect.bottom > barRect.top) {
+        wrapper.scrollIntoView({ block: "center", behavior: "smooth" });
+      }
+    }
   });
 }
 

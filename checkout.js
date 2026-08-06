@@ -51,12 +51,12 @@ function renderCartLine(key, line) {
         <p class="text-xs text-muted">${escapeHtml(formatPrice(line.unitPrice))} each</p>
       </div>
       <div class="flex items-center gap-3 flex-shrink-0">
-        <div class="inline-flex items-center gap-2.5 bg-cream-alt rounded-full pl-1 pr-1 py-1">
-          <button type="button" class="cart-line-remove w-7 h-7 flex items-center justify-center rounded-full hover:bg-white transition-colors duration-150" data-key="${escapeHtml(key)}">
+        <div class="inline-flex items-center gap-1 bg-cream-alt rounded-full pl-1 pr-1 py-1">
+          <button type="button" class="cart-line-remove w-9 h-9 flex items-center justify-center rounded-full hover:bg-white transition-colors duration-150" data-key="${escapeHtml(key)}">
             <span class="w-3.5 h-3.5 text-ink">${ICONS.minus}</span>
           </button>
           <span class="text-sm font-bold min-w-[1rem] text-center">${line.quantity}</span>
-          <button type="button" class="cart-line-add w-7 h-7 flex items-center justify-center rounded-full hover:bg-white transition-colors duration-150" data-key="${escapeHtml(key)}">
+          <button type="button" class="cart-line-add w-9 h-9 flex items-center justify-center rounded-full hover:bg-white transition-colors duration-150" data-key="${escapeHtml(key)}">
             <span class="w-3.5 h-3.5 text-ink">${ICONS.plus}</span>
           </button>
         </div>

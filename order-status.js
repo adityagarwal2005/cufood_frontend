@@ -5,11 +5,59 @@ let pollTimer = null;
 // Survives the periodic re-render triggered by polling (see loadOrder),
 // so opening the QR to scan doesn't get silently closed mid-scan.
 let qrVisible = false;
+// Set once the student has actually engaged with a payment method (opened
+// the UPI link or revealed the QR) — until then "I've paid" stays disabled,
+// so it can't be tapped as a reflex without ever attempting to pay. Not a
+// real verification (nothing client-side can be, without a payment
+// gateway), just friction against the most casual false claims. Survives
+// the 8s poll re-render like qrVisible does, for the same reason.
+let paymentAttempted = false;
 
 function escapeHtml(text) {
   const div = document.createElement("div");
   div.textContent = text;
   return div.innerHTML.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+// Falls back to a hidden textarea + execCommand for browsers/contexts where
+// navigator.clipboard isn't available (e.g. some in-app UPI/WhatsApp webviews).
+async function copyToClipboard(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (err) {
+      // fall through to the execCommand fallback below
+    }
+  }
+  try {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    document.execCommand("copy");
+    document.body.removeChild(textarea);
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+function wireCopyButton(btn, getText) {
+  if (!btn) return;
+  btn.addEventListener("click", async () => {
+    const ok = await copyToClipboard(getText());
+    const original = btn.innerHTML;
+    btn.innerHTML = `<span class="w-4 h-4 pointer-events-none">${ICONS.check}</span>`;
+    btn.classList.toggle("text-accent-deep", ok);
+    setTimeout(() => {
+      btn.innerHTML = original;
+      btn.classList.remove("text-accent-deep");
+    }, 1500);
+  });
 }
 
 function formatPrice(price) {
@@ -163,17 +211,22 @@ function renderPaymentSection(order) {
       <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">Pay to confirm your order</p>
       <div class="bg-cream-alt rounded-xl p-4 mb-3">
         <p class="text-xs text-muted mb-1">Pay via UPI to</p>
-        <p class="text-base font-extrabold text-ink break-all">${escapeHtml(order.restaurant_upi_id)}</p>
+        <div class="flex items-center gap-2">
+          <p class="text-base font-extrabold text-ink break-all">${escapeHtml(order.restaurant_upi_id)}</p>
+          <button type="button" id="copy-upi-btn" data-upi-id="${escapeHtml(order.restaurant_upi_id)}" class="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-lg text-muted hover:text-accent-deep hover:bg-white transition-colors duration-150" aria-label="Copy UPI ID">
+            <span class="w-4 h-4 pointer-events-none">${ICONS.copy}</span>
+          </button>
+        </div>
         <p class="text-sm font-bold text-accent-deep mt-1">${escapeHtml(formatPrice(order.total_amount))}</p>
       </div>
-      <a href="${buildUpiLink(order)}" class="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-accent to-accent-deep text-white font-bold text-base px-5 py-3.5 shadow-accent-glow hover:shadow-lg transition-all duration-150 mb-2.5">Open UPI app to pay</a>
+      <a href="${buildUpiLink(order)}" id="open-upi-link" class="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-accent to-accent-deep text-white font-bold text-base px-5 py-3.5 shadow-accent-glow hover:shadow-lg transition-all duration-150 mb-2.5">Open UPI app to pay</a>
       <button type="button" id="toggle-qr-btn" class="w-full text-center text-xs font-bold text-accent-deep hover:underline mb-3">${qrVisible ? "Hide QR code" : "If that shows a warning, scan a QR code instead"}</button>
       <div id="qr-wrapper" class="${qrVisible ? "flex" : "hidden"} flex-col items-center gap-2 mb-3" style="${qrVisible ? "display:flex" : ""}">
         <div class="w-40 h-40 [&_svg]:w-full [&_svg]:h-full">${buildQrSvg(buildUpiLink(order))}</div>
         <p class="text-xs text-muted text-center">Scan with any UPI app</p>
       </div>
-      <button type="button" id="ive-paid-btn" class="w-full rounded-xl border-2 border-line bg-white text-ink font-bold text-sm px-5 py-3 hover:border-accent-soft transition-all duration-150">I've paid</button>
-      <p class="text-xs text-muted text-center mt-2">Only tap "I've paid" after the money has actually left your account.</p>
+      <button type="button" id="ive-paid-btn" ${paymentAttempted ? "" : "disabled"} class="w-full rounded-xl border-2 border-line bg-white text-ink font-bold text-sm px-5 py-3 hover:border-accent-soft transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-line">I've paid</button>
+      <p id="ive-paid-hint" class="text-xs text-muted text-center mt-2">${paymentAttempted ? "Only confirm after the money has actually left your account." : "Open the UPI app or scan the QR above first — this unlocks once you have."}</p>
     </div>
   `;
 }
@@ -227,8 +280,32 @@ function renderOrder(order) {
 
   const ivePaidBtn = document.getElementById("ive-paid-btn");
   if (ivePaidBtn) {
-    ivePaidBtn.addEventListener("click", () => claimPayment(order.order_code));
+    ivePaidBtn.addEventListener("click", () => {
+      if (
+        !window.confirm(
+          `Confirm you've completed the ${formatPrice(order.total_amount)} payment to ${order.restaurant_name}. Marking this falsely may get your order rejected.`
+        )
+      ) {
+        return;
+      }
+      claimPayment(order.order_code);
+    });
   }
+
+  const ivePaidHint = document.getElementById("ive-paid-hint");
+  function unlockIvePaid() {
+    paymentAttempted = true;
+    if (ivePaidBtn) ivePaidBtn.disabled = false;
+    if (ivePaidHint) ivePaidHint.textContent = "Only confirm after the money has actually left your account.";
+  }
+
+  const openUpiLink = document.getElementById("open-upi-link");
+  if (openUpiLink) {
+    openUpiLink.addEventListener("click", unlockIvePaid);
+  }
+
+  const copyUpiBtn = document.getElementById("copy-upi-btn");
+  wireCopyButton(copyUpiBtn, () => copyUpiBtn.dataset.upiId);
 
   const toggleQrBtn = document.getElementById("toggle-qr-btn");
   const qrWrapper = document.getElementById("qr-wrapper");
@@ -242,6 +319,7 @@ function renderOrder(order) {
       qrWrapper.classList.toggle("hidden", !qrVisible);
       qrWrapper.style.display = qrVisible ? "flex" : "";
       toggleQrBtn.textContent = qrVisible ? "Hide QR code" : "If that shows a warning, scan a QR code instead";
+      if (qrVisible) unlockIvePaid();
     });
   }
 }
