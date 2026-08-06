@@ -379,7 +379,7 @@ function renderOrderCard(order) {
             <span class="text-[11px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${meta.pillClass}">${meta.label}</span>
             ${scheduledBadge}
           </div>
-          <p class="text-xs text-muted">${escapeHtml(order.student_name)} · ${timeAgo(order.created_at)}</p>
+          <p class="text-xs text-muted">${escapeHtml(order.student_name)}${order.status === "placed" && order.student_phone_number ? ` · ${escapeHtml(order.student_phone_number)}` : ""} · ${timeAgo(order.created_at)}</p>
           <p class="text-sm text-ink mt-2">${itemsSummary}</p>
           <p class="text-sm font-bold text-accent-deep mt-1">${escapeHtml(formatPrice(order.total_amount))}</p>
           ${etaText}
@@ -478,7 +478,27 @@ function renderOrders(orders) {
 
 function attachOrderListeners() {
   document.querySelectorAll(".order-accept-btn").forEach((btn) => {
-    btn.addEventListener("click", () => handleOrderAction(btn.dataset.code, "accept", btn));
+    btn.addEventListener("click", () => {
+      // "Accept" is the only point that actually matters for the false-claim
+      // problem: a student tapping "I've paid" without paying costs nothing
+      // by itself, but it does if the owner starts cooking on the strength
+      // of that claim alone. This forces them to actually check their own
+      // UPI app — the one place real proof of payment exists — before
+      // committing food/time, instead of just trusting payment_status.
+      const order = (ordersData || []).find((o) => o.order_code === btn.dataset.code);
+      const amount = order ? formatPrice(order.total_amount) : "the order amount";
+      const phoneLine = order && order.student_phone_number
+        ? ` Payer's number on file: ${order.student_phone_number} — cross-check it against the payment notification in your UPI app.`
+        : "";
+      if (
+        !window.confirm(
+          `Before accepting: have you actually seen ${amount} land in your UPI app for this order?${phoneLine}\n\nThe student's "paid" status is self-reported, not verified — only your own bank/UPI app is proof. If you haven't seen the payment, reject instead.`
+        )
+      ) {
+        return;
+      }
+      handleOrderAction(btn.dataset.code, "accept", btn);
+    });
   });
   document.querySelectorAll(".order-reject-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
