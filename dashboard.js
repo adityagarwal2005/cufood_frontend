@@ -228,8 +228,8 @@ function renderMenuItemsHtml(items) {
       }
       const tiered = hasPriceTiers(item);
       html += `
-        <div class="flex items-center gap-4 bg-white border border-line border-l-4 border-l-transparent rounded-xl shadow-sm px-5 py-4 hover:shadow-md hover:-translate-y-0.5 hover:border-l-accent transition-all duration-200">
-          <div class="flex-1 flex flex-wrap items-baseline gap-2 min-w-0">
+        <div class="flex flex-wrap items-center gap-4 bg-white border border-line border-l-4 border-l-transparent rounded-xl shadow-sm px-5 py-4 hover:shadow-md hover:-translate-y-0.5 hover:border-l-accent transition-all duration-200">
+          <div class="flex-1 flex flex-wrap items-baseline gap-2 min-w-[140px]">
             <span class="text-[15px] font-semibold text-ink">${escapeHtml(item.name)}</span>
             ${tiered ? renderTierPills(item.price_tiers) : renderItemPrice(item)}
             ${!item.is_permanently_active ? `<span class="text-[11px] font-semibold text-muted bg-stone-100 px-2.5 py-0.5 rounded-full">Inactive</span>` : ""}
