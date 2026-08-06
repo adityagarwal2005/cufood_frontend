@@ -505,12 +505,12 @@ function renderDashboard() {
             <p class="text-sm font-semibold text-muted">${items.length} ${itemWord} · ${availableCount} available today</p>
           </div>
         </div>
-        <div class="flex items-center gap-4">
-          <div class="flex items-center gap-2.5 pl-4 border-l border-line">
+        <div class="flex flex-wrap items-center gap-4">
+          <div class="flex items-center gap-2.5 pl-4 border-l border-line whitespace-nowrap">
             <span class="text-sm font-semibold text-muted">Open today</span>
             ${toggleSwitchHtml({ id: "open-toggle", checked: restaurantData.is_open_today })}
           </div>
-          <button type="button" id="logout-btn" class="inline-flex items-center gap-1.5 text-sm font-semibold text-muted bg-cream border border-line rounded-full px-5 py-2.5 hover:text-accent-deep hover:border-accent-soft transition-all duration-150">
+          <button type="button" id="logout-btn" class="inline-flex items-center gap-1.5 text-sm font-semibold text-muted bg-cream border border-line rounded-full px-5 py-2.5 hover:text-accent-deep hover:border-accent-soft transition-all duration-150 whitespace-nowrap">
             <span class="w-3.5 h-3.5">${ICONS.logout}</span>Log out
           </button>
         </div>
