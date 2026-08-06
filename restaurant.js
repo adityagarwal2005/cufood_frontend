@@ -555,3 +555,15 @@ async function loadRestaurant() {
 }
 
 loadRestaurant();
+
+// When the browser restores this page from bfcache (e.g. tapping "back"
+// after removing items on the checkout page), the DOM comes back exactly
+// as it was at navigation time — none of this file's JS re-runs, so the
+// +/- steppers and cart bar would keep showing whatever was in the cart
+// when this page was last visible, not what's actually in localStorage
+// now. Re-render from the live cart whenever that happens.
+window.addEventListener("pageshow", (event) => {
+  if (event.persisted && currentRestaurant) {
+    renderRestaurant(currentRestaurant);
+  }
+});

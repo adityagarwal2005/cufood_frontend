@@ -68,11 +68,17 @@ function generateTimeSlots() {
 let selectedSlot = null;
 
 function emptyCartView() {
+  // backLink is set once at page load from the cart that existed then (see
+  // the bottom of this file) and its href doesn't change after — so it's
+  // still pointing at the right restaurant even once the cart empties out
+  // from here, unlike a hardcoded link to the generic location picker.
+  const goBackHref = backLink ? backLink.href : "location-select.html";
+  const goBackLabel = backLink && backLink.href.includes("restaurant.html") ? "Back to menu" : "Browse outlets";
   pageContent.innerHTML = `
     <div class="text-center bg-white border border-line rounded-2xl shadow-sm px-7 py-14">
       <span class="flex items-center justify-center w-14 h-14 rounded-full bg-accent-soft text-accent mx-auto mb-4 p-3.5">${ICONS.cart}</span>
       <p class="text-muted text-[15px] mb-4">Your cart is empty.</p>
-      <a href="location-select.html" class="text-accent-deep font-bold hover:underline">Browse outlets</a>
+      <a href="${escapeHtml(goBackHref)}" class="text-accent-deep font-bold hover:underline">${goBackLabel}</a>
     </div>
   `;
 }
