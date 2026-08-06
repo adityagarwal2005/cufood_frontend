@@ -45,9 +45,9 @@ function emptyCartView() {
 
 function renderCartLine(key, line) {
   return `
-    <div class="flex items-center justify-between gap-4 py-3 border-b border-line last:border-b-0">
+    <div class="flex items-start justify-between gap-4 py-3 border-b border-line last:border-b-0">
       <div class="min-w-0">
-        <p class="text-[15px] font-semibold text-ink truncate">${escapeHtml(line.name)}${line.sizeLabel ? ` <span class="text-muted font-medium">(${escapeHtml(line.sizeLabel)})</span>` : ""}</p>
+        <p class="text-[15px] font-semibold text-ink">${escapeHtml(line.name)}${line.sizeLabel ? ` <span class="text-muted font-medium">(${escapeHtml(line.sizeLabel)})</span>` : ""}</p>
         <p class="text-xs text-muted">${escapeHtml(formatPrice(line.unitPrice))} each</p>
       </div>
       <div class="flex items-center gap-3 flex-shrink-0">
