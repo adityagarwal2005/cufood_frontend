@@ -215,6 +215,7 @@ async function retryPayment(code) {
       order_id: data.razorpay_order_id,
       name: "CUFood",
       description: `Order from ${data.restaurant_name}`,
+      image: `${window.location.origin}/icon-192.png`,
       prefill: { name: data.student_name },
       theme: { color: "#d9531e" },
       handler: () => loadOrder(code),

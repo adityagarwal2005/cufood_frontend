@@ -365,6 +365,7 @@ function openRazorpayCheckout({ orderCode, razorpayOrderId, razorpayKeyId, resta
     order_id: razorpayOrderId,
     name: "CUFood",
     description: `Order from ${restaurantName}`,
+    image: `${window.location.origin}/icon-192.png`,
     prefill: { name: studentName, contact: studentPhone },
     theme: { color: "#d9531e" },
     handler: goToStatus,
