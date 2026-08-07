@@ -192,8 +192,8 @@ function toggleSwitchHtml({ id, extraInputClasses, checked, dataAttrs }) {
   return `
     <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
       <input type="checkbox"${idAttr} class="peer sr-only ${extraInputClasses || ""}" ${dataAttrs || ""} ${checked ? "checked" : ""}>
-      <span class="block w-11 h-6 rounded-full bg-line shadow-inner peer-checked:bg-gradient-to-r peer-checked:from-accent peer-checked:to-accent-deep transition-colors duration-200"></span>
-      <span class="absolute left-0.5 top-0.5 w-5 h-5 rounded-full bg-white shadow flex items-center justify-center text-accent-deep p-1 opacity-0 peer-checked:opacity-100 transition-all duration-200 peer-checked:translate-x-5">${ICONS.check}</span>
+      <span class="block w-11 h-6 rounded-full bg-line shadow-inner peer-checked:bg-gradient-to-r peer-checked:from-accent peer-checked:to-accent-deep transition-colors duration-150"></span>
+      <span class="absolute left-0.5 top-0.5 w-5 h-5 rounded-full bg-white shadow flex items-center justify-center text-accent-deep p-1 opacity-0 peer-checked:opacity-100 transition-all duration-150 peer-checked:translate-x-5">${ICONS.check}</span>
     </label>
   `;
 }
@@ -236,7 +236,7 @@ function renderEditItemRow(item) {
         </div>
       ` : ""}
       <div class="flex items-center gap-2">
-        <button type="button" class="btn-save-edit inline-flex items-center gap-1.5 text-sm font-bold text-white bg-gradient-to-br from-accent to-accent-deep rounded-lg px-3.5 py-2" data-item-id="${item.id}">Save</button>
+        <button type="button" class="btn-save-edit inline-flex items-center gap-1.5 text-sm font-bold text-white bg-ink rounded-lg px-3.5 py-2" data-item-id="${item.id}">Save</button>
         <button type="button" class="btn-cancel-edit inline-flex items-center gap-1.5 text-sm font-semibold text-muted bg-white border border-line rounded-lg px-3.5 py-2">Cancel</button>
       </div>
     </div>
@@ -258,7 +258,7 @@ function renderMenuItemsHtml(items) {
   groups.forEach((groupItems, category) => {
     html += `<div class="mb-6 last:mb-0">`;
     html += `<h2 class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted mb-3.5">
-      <span class="w-1.5 h-1.5 rounded-full bg-gradient-to-br from-accent to-accent-deep"></span>
+      <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
       ${escapeHtml(category)}
     </h2>`;
     html += `<div class="flex flex-col gap-2.5">`;
@@ -269,7 +269,7 @@ function renderMenuItemsHtml(items) {
       }
       const tiered = hasPriceTiers(item);
       html += `
-        <div class="flex flex-wrap items-center gap-4 bg-white border border-line border-l-4 border-l-transparent rounded-xl shadow-sm px-5 py-4 hover:shadow-md hover:-translate-y-0.5 hover:border-l-accent transition-all duration-200">
+        <div class="flex flex-wrap items-center gap-4 bg-white border border-line border-l-4 border-l-transparent rounded-xl shadow-sm px-5 py-4 hover:shadow-md hover:-translate-y-0.5 hover:border-l-accent transition-all duration-150">
           <div class="flex-1 flex flex-wrap items-baseline gap-2 min-w-[140px]">
             <span class="text-[15px] font-semibold text-ink">${escapeHtml(item.name)}</span>
             ${tiered ? renderTierPills(item.price_tiers) : renderItemPrice(item)}
@@ -319,18 +319,18 @@ function renderOrderActions(order) {
     return `
       <div class="flex items-center gap-2 flex-shrink-0">
         <button type="button" class="order-reject-btn inline-flex items-center gap-1.5 text-sm font-semibold text-error bg-error-soft rounded-xl px-4 py-2 hover:opacity-80 transition-opacity duration-150" data-code="${escapeHtml(order.order_code)}">Reject</button>
-        <button type="button" class="order-accept-btn inline-flex items-center gap-1.5 text-sm font-bold text-white bg-gradient-to-br from-accent to-accent-deep rounded-xl px-4 py-2 shadow-accent-glow hover:shadow-lg transition-all duration-150" data-code="${escapeHtml(order.order_code)}">Accept & start</button>
+        <button type="button" class="order-accept-btn inline-flex items-center gap-1.5 text-sm font-bold text-white bg-ink rounded-xl px-4 py-2 shadow-accent-glow hover:shadow-lg transition-all duration-150" data-code="${escapeHtml(order.order_code)}">Accept & start</button>
       </div>
     `;
   }
   if (order.status === "preparing") {
     return `
-      <button type="button" class="order-ready-btn inline-flex items-center gap-1.5 text-sm font-bold text-white bg-gradient-to-br from-accent to-accent-deep rounded-xl px-4 py-2 shadow-accent-glow hover:shadow-lg transition-all duration-150 flex-shrink-0" data-code="${escapeHtml(order.order_code)}">Mark ready</button>
+      <button type="button" class="order-ready-btn inline-flex items-center gap-1.5 text-sm font-bold text-white bg-ink rounded-xl px-4 py-2 shadow-accent-glow hover:shadow-lg transition-all duration-150 flex-shrink-0" data-code="${escapeHtml(order.order_code)}">Mark ready</button>
     `;
   }
   if (order.status === "ready") {
     return `
-      <button type="button" class="order-complete-btn inline-flex items-center gap-1.5 text-sm font-bold text-white bg-gradient-to-br from-accent to-accent-deep rounded-xl px-4 py-2 shadow-accent-glow hover:shadow-lg transition-all duration-150 flex-shrink-0" data-code="${escapeHtml(order.order_code)}">Picked up</button>
+      <button type="button" class="order-complete-btn inline-flex items-center gap-1.5 text-sm font-bold text-white bg-ink rounded-xl px-4 py-2 shadow-accent-glow hover:shadow-lg transition-all duration-150 flex-shrink-0" data-code="${escapeHtml(order.order_code)}">Picked up</button>
     `;
   }
   return "";
@@ -544,13 +544,13 @@ function renderDashboard() {
 
   pageContent.innerHTML = `
     <div class="relative bg-white border border-line rounded-2xl shadow-lg p-6 sm:p-7 mb-8 overflow-hidden">
-      <div class="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-accent to-accent-deep"></div>
+      <div class="absolute top-0 inset-x-0 h-1 bg-accent"></div>
       <div class="flex flex-wrap items-center justify-between gap-4">
         <div class="flex flex-wrap items-center gap-4">
-          <span class="flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-accent to-accent-deep text-white font-extrabold text-lg shadow-accent-glow flex-shrink-0">${escapeHtml(initial)}</span>
+          <span class="flex items-center justify-center w-12 h-12 rounded-2xl bg-ink text-white font-extrabold text-lg shadow-accent-glow flex-shrink-0">${escapeHtml(initial)}</span>
           <div class="flex flex-col gap-1">
             <div class="flex flex-wrap items-center gap-3">
-              <h1 class="text-2xl sm:text-3xl font-extrabold text-ink leading-tight">${escapeHtml(restaurantData.name)}</h1>
+              <h1 class="text-2xl sm:text-3xl font-black tracking-tightest text-ink leading-tight">${escapeHtml(restaurantData.name)}</h1>
               ${statusPill}
             </div>
             <p class="text-sm font-semibold text-muted">${items.length} ${itemWord} · ${availableCount} available today</p>
@@ -594,7 +594,7 @@ function renderDashboard() {
             ` : ""}
           </div>
         </div>
-        <button type="submit" id="upi-save-btn" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-accent to-accent-deep text-white font-bold text-sm px-5 py-2.5 shadow-accent-glow hover:shadow-lg transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed">Save</button>
+        <button type="submit" id="upi-save-btn" class="inline-flex items-center gap-2 rounded-xl bg-ink text-white font-bold text-sm px-5 py-2.5 shadow-accent-glow hover:shadow-lg transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed">Save</button>
       </form>
       <p class="text-xs text-muted mt-3">Students pay through the app now, not directly to you — this is just where we send your share of what they've paid.</p>
     </section>
@@ -637,7 +637,7 @@ function renderDashboard() {
           <input type="number" id="item-price" placeholder="Optional" min="0" step="0.01"
             class="rounded-xl border-2 border-line bg-white px-3.5 py-2.5 text-sm text-ink focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150">
         </div>
-        <button type="submit" id="add-item-submit" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-accent to-accent-deep text-white font-bold text-sm px-5 py-2.5 shadow-accent-glow hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0">
+        <button type="submit" id="add-item-submit" class="inline-flex items-center gap-2 rounded-xl bg-ink text-white font-bold text-sm px-5 py-2.5 shadow-accent-glow hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0">
           <span class="w-3.5 h-3.5">${ICONS.plus}</span>Add item
         </button>
       </form>

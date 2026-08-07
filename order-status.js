@@ -32,13 +32,13 @@ function stateMessage({ icon, message }) {
 function renderLookupForm(errorMessage) {
   pageContent.innerHTML = `
     <div class="bg-white border border-line rounded-2xl shadow-sm p-6 sm:p-7">
-      <h1 class="text-xl font-extrabold text-ink mb-1">Check your order</h1>
+      <h1 class="text-2xl font-black tracking-tightest text-ink mb-1">Check your order</h1>
       <p class="text-sm text-muted mb-5">Enter the 6-character code from your confirmation.</p>
       ${errorMessage ? `<div class="text-sm font-medium text-error bg-error-soft rounded-xl px-4 py-3 mb-4">${escapeHtml(errorMessage)}</div>` : ""}
       <form id="lookup-form" class="flex gap-2">
         <input type="text" id="code-input" maxlength="6" placeholder="ABC123" required
           class="flex-1 rounded-xl border-2 border-line bg-cream px-4 py-3 text-[15px] font-bold tracking-widest uppercase text-ink focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150">
-        <button type="submit" class="rounded-xl bg-gradient-to-br from-accent to-accent-deep text-white font-bold px-5 py-3 shadow-accent-glow hover:shadow-lg transition-all duration-150">Check</button>
+        <button type="submit" class="rounded-xl bg-ink text-white font-bold px-5 py-3 shadow-accent-glow hover:shadow-lg transition-all duration-150">Check</button>
       </form>
     </div>
   `;
@@ -143,7 +143,7 @@ function renderStepTracker(order) {
     const labelClass = done || active ? "text-ink font-bold" : "text-muted font-medium";
     return `
       <div class="relative z-10 flex flex-col items-center gap-2 flex-1">
-        <span class="flex items-center justify-center w-9 h-9 rounded-full transition-all duration-300 ${circleClass}">
+        <span class="flex items-center justify-center w-9 h-9 rounded-full transition-all duration-150 ${circleClass}">
           <span class="w-4 h-4">${step.icon}</span>
         </span>
         <span class="text-[11px] text-center ${labelClass}">${escapeHtml(step.label)}</span>
@@ -154,7 +154,7 @@ function renderStepTracker(order) {
   return `
     <div class="relative mb-2">
       <div class="absolute top-[18px] left-9 right-9 h-1 bg-line rounded-full"></div>
-      <div class="absolute top-[18px] left-9 h-1 bg-accent rounded-full transition-all duration-500" style="width: calc((100% - 4.5rem) * ${fillPercent / 100})"></div>
+      <div class="absolute top-[18px] left-9 h-1 bg-accent rounded-full transition-all duration-200" style="width: calc((100% - 4.5rem) * ${fillPercent / 100})"></div>
       <div class="relative flex items-start">${stepsHtml}</div>
     </div>
   `;
@@ -260,7 +260,7 @@ function renderOrder(order) {
 
   pageContent.innerHTML = `
     <div class="bg-white border border-line rounded-2xl shadow-lg overflow-hidden mb-6">
-      <div class="bg-gradient-to-br from-accent to-accent-deep text-white p-6 sm:p-7 text-center">
+      <div class="bg-ink text-white p-6 sm:p-7 text-center">
         <p class="text-xs font-bold uppercase tracking-widest text-white/80 mb-2">Pickup code</p>
         <p class="text-4xl font-extrabold tracking-[0.3em]">${escapeHtml(order.order_code)}</p>
         ${formatScheduledBadge(order)}

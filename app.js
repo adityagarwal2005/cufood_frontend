@@ -83,13 +83,13 @@ function renderRestaurants(restaurants) {
     const card = document.createElement("a");
     card.href = restaurantUrl(restaurant.slug);
     card.className =
-      "group relative block aspect-[16/10] sm:aspect-[2/1] rounded-3xl overflow-hidden shadow-md ring-1 ring-black/5 hover:shadow-2xl hover:-translate-y-1.5 active:translate-y-0 transition-all duration-300 bg-stone-200 opacity-0 animate-fade-in-up";
+      "group relative block aspect-[16/10] sm:aspect-[2/1] rounded-2xl overflow-hidden shadow-md ring-1 ring-black/5 hover:shadow-2xl hover:-translate-y-1.5 active:translate-y-0 transition-all duration-150 bg-stone-200 opacity-0 animate-fade-in-up";
     card.style.animationDelay = `${index * 50}ms`;
 
     const photo = document.createElement("div");
     if (restaurant.logo) {
       photo.className =
-        "absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110" +
+        "absolute inset-0 bg-cover bg-center transition-transform duration-200 group-hover:scale-110" +
         (restaurant.is_open_today ? "" : " grayscale opacity-60");
       photo.style.backgroundImage = `url("${restaurant.logo}")`;
     } else {
@@ -113,14 +113,14 @@ function renderRestaurants(restaurants) {
 
     const arrowChip = document.createElement("span");
     arrowChip.className =
-      "absolute top-4 right-4 z-10 flex items-center justify-center w-9 h-9 rounded-full bg-white/15 border border-white/25 backdrop-blur text-white opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300";
+      "absolute top-4 right-4 z-10 flex items-center justify-center w-9 h-9 rounded-full bg-white/15 border border-white/25 backdrop-blur text-white opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-150";
     arrowChip.innerHTML = `<span class="w-4 h-4">${ICONS.arrowRight}</span>`;
 
     const nameWrap = document.createElement("div");
     nameWrap.className = "absolute bottom-0 inset-x-0 p-5 sm:p-6 flex items-end justify-between gap-3";
     nameWrap.innerHTML = `
       <h3 class="font-extrabold text-xl sm:text-2xl leading-snug text-white drop-shadow-md">${escapeHtml(restaurant.name)}</h3>
-      <span class="hidden sm:inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wide text-white/80 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 whitespace-nowrap">View menu &rarr;</span>
+      <span class="hidden sm:inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wide text-white/80 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-150 whitespace-nowrap">View menu &rarr;</span>
     `;
 
     card.appendChild(photo);
@@ -150,11 +150,8 @@ async function loadRestaurants() {
 if (openOnlyToggle) {
   openOnlyToggle.addEventListener("click", () => {
     openOnlyFilter = !openOnlyFilter;
-    openOnlyToggle.classList.toggle("bg-gradient-to-br", openOnlyFilter);
-    openOnlyToggle.classList.toggle("from-accent", openOnlyFilter);
-    openOnlyToggle.classList.toggle("to-accent-deep", openOnlyFilter);
+    openOnlyToggle.classList.toggle("bg-ink", openOnlyFilter);
     openOnlyToggle.classList.toggle("text-white", openOnlyFilter);
-    openOnlyToggle.classList.toggle("shadow-accent-glow", openOnlyFilter);
     openOnlyToggle.classList.toggle("bg-white", !openOnlyFilter);
     openOnlyToggle.classList.toggle("text-ink", !openOnlyFilter);
     applyRestaurantFilter();
@@ -173,7 +170,7 @@ function renderSearchResults(results) {
   results.forEach((result) => {
     const item = document.createElement("a");
     item.className =
-      "group flex items-center gap-4 rounded-2xl bg-white border border-line shadow-sm hover:shadow-lg hover:-translate-y-0.5 hover:border-accent-soft transition-all duration-200 px-5 py-4";
+      "group flex items-center gap-4 rounded-2xl bg-white border border-line shadow-sm hover:shadow-lg hover:-translate-y-0.5 hover:border-accent-soft transition-all duration-150 px-5 py-4";
     item.href = restaurantUrl(result.restaurant_slug);
     const itemWord = result.matching_item_count === 1 ? "item" : "items";
     item.innerHTML = `
@@ -182,7 +179,7 @@ function renderSearchResults(results) {
         <strong class="font-bold text-ink">${escapeHtml(result.restaurant_name)}</strong>
         <span class="text-muted"> — ${result.matching_item_count} matching ${itemWord}</span>
       </span>
-      <span class="w-4 h-4 text-muted flex-shrink-0 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200">${ICONS.arrowRight}</span>
+      <span class="w-4 h-4 text-muted flex-shrink-0 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-150">${ICONS.arrowRight}</span>
     `;
     searchResults.appendChild(item);
   });

@@ -111,7 +111,7 @@ function renderCheckout(cart) {
   const total = getCartTotal(cart);
 
   pageContent.innerHTML = `
-    <h1 class="text-2xl sm:text-3xl font-extrabold text-ink mb-1">Your order</h1>
+    <h1 class="text-3xl sm:text-4xl font-black tracking-tightest text-ink mb-1">Your order</h1>
     <p class="text-sm text-muted mb-6">From <span class="font-bold text-ink">${escapeHtml(cart.restaurantName)}</span></p>
 
     <div id="error-banner" class="hidden text-sm font-medium text-error bg-error-soft rounded-xl px-4 py-3 mb-5"></div>
@@ -153,7 +153,7 @@ function renderCheckout(cart) {
             class="rounded-xl border-2 border-line bg-white px-4 py-3 text-[15px] text-ink focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150">
           <p class="text-xs text-muted">So the restaurant can reach you if there's an issue with your order.</p>
         </div>
-        <button type="submit" id="pay-btn" class="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-accent to-accent-deep text-white font-bold text-base px-5 py-3.5 shadow-accent-glow hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 mt-1">
+        <button type="submit" id="pay-btn" class="inline-flex items-center justify-center gap-2 rounded-xl bg-ink text-white font-bold text-base px-5 py-3.5 shadow-accent-glow hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 mt-1">
           Continue to pay — ${escapeHtml(formatPrice(total))}
         </button>
         <p class="text-xs text-muted text-center leading-relaxed">${selectedSlot ? `You'll pay securely next. They'll have your order ready around ${escapeHtml(formatSlotTime(selectedSlot))}.` : "You'll pay securely next. The restaurant starts as soon as payment is confirmed."}</p>

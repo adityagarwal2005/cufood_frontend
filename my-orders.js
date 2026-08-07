@@ -51,12 +51,12 @@ function emptyState() {
   `;
 }
 
-function renderOrderRow(order, live) {
+function renderOrderRow(order, live, index) {
   const status = live ? live.status : null;
   const pillClass = status ? STATUS_PILL[status] || "bg-stone-100 text-muted" : "bg-stone-100 text-muted";
   const label = status ? STATUS_LABEL[status] || status : "Not found";
   return `
-    <a href="order-status.html?code=${encodeURIComponent(order.code)}" class="block bg-white border border-line rounded-xl px-5 py-4 mb-3 last:mb-0 hover:shadow-md hover:-translate-y-0.5 transition-all duration-150">
+    <a href="order-status.html?code=${encodeURIComponent(order.code)}" style="animation-delay:${index * 50}ms" class="opacity-0 animate-fade-in-up block bg-white border border-line rounded-xl px-5 py-4 mb-3 last:mb-0 hover:shadow-md hover:-translate-y-0.5 transition-all duration-150">
       <div class="flex items-center justify-between gap-3">
         <div class="min-w-0">
           <p class="text-sm font-extrabold text-ink">${escapeHtml(order.restaurantName || "")} <span class="text-muted font-semibold">· #${escapeHtml(order.code)}</span></p>
@@ -75,7 +75,7 @@ async function loadMyOrders() {
     return;
   }
 
-  pageContent.innerHTML = orders.map((o) => renderOrderRow(o, null)).join("");
+  pageContent.innerHTML = orders.map((o, i) => renderOrderRow(o, null, i)).join("");
 
   const results = await Promise.all(
     orders.map(async (o) => {
@@ -89,7 +89,7 @@ async function loadMyOrders() {
     })
   );
 
-  pageContent.innerHTML = orders.map((o, i) => renderOrderRow(o, results[i])).join("");
+  pageContent.innerHTML = orders.map((o, i) => renderOrderRow(o, results[i], i)).join("");
 }
 
 loadMyOrders();

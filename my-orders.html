@@ -6,43 +6,42 @@
   <title>CUFood — My Orders</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon-192.png">
-  <meta name="theme-color" content="#d9531e">
+  <meta name="theme-color" content="#0a0a0a">
 </head>
 <body class="font-sans bg-cream text-ink antialiased">
-  <header class="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-line shadow-sm">
-    <div class="max-w-6xl mx-auto flex items-center justify-between px-6 sm:px-8 py-4">
+  <header class="sticky top-0 z-20 bg-white/90 backdrop-blur-md border-b border-line">
+    <div class="max-w-6xl mx-auto flex items-center justify-between px-6 sm:px-8 py-5">
       <a href="location-select.html" class="flex items-center gap-3">
-        <span class="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-accent to-accent-deep text-white font-extrabold text-sm shadow-accent-glow">CU</span>
+        <span class="flex items-center justify-center w-9 h-9 rounded-full bg-ink text-white font-black text-sm">CU</span>
         <span class="flex flex-col leading-tight">
-          <span class="text-lg font-extrabold tracking-tight text-ink">CUFood</span>
-          <span class="text-xs font-medium text-muted hidden sm:block">My orders</span>
+          <span class="text-lg font-black tracking-tightest text-ink">CUFOOD</span>
+          <span class="text-[10px] font-semibold uppercase tracking-widest text-muted hidden sm:block">My orders</span>
         </span>
       </a>
-      <a href="location-select.html" class="inline-flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-accent-deep transition-all duration-150">&larr; Browse outlets</a>
+      <a href="location-select.html" class="text-xs font-bold uppercase tracking-wide text-ink hover:text-accent transition-colors duration-150">&larr; Browse outlets</a>
     </div>
   </header>
 
-  <main class="relative overflow-hidden bg-gradient-to-br from-cream via-cream to-accent-soft/20 min-h-[calc(100vh-69px)]">
-    <div class="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-accent-soft blur-3xl opacity-50 pointer-events-none"></div>
-    <div class="relative max-w-lg mx-auto px-6 sm:px-8 py-10 sm:py-12">
-      <h1 class="text-2xl sm:text-3xl font-extrabold text-ink mb-1">My orders</h1>
-      <p class="text-sm text-muted mb-6">Orders you've placed from this device.</p>
+  <main class="relative overflow-hidden bg-white min-h-[calc(100vh-77px)]">
+    <div class="relative max-w-lg mx-auto px-6 sm:px-8 py-10 sm:py-14">
+      <h1 class="text-3xl sm:text-4xl font-black tracking-tightest text-ink mb-1">My Orders</h1>
+      <p class="text-sm text-muted mb-8">Orders you've placed from this device.</p>
       <div id="page-content">
         <p class="text-sm font-medium text-muted">Loading...</p>
       </div>
     </div>
   </main>
 
-  <footer class="relative border-t border-line bg-white/40">
-    <div class="max-w-6xl mx-auto px-6 sm:px-8 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+  <footer class="relative border-t border-line bg-white">
+    <div class="max-w-6xl mx-auto px-6 sm:px-8 py-10 flex flex-col sm:flex-row items-center justify-between gap-4">
       <a href="location-select.html" class="flex items-center gap-2.5">
-        <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-accent-deep text-white font-extrabold text-xs shadow-accent-glow">CU</span>
+        <span class="flex items-center justify-center w-8 h-8 rounded-full bg-ink text-white font-black text-xs">CU</span>
         <span class="flex flex-col leading-tight">
-          <span class="text-sm font-extrabold tracking-tight text-ink">CUFood</span>
+          <span class="text-sm font-black tracking-tightest text-ink">CUFOOD</span>
           <span class="text-[11px] font-medium text-muted">Live campus food availability</span>
         </span>
       </a>
