@@ -151,12 +151,12 @@ function renderCheckout(cart) {
           <label class="text-xs font-semibold text-muted" for="student-phone">Your phone number</label>
           <input type="tel" id="student-phone" placeholder="98765 43210" required
             class="rounded-xl border-2 border-line bg-white px-4 py-3 text-[15px] text-ink focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150">
-          <p class="text-xs text-muted">Only used to refund you directly if the restaurant can't take your order.</p>
+          <p class="text-xs text-muted">So the restaurant can reach you if there's an issue with your order.</p>
         </div>
         <button type="submit" id="pay-btn" class="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-accent to-accent-deep text-white font-bold text-base px-5 py-3.5 shadow-accent-glow hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 mt-1">
           Continue to pay — ${escapeHtml(formatPrice(total))}
         </button>
-        <p class="text-xs text-muted text-center leading-relaxed">${selectedSlot ? `You'll pay the restaurant by UPI next. They'll have your order ready around ${escapeHtml(formatSlotTime(selectedSlot))}.` : "You'll pay the restaurant by UPI next. They start preparing as soon as your payment lands."}</p>
+        <p class="text-xs text-muted text-center leading-relaxed">${selectedSlot ? `You'll pay securely next. They'll have your order ready around ${escapeHtml(formatSlotTime(selectedSlot))}.` : "You'll pay securely next. The restaurant starts as soon as payment is confirmed."}</p>
       </form>
     </div>
   `;
@@ -318,14 +318,60 @@ async function handleCheckoutSubmit(event) {
       resetPlaceOrderButton();
       return;
     }
+    // The order exists now (with a pickup code) but isn't paid for yet —
+    // clearing the cart here (not after payment) matches that: this cart's
+    // contents have already become this specific order, so there's
+    // nothing left for the checkout page to show if the student backs out
+    // of paying and returns. Retrying payment for THIS order happens from
+    // order-status.html, not by rebuilding a cart.
     rememberMyOrder(data.order_code, cart.restaurantName);
     clearCart();
-    window.location.href = `order-status.html?code=${encodeURIComponent(data.order_code)}`;
+    openRazorpayCheckout({
+      orderCode: data.order_code,
+      razorpayOrderId: data.razorpay_order_id,
+      razorpayKeyId: data.razorpay_key_id,
+      restaurantName: cart.restaurantName,
+      studentName,
+      studentPhone,
+    });
   } catch (err) {
     showError("Could not reach the server. Please try again.");
     console.error(err);
     resetPlaceOrderButton();
   }
+}
+
+// Opens Razorpay's own Checkout modal — payment itself happens entirely
+// inside it, not on this page. Both branches below (paid or dismissed
+// without paying) just move on to order-status.html; that page polls the
+// backend for the real, webhook-confirmed state rather than trusting
+// anything from this modal directly, since a client-side "success"
+// callback is exactly the kind of self-report this whole flow exists to
+// not rely on.
+function openRazorpayCheckout({ orderCode, razorpayOrderId, razorpayKeyId, restaurantName, studentName, studentPhone }) {
+  const goToStatus = () => {
+    window.location.href = `order-status.html?code=${encodeURIComponent(orderCode)}`;
+  };
+
+  if (typeof Razorpay === "undefined") {
+    // Payment couldn't even start — order-status.html's retry-payment
+    // button (see order-status.js) gives the student another way in.
+    goToStatus();
+    return;
+  }
+
+  const checkout = new Razorpay({
+    key: razorpayKeyId,
+    order_id: razorpayOrderId,
+    name: "CUFood",
+    description: `Order from ${restaurantName}`,
+    prefill: { name: studentName, contact: studentPhone },
+    theme: { color: "#d9531e" },
+    handler: goToStatus,
+    modal: { ondismiss: goToStatus },
+  });
+  checkout.on("payment.failed", goToStatus);
+  checkout.open();
 }
 
 if (backLink) {

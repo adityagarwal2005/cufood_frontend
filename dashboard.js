@@ -351,21 +351,14 @@ function renderOrderCard(order) {
   const scheduledBadge = order.scheduled_for && ["placed", "rejected"].includes(order.status)
     ? `<span class="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-accent-soft text-accent-deep"><span class="w-3 h-3">${ICONS.clock}</span>${escapeHtml(new Date(order.scheduled_for).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }))}</span>`
     : "";
-  // No UPI deep-link parameter exists for "pay by mobile number" (the
-  // spec only supports payee VPA, pa=), so unlike restaurant_upi_id this
-  // can't be a tap-to-pay link or QR — just the number, for the owner to
-  // enter manually via their UPI app's "Pay via Mobile Number" option.
-  const refundLinkHtml = order.status === "rejected" && order.student_phone_number
+  // Reject triggers an automatic Razorpay refund server-side (see
+  // RejectOrderView) — nothing for the owner to do here anymore, just a
+  // confirmation that it happened rather than an action to take.
+  const refundLinkHtml = order.status === "rejected" && order.payment_status === "refunded"
     ? `
-      <div class="mt-2 bg-error-soft rounded-xl px-3 py-2">
-        <p class="text-xs font-semibold text-error">Refund this number via UPI:</p>
-        <div class="flex items-center gap-1.5">
-          <a href="tel:${escapeHtml(order.student_phone_number)}" class="text-sm font-bold text-error underline">${escapeHtml(order.student_phone_number)}</a>
-          <button type="button" class="copy-btn flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-lg text-error hover:bg-white/60 transition-colors duration-150" data-copy-value="${escapeHtml(order.student_phone_number)}" aria-label="Copy phone number">
-            <span class="w-3.5 h-3.5 pointer-events-none">${ICONS.copy}</span>
-          </button>
-        </div>
-        <p class="text-[11px] text-error/80 mt-0.5">Use "Pay via Mobile Number" in your UPI app.</p>
+      <div class="mt-2 bg-error-soft rounded-xl px-3 py-2 flex items-center gap-1.5">
+        <span class="w-3.5 h-3.5 text-error flex-shrink-0">${ICONS.check}</span>
+        <p class="text-xs font-semibold text-error">Refunded automatically to the student.</p>
       </div>
     `
     : "";
@@ -477,32 +470,16 @@ function renderOrders(orders) {
 }
 
 function attachOrderListeners() {
+  // No payment-verification prompt here anymore — an order only reaches
+  // this list once Razorpay's webhook has actually confirmed payment (see
+  // MyOrdersView / RazorpayWebhookView), not a student's self-report, so
+  // there's nothing left for the owner to double-check before accepting.
   document.querySelectorAll(".order-accept-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      // "Accept" is the only point that actually matters for the false-claim
-      // problem: a student tapping "I've paid" without paying costs nothing
-      // by itself, but it does if the owner starts cooking on the strength
-      // of that claim alone. This forces them to actually check their own
-      // UPI app — the one place real proof of payment exists — before
-      // committing food/time, instead of just trusting payment_status.
-      const order = (ordersData || []).find((o) => o.order_code === btn.dataset.code);
-      const amount = order ? formatPrice(order.total_amount) : "the order amount";
-      const phoneLine = order && order.student_phone_number
-        ? ` Payer's number on file: ${order.student_phone_number} — cross-check it against the payment notification in your UPI app.`
-        : "";
-      if (
-        !window.confirm(
-          `Before accepting: have you actually seen ${amount} land in your UPI app for this order?${phoneLine}\n\nThe student's "paid" status is self-reported, not verified — only your own bank/UPI app is proof. If you haven't seen the payment, reject instead.`
-        )
-      ) {
-        return;
-      }
-      handleOrderAction(btn.dataset.code, "accept", btn);
-    });
+    btn.addEventListener("click", () => handleOrderAction(btn.dataset.code, "accept", btn));
   });
   document.querySelectorAll(".order-reject-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
-      if (!window.confirm("Reject this order? The student has already paid — you'll need to refund them via UPI. Their phone number will appear on the order once you reject it.")) return;
+      if (!window.confirm("Reject this order? The student will be refunded automatically.")) return;
       handleOrderAction(btn.dataset.code, "reject", btn);
     });
   });
@@ -596,13 +573,13 @@ function renderDashboard() {
     ${!restaurantData.upi_id ? `
       <div class="flex items-center gap-3 bg-error-soft border border-error/20 rounded-2xl px-5 py-4 mb-6">
         <span class="w-5 h-5 text-error flex-shrink-0">${ICONS.warning}</span>
-        <p class="text-sm font-semibold text-error">Set your UPI ID below so students can pay you right after they place an order.</p>
+        <p class="text-sm font-semibold text-error">Set your UPI ID below — that's where we'll send your order earnings.</p>
       </div>
     ` : ""}
 
     <section class="bg-white border border-line rounded-2xl shadow-sm p-6 sm:p-7 mb-8">
       <h2 class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted mb-4">
-        <span class="w-3.5 h-3.5 text-accent-deep">${ICONS.cart}</span>Payment settings
+        <span class="w-3.5 h-3.5 text-accent-deep">${ICONS.cart}</span>Payout settings
       </h2>
       <form id="upi-form" class="flex flex-wrap gap-3.5 items-end">
         <div class="flex flex-col gap-1.5 flex-1 min-w-[200px]">
@@ -619,7 +596,7 @@ function renderDashboard() {
         </div>
         <button type="submit" id="upi-save-btn" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-accent to-accent-deep text-white font-bold text-sm px-5 py-2.5 shadow-accent-glow hover:shadow-lg transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed">Save</button>
       </form>
-      <p class="text-xs text-muted mt-3">Shown to students right after they place an order, so they can pay you directly before you ever see it.</p>
+      <p class="text-xs text-muted mt-3">Students pay through the app now, not directly to you — this is just where we send your share of what they've paid.</p>
     </section>
 
     <section class="bg-white border border-line rounded-2xl shadow-sm p-6 sm:p-7 mb-8">

@@ -2,62 +2,11 @@ const API_BASE_URL = "https://cufood-backend.onrender.com";
 
 const pageContent = document.getElementById("page-content");
 let pollTimer = null;
-// Survives the periodic re-render triggered by polling (see loadOrder),
-// so opening the QR to scan doesn't get silently closed mid-scan.
-let qrVisible = false;
-// Set once the student has actually engaged with a payment method (opened
-// the UPI link or revealed the QR) — until then "I've paid" stays disabled,
-// so it can't be tapped as a reflex without ever attempting to pay. Not a
-// real verification (nothing client-side can be, without a payment
-// gateway), just friction against the most casual false claims. Survives
-// the 8s poll re-render like qrVisible does, for the same reason.
-let paymentAttempted = false;
 
 function escapeHtml(text) {
   const div = document.createElement("div");
   div.textContent = text;
   return div.innerHTML.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-}
-
-// Falls back to a hidden textarea + execCommand for browsers/contexts where
-// navigator.clipboard isn't available (e.g. some in-app UPI/WhatsApp webviews).
-async function copyToClipboard(text) {
-  if (navigator.clipboard && window.isSecureContext) {
-    try {
-      await navigator.clipboard.writeText(text);
-      return true;
-    } catch (err) {
-      // fall through to the execCommand fallback below
-    }
-  }
-  try {
-    const textarea = document.createElement("textarea");
-    textarea.value = text;
-    textarea.style.position = "fixed";
-    textarea.style.opacity = "0";
-    document.body.appendChild(textarea);
-    textarea.focus();
-    textarea.select();
-    document.execCommand("copy");
-    document.body.removeChild(textarea);
-    return true;
-  } catch (err) {
-    return false;
-  }
-}
-
-function wireCopyButton(btn, getText) {
-  if (!btn) return;
-  btn.addEventListener("click", async () => {
-    const ok = await copyToClipboard(getText());
-    const original = btn.innerHTML;
-    btn.innerHTML = `<span class="w-4 h-4 pointer-events-none">${ICONS.check}</span>`;
-    btn.classList.toggle("text-accent-deep", ok);
-    setTimeout(() => {
-      btn.innerHTML = original;
-      btn.classList.remove("text-accent-deep");
-    }, 1500);
-  });
 }
 
 function formatPrice(price) {
@@ -105,7 +54,8 @@ function renderLookupForm(errorMessage) {
 // Payment now happens before the restaurant ever sees the order, so
 // "placed" and "rejected" each split into two messages depending on
 // payment_status — everything from "preparing" onward is only reachable
-// once payment_status is already "claimed", so those don't need to check it.
+// once payment_status is already "paid" (verified server-side by
+// RazorpayWebhookView, not self-reported), so those don't need to check it.
 const STATUS_META = {
   preparing: {
     label: "Preparing",
@@ -129,28 +79,28 @@ const STATUS_META = {
 
 function getStatusMeta(order) {
   if (order.status === "placed") {
-    if (order.payment_status !== "claimed") {
+    if (order.payment_status !== "paid") {
       return {
-        label: "Pay to confirm your order",
+        label: "Waiting for payment",
         color: "text-accent-deep",
         icon: ICONS.clock,
-        message: "The restaurant starts as soon as your payment is in.",
+        message: "The restaurant sees this order as soon as payment is confirmed.",
       };
     }
     return {
-      label: "Payment received",
+      label: "Payment confirmed",
       color: "text-accent-deep",
       icon: ICONS.clock,
       message: "Waiting for the restaurant to accept. This page updates automatically.",
     };
   }
   if (order.status === "rejected") {
-    if (order.payment_status === "claimed") {
+    if (order.payment_status === "refunded") {
       return {
-        label: "Rejected — refund on the way",
+        label: "Rejected — refunded",
         color: "text-error",
         icon: ICONS.warning,
-        message: "The restaurant couldn't take this order. They'll refund you via UPI shortly.",
+        message: "The restaurant couldn't take this order. Your payment has been refunded automatically — it should reflect in a few days depending on your bank.",
       };
     }
     return {
@@ -163,7 +113,7 @@ function getStatusMeta(order) {
   return STATUS_META[order.status] || STATUS_META.preparing;
 }
 
-// Only shown once payment_status is "claimed" (see renderOrder) — before
+// Only shown once payment_status is "paid" (see renderOrder) — before
 // that, the order isn't really "in the queue" yet from the restaurant's
 // side, so a step tracker would be misleading.
 const ORDER_STEPS = [
@@ -229,74 +179,72 @@ function formatEta(estimatedReadyAt) {
   return `in about ${diffMin} min`;
 }
 
-function buildUpiLink(order) {
-  const params = new URLSearchParams({
-    pa: order.restaurant_upi_id,
-    pn: order.restaurant_name,
-    am: String(order.total_amount),
-    cu: "INR",
-    tn: `CUFood order ${order.order_code}`,
-  });
-  return `upi://pay?${params.toString()}`;
-}
-
-// Some UPI apps show extra caution on deep-link payments (the "Open UPI
-// app to pay" button above) to a payee the student hasn't paid before,
-// and suggest scanning a QR code instead — but give no way to actually
-// get one. This renders the identical payment request as a real,
-// scannable QR (via the vendored qrcode-lib.js) so that fallback exists.
-function buildQrSvg(uri) {
-  const qr = qrcode(0, "M");
-  qr.addData(uri);
-  qr.make();
-  return qr.createSvgTag(4, 8);
-}
-
-// Only ever called for status "placed" with payment_status !== "claimed"
-// (see the call site in renderOrder) — the payment prompt is meaningless
-// once payment's already been claimed.
-function renderPaymentSection(order) {
-  if (!order.restaurant_upi_id) {
-    return `
-      <div class="border-t border-line pt-4 mt-4">
-        <p class="text-sm text-muted">This restaurant hasn't set up UPI payments yet — please pay at the counter when you arrive.</p>
-      </div>
-    `;
-  }
-
+// Only ever called for status "placed" with payment_status !== "paid" (see
+// the call site in renderOrder). Payment itself already happened (or was
+// attempted) in Razorpay's own Checkout modal on the checkout page — this
+// is just "waiting to hear back" plus a way back in if it didn't go
+// through, not a place to pay from directly.
+function renderPaymentPendingSection(order) {
   return `
     <div class="border-t border-line pt-4 mt-4">
-      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">Pay to confirm your order</p>
-      <div class="bg-cream-alt rounded-xl p-4 mb-3">
-        <p class="text-xs text-muted mb-1">Pay via UPI to</p>
-        <div class="flex items-center gap-2">
-          <p class="text-base font-extrabold text-ink break-all">${escapeHtml(order.restaurant_upi_id)}</p>
-          <button type="button" id="copy-upi-btn" data-upi-id="${escapeHtml(order.restaurant_upi_id)}" class="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-lg text-muted hover:text-accent-deep hover:bg-white transition-colors duration-150" aria-label="Copy UPI ID">
-            <span class="w-4 h-4 pointer-events-none">${ICONS.copy}</span>
-          </button>
-        </div>
-        <p class="text-sm font-bold text-accent-deep mt-1">${escapeHtml(formatPrice(order.total_amount))}</p>
+      <div class="flex items-center gap-3 bg-cream-alt rounded-xl p-4 mb-3">
+        <span class="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin flex-shrink-0" aria-hidden="true"></span>
+        <p class="text-sm text-ink">Confirming your payment of ${escapeHtml(formatPrice(order.total_amount))} — this page updates on its own once it's through.</p>
       </div>
-      <a href="${buildUpiLink(order)}" id="open-upi-link" class="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-accent to-accent-deep text-white font-bold text-base px-5 py-3.5 shadow-accent-glow hover:shadow-lg transition-all duration-150 mb-2.5">Open UPI app to pay</a>
-      <button type="button" id="toggle-qr-btn" class="w-full text-center text-xs font-bold text-accent-deep hover:underline mb-3">${qrVisible ? "Hide QR code" : "If that shows a warning, scan a QR code instead"}</button>
-      <div id="qr-wrapper" class="${qrVisible ? "flex" : "hidden"} flex-col items-center gap-2 mb-3" style="${qrVisible ? "display:flex" : ""}">
-        <div class="w-40 h-40 [&_svg]:w-full [&_svg]:h-full">${buildQrSvg(buildUpiLink(order))}</div>
-        <p class="text-xs text-muted text-center">Scan with any UPI app</p>
-      </div>
-      <button type="button" id="ive-paid-btn" ${paymentAttempted ? "" : "disabled"} class="w-full rounded-xl border-2 border-line bg-white text-ink font-bold text-sm px-5 py-3 hover:border-accent-soft transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-line">I've paid</button>
-      <p id="ive-paid-hint" class="text-xs text-muted text-center mt-2">${paymentAttempted ? "Only confirm after the money has actually left your account." : "Open the UPI app or scan the QR above first — this unlocks once you have."}</p>
+      <button type="button" id="retry-payment-btn" class="w-full rounded-xl border-2 border-line bg-white text-ink font-bold text-sm px-5 py-3 hover:border-accent-soft transition-all duration-150">Didn't finish paying? Try again</button>
     </div>
   `;
+}
+
+async function retryPayment(code) {
+  const btn = document.getElementById("retry-payment-btn");
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "Loading...";
+  }
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/orders/${encodeURIComponent(code)}/retry-payment/`);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.detail || `Request failed: ${response.status}`);
+
+    if (typeof Razorpay === "undefined") {
+      throw new Error("Payment couldn't load. Please check your connection and try again.");
+    }
+    const checkout = new Razorpay({
+      key: data.razorpay_key_id,
+      order_id: data.razorpay_order_id,
+      name: "CUFood",
+      description: `Order from ${data.restaurant_name}`,
+      prefill: { name: data.student_name },
+      theme: { color: "#d9531e" },
+      handler: () => loadOrder(code),
+      modal: {
+        ondismiss: () => {
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = "Didn't finish paying? Try again";
+          }
+        },
+      },
+    });
+    checkout.open();
+  } catch (err) {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "Didn't finish paying? Try again";
+    }
+    console.error(err);
+  }
 }
 
 function renderOrder(order) {
   const meta = getStatusMeta(order);
   const eta = order.status === "preparing" ? formatEta(order.estimated_ready_at) : null;
   // The tracker only makes sense once the order is actually in the
-  // restaurant's queue — before payment_status is "claimed" it's not
+  // restaurant's queue — before payment_status is "paid" it's not
   // visible to them yet at all (see MyOrdersView), and "rejected" is a
   // terminal off-ramp the linear tracker can't represent.
-  const showTracker = order.payment_status === "claimed" && order.status !== "rejected";
+  const showTracker = order.payment_status === "paid" && order.status !== "rejected";
 
   const itemsHtml = order.items
     .map(
@@ -345,7 +293,7 @@ function renderOrder(order) {
             <span class="text-lg font-extrabold text-ink">${escapeHtml(formatPrice(order.total_amount))}</span>
           </div>
         </div>
-        ${order.status === "placed" && order.payment_status !== "claimed" ? renderPaymentSection(order) : ""}
+        ${order.status === "placed" && order.payment_status !== "paid" ? renderPaymentPendingSection(order) : ""}
         <div class="pt-4 mt-2 border-t border-line text-xs text-muted">
           ${escapeHtml(order.student_name)}
         </div>
@@ -354,70 +302,9 @@ function renderOrder(order) {
     <a href="restaurant.html?slug=${encodeURIComponent(order.restaurant_slug)}" class="block text-center text-accent-deep font-bold hover:underline">Order again from ${escapeHtml(order.restaurant_name)}</a>
   `;
 
-  const ivePaidBtn = document.getElementById("ive-paid-btn");
-  if (ivePaidBtn) {
-    ivePaidBtn.addEventListener("click", () => {
-      if (
-        !window.confirm(
-          `Confirm you've completed the ${formatPrice(order.total_amount)} payment to ${order.restaurant_name}. Marking this falsely may get your order rejected.`
-        )
-      ) {
-        return;
-      }
-      claimPayment(order.order_code);
-    });
-  }
-
-  const ivePaidHint = document.getElementById("ive-paid-hint");
-  function unlockIvePaid() {
-    paymentAttempted = true;
-    if (ivePaidBtn) ivePaidBtn.disabled = false;
-    if (ivePaidHint) ivePaidHint.textContent = "Only confirm after the money has actually left your account.";
-  }
-
-  const openUpiLink = document.getElementById("open-upi-link");
-  if (openUpiLink) {
-    openUpiLink.addEventListener("click", unlockIvePaid);
-  }
-
-  const copyUpiBtn = document.getElementById("copy-upi-btn");
-  wireCopyButton(copyUpiBtn, () => copyUpiBtn.dataset.upiId);
-
-  const toggleQrBtn = document.getElementById("toggle-qr-btn");
-  const qrWrapper = document.getElementById("qr-wrapper");
-  if (toggleQrBtn && qrWrapper) {
-    toggleQrBtn.addEventListener("click", () => {
-      // qrVisible is a module-level flag, not just local DOM state — the
-      // page polls every 8s while an order is active and re-renders from
-      // scratch (see loadOrder), which would otherwise silently close the
-      // QR mid-scan.
-      qrVisible = !qrVisible;
-      qrWrapper.classList.toggle("hidden", !qrVisible);
-      qrWrapper.style.display = qrVisible ? "flex" : "";
-      toggleQrBtn.textContent = qrVisible ? "Hide QR code" : "If that shows a warning, scan a QR code instead";
-      if (qrVisible) unlockIvePaid();
-    });
-  }
-}
-
-async function claimPayment(code) {
-  const btn = document.getElementById("ive-paid-btn");
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = "Saving...";
-  }
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/orders/${encodeURIComponent(code)}/claim-payment/`, {
-      method: "PATCH",
-    });
-    if (!response.ok) throw new Error(`Request failed: ${response.status}`);
-    loadOrder(code);
-  } catch (err) {
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = "I've paid";
-    }
-    console.error(err);
+  const retryPaymentBtn = document.getElementById("retry-payment-btn");
+  if (retryPaymentBtn) {
+    retryPaymentBtn.addEventListener("click", () => retryPayment(order.order_code));
   }
 }
 
@@ -434,10 +321,14 @@ async function loadOrder(code) {
 
     // Keep polling while the order is still moving through its lifecycle,
     // so a student can leave this page open and watch it update live.
+    // Faster while payment is still pending — the webhook usually confirms
+    // within a couple of seconds, so a short poll here means the "waiting"
+    // spinner doesn't sit there for up to 8s after payment actually landed.
     const activeStatuses = ["placed", "preparing", "ready"];
     clearTimeout(pollTimer);
     if (activeStatuses.includes(order.status)) {
-      pollTimer = setTimeout(() => loadOrder(code), 8000);
+      const interval = order.payment_status === "pending" ? 3000 : 8000;
+      pollTimer = setTimeout(() => loadOrder(code), interval);
     }
   } catch (err) {
     pageContent.innerHTML = stateMessage({
