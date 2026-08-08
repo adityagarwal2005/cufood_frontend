@@ -503,8 +503,8 @@ function renderRestaurant(restaurant) {
     `;
 
   const statusPill = restaurant.is_open_today
-    ? `<span class="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-full bg-white/95 backdrop-blur shadow-sm text-accent-deep"><span class="w-1.5 h-1.5 rounded-full bg-accent"></span>Open today</span>`
-    : `<span class="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-full bg-white/95 backdrop-blur shadow-sm text-muted"><span class="w-1.5 h-1.5 rounded-full bg-muted"></span>Closed today</span>`;
+    ? `<span class="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-full bg-white/95 backdrop-blur shadow-sm text-accent-deep"><span class="w-1.5 h-1.5 rounded-full bg-accent"></span>Open now</span>`
+    : `<span class="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-full bg-white/95 backdrop-blur shadow-sm text-muted"><span class="w-1.5 h-1.5 rounded-full bg-muted"></span>Closed &middot; opens 10am&ndash;6pm, Mon&ndash;Fri</span>`;
 
   const callPill = restaurant.contact_number
     ? `<a href="tel:${escapeHtml(restaurant.contact_number.replace(/\s+/g, ""))}" class="inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-full bg-ink text-white shadow-accent-glow hover:-translate-y-0.5 hover:shadow-lg transition-all duration-150"><span class="w-3 h-3">${ICONS.phone}</span>Call</a>`
