@@ -132,9 +132,9 @@ function renderItemVariants(item) {
 
 function stateMessage({ icon, message, showBackLink }) {
   return `
-    <div class="text-center bg-white border border-line rounded-2xl shadow-sm px-7 py-14">
-      <span class="flex items-center justify-center w-14 h-14 rounded-full bg-accent-soft text-accent mx-auto mb-4 p-3.5">${icon}</span>
-      <p class="text-muted text-[15px] mb-4">${message}</p>
+    <div class="state-shell">
+      <span class="state-icon">${icon}</span>
+      <p class="text-muted text-base mb-4">${message}</p>
       ${showBackLink ? `<a href="${indexUrl()}" class="text-accent-deep font-bold hover:underline">&larr; Back to CUFood</a>` : ""}
     </div>
   `;
@@ -181,7 +181,7 @@ function renderStaticPrice(item) {
   const variants = getPurchasableVariants(item);
   if (variants.length === 0) return "";
   if (variants.length === 1 && variants[0].sizeLabel === "") {
-    return `<span class="text-[15px] font-bold text-muted whitespace-nowrap">${escapeHtml(formatPrice(variants[0].price))}</span>`;
+    return `<span class="text-base font-bold text-muted whitespace-nowrap">${escapeHtml(formatPrice(variants[0].price))}</span>`;
   }
   const pills = variants
     .map(({ sizeLabel, price }) => `<span class="inline-flex items-center gap-1 text-xs font-semibold text-muted bg-cream-alt rounded-full pl-2.5 pr-3 py-1 whitespace-nowrap">${escapeHtml(sizeLabel)} ${escapeHtml(formatPrice(price))}</span>`)
@@ -199,7 +199,7 @@ function renderCategoryBlock(category, groupItems) {
       return `
         <div class="flex flex-col gap-1 py-4 px-5 border-b border-line last:border-b-0 hover:bg-cream-alt transition-colors duration-150" data-menu-item data-item-name="${escapeHtml(item.name.toLowerCase())}">
           <div class="flex items-center justify-between gap-4 flex-wrap">
-            <span class="text-[15px] font-semibold text-ink">${escapeHtml(item.name)}</span>
+            <span class="text-base font-semibold text-ink">${escapeHtml(item.name)}</span>
             ${canOrder ? "" : renderStaticPrice(item)}
           </div>
           ${canOrder ? renderItemVariants(item) : ""}
@@ -289,9 +289,9 @@ function renderMenuSection(items) {
 
   html += `</div>`;
   html += `
-    <div class="hidden text-center bg-white border border-line rounded-2xl shadow-sm px-7 py-14" data-no-search-results>
-      <span class="flex items-center justify-center w-14 h-14 rounded-full bg-accent-soft text-accent mx-auto mb-4 p-3.5">${ICONS.search}</span>
-      <p class="text-muted text-[15px]">No items match your search</p>
+    <div class="hidden state-shell" data-no-search-results>
+      <span class="state-icon">${ICONS.search}</span>
+      <p class="text-muted text-base">No items match your search</p>
     </div>
   `;
 
@@ -512,10 +512,10 @@ function renderRestaurant(restaurant) {
 
   pageContent.innerHTML = `
     <div class="relative h-72 sm:h-[420px] rounded-2xl overflow-hidden shadow-xl mb-10">
-      <div class="absolute inset-0 bg-stone-200 bg-cover bg-center"${photoStyle}>${photoInner}</div>
+      <div class="absolute inset-0 bg-skeleton bg-cover bg-center"${photoStyle}>${photoInner}</div>
       <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
       <div class="absolute bottom-0 inset-x-0 p-6 sm:p-9 flex flex-col gap-3 sm:gap-4">
-        <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight drop-shadow-lg">${escapeHtml(restaurant.name)}</h1>
+        <h1 class="text-3xl sm:text-4xl font-black tracking-tightest text-white leading-tight drop-shadow-lg">${escapeHtml(restaurant.name)}</h1>
         <div class="flex items-center gap-2.5 flex-wrap">
           ${statusPill}
           ${callPill}

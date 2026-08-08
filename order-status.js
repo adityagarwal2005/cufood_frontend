@@ -22,9 +22,9 @@ function getCodeFromUrl() {
 
 function stateMessage({ icon, message }) {
   return `
-    <div class="text-center bg-white border border-line rounded-2xl shadow-sm px-7 py-14">
-      <span class="flex items-center justify-center w-14 h-14 rounded-full bg-accent-soft text-accent mx-auto mb-4 p-3.5">${icon}</span>
-      <p class="text-muted text-[15px]">${message}</p>
+    <div class="state-shell">
+      <span class="state-icon">${icon}</span>
+      <p class="text-muted text-base">${message}</p>
     </div>
   `;
 }
@@ -37,8 +37,8 @@ function renderLookupForm(errorMessage) {
       ${errorMessage ? `<div class="text-sm font-medium text-error bg-error-soft rounded-xl px-4 py-3 mb-4">${escapeHtml(errorMessage)}</div>` : ""}
       <form id="lookup-form" class="flex gap-2">
         <input type="text" id="code-input" maxlength="6" placeholder="ABC123" required
-          class="flex-1 rounded-xl border-2 border-line bg-cream px-4 py-3 text-[15px] font-bold tracking-widest uppercase text-ink focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150">
-        <button type="submit" class="rounded-xl bg-ink text-white font-bold px-5 py-3 shadow-accent-glow hover:shadow-lg transition-all duration-150">Check</button>
+          class="flex-1 rounded-xl border-2 border-line bg-cream px-4 py-3 text-base font-bold tracking-widest uppercase text-ink focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150">
+        <button type="submit" class="btn-primary">Check</button>
       </form>
     </div>
   `;
@@ -146,7 +146,7 @@ function renderStepTracker(order) {
         <span class="flex items-center justify-center w-9 h-9 rounded-full transition-all duration-150 ${circleClass}">
           <span class="w-4 h-4">${step.icon}</span>
         </span>
-        <span class="text-[11px] text-center ${labelClass}">${escapeHtml(step.label)}</span>
+        <span class="text-xs text-center ${labelClass}">${escapeHtml(step.label)}</span>
       </div>
     `;
   }).join("");
@@ -262,7 +262,7 @@ function renderOrder(order) {
     <div class="bg-white border border-line rounded-2xl shadow-lg overflow-hidden mb-6">
       <div class="bg-ink text-white p-6 sm:p-7 text-center">
         <p class="text-xs font-bold uppercase tracking-widest text-white/80 mb-2">Pickup code</p>
-        <p class="text-4xl font-extrabold tracking-[0.3em]">${escapeHtml(order.order_code)}</p>
+        <p class="text-4xl font-black tracking-[0.3em]">${escapeHtml(order.order_code)}</p>
         ${formatScheduledBadge(order)}
       </div>
       <div class="p-6 sm:p-7">
@@ -271,7 +271,7 @@ function renderOrder(order) {
             ? `
               ${renderStepTracker(order)}
               <div class="flex items-center gap-2 mb-4">
-                <p class="text-base font-extrabold text-ink">${meta.label}</p>
+                <p class="text-base font-black text-ink">${meta.label}</p>
                 ${eta ? `<span class="text-xs font-bold text-accent-deep bg-accent-soft rounded-full px-2.5 py-1">Ready ${eta}</span>` : ""}
               </div>
             `
@@ -279,7 +279,7 @@ function renderOrder(order) {
               <div class="flex items-center gap-3 mb-4">
                 <span class="flex items-center justify-center w-10 h-10 rounded-full bg-accent-soft ${meta.color} p-2.5 flex-shrink-0">${meta.icon}</span>
                 <div>
-                  <p class="text-base font-extrabold text-ink">${meta.label}</p>
+                  <p class="text-base font-black text-ink">${meta.label}</p>
                   ${eta ? `<p class="text-sm text-muted">Ready ${eta}</p>` : ""}
                 </div>
               </div>
@@ -291,7 +291,7 @@ function renderOrder(order) {
           <div>${itemsHtml}</div>
           <div class="flex items-center justify-between pt-3 mt-1 border-t border-line">
             <span class="text-sm font-bold text-muted uppercase tracking-wide">Total</span>
-            <span class="text-lg font-extrabold text-ink">${escapeHtml(formatPrice(order.total_amount))}</span>
+            <span class="text-lg font-black text-ink">${escapeHtml(formatPrice(order.total_amount))}</span>
           </div>
         </div>
         ${order.status === "placed" && order.payment_status !== "paid" ? renderPaymentPendingSection(order) : ""}

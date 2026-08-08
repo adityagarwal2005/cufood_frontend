@@ -138,10 +138,10 @@ function renderItemPrice(item) {
     const parts = [];
     if (half) parts.push(`Half ${half}`);
     if (full) parts.push(`Full ${full}`);
-    return `<span class="text-[15px] font-bold text-accent-deep whitespace-nowrap">${escapeHtml(parts.join(" / "))}</span>`;
+    return `<span class="text-base font-bold text-accent-deep whitespace-nowrap">${escapeHtml(parts.join(" / "))}</span>`;
   }
   const price = formatPrice(item.price);
-  return price ? `<span class="text-[15px] font-bold text-accent-deep whitespace-nowrap">${escapeHtml(price)}</span>` : "";
+  return price ? `<span class="text-base font-bold text-accent-deep whitespace-nowrap">${escapeHtml(price)}</span>` : "";
 }
 
 function hasPriceTiers(item) {
@@ -200,12 +200,12 @@ function toggleSwitchHtml({ id, extraInputClasses, checked, dataAttrs }) {
 
 function stateMessage({ icon, message, card }) {
   const wrapper = card
-    ? "text-center bg-white border border-line rounded-2xl shadow-sm px-7 py-14"
+    ? "state-shell"
     : "text-center py-10";
   return `
     <div class="${wrapper}">
-      <span class="flex items-center justify-center w-14 h-14 rounded-full bg-accent-soft text-accent mx-auto mb-4 p-3.5">${icon}</span>
-      <p class="text-muted text-[15px]">${message}</p>
+      <span class="state-icon">${icon}</span>
+      <p class="text-muted text-base">${message}</p>
     </div>
   `;
 }
@@ -222,16 +222,16 @@ function renderEditItemRow(item) {
   return `
     <div class="flex flex-wrap items-end gap-3 bg-white border-2 border-accent-soft rounded-xl px-5 py-4" data-edit-row="${item.id}">
       <div class="flex flex-col gap-1 flex-1 min-w-[140px]">
-        <label class="text-[11px] font-semibold text-muted">Name</label>
+        <label class="text-xs font-semibold text-muted">Name</label>
         <input type="text" class="edit-item-name rounded-lg border-2 border-line bg-white px-3 py-2 text-sm text-ink focus:outline-none focus:border-accent" value="${escapeHtml(item.name)}">
       </div>
       <div class="flex flex-col gap-1 flex-1 min-w-[120px]">
-        <label class="text-[11px] font-semibold text-muted">Category</label>
+        <label class="text-xs font-semibold text-muted">Category</label>
         <input type="text" class="edit-item-category rounded-lg border-2 border-line bg-white px-3 py-2 text-sm text-ink focus:outline-none focus:border-accent" value="${escapeHtml(item.category || "")}">
       </div>
       ${simplePriced ? `
         <div class="flex flex-col gap-1 w-24">
-          <label class="text-[11px] font-semibold text-muted">Price</label>
+          <label class="text-xs font-semibold text-muted">Price</label>
           <input type="number" min="0" step="0.01" class="edit-item-price rounded-lg border-2 border-line bg-white px-3 py-2 text-sm text-ink focus:outline-none focus:border-accent" value="${item.price !== null ? item.price : ""}">
         </div>
       ` : ""}
@@ -271,9 +271,9 @@ function renderMenuItemsHtml(items) {
       html += `
         <div class="flex flex-wrap items-center gap-4 bg-white border border-line border-l-4 border-l-transparent rounded-xl shadow-sm px-5 py-4 hover:shadow-md hover:-translate-y-0.5 hover:border-l-accent transition-all duration-150">
           <div class="flex-1 flex flex-wrap items-baseline gap-2 min-w-[140px]">
-            <span class="text-[15px] font-semibold text-ink">${escapeHtml(item.name)}</span>
+            <span class="text-base font-semibold text-ink">${escapeHtml(item.name)}</span>
             ${tiered ? renderTierPills(item.price_tiers) : renderItemPrice(item)}
-            ${!item.is_permanently_active ? `<span class="text-[11px] font-semibold text-muted bg-stone-100 px-2.5 py-0.5 rounded-full">Inactive</span>` : ""}
+            ${!item.is_permanently_active ? `<span class="text-xs font-semibold text-muted bg-cream-alt px-2.5 py-0.5 rounded-full">Inactive</span>` : ""}
           </div>
           <div class="flex items-center gap-4 flex-shrink-0">
             ${toggleSwitchHtml({
@@ -300,9 +300,9 @@ function renderMenuItemsHtml(items) {
 const ORDER_STATUS_META = {
   placed: { label: "New order", pillClass: "bg-accent-soft text-accent-deep" },
   preparing: { label: "Preparing", pillClass: "bg-accent-soft text-accent-deep" },
-  rejected: { label: "Rejected", pillClass: "bg-stone-100 text-muted" },
+  rejected: { label: "Rejected", pillClass: "bg-cream-alt text-muted" },
   ready: { label: "Ready for pickup", pillClass: "bg-accent-soft text-accent-deep" },
-  completed: { label: "Completed", pillClass: "bg-stone-100 text-muted" },
+  completed: { label: "Completed", pillClass: "bg-cream-alt text-muted" },
 };
 
 function timeAgo(isoString) {
@@ -318,19 +318,19 @@ function renderOrderActions(order) {
   if (order.status === "placed") {
     return `
       <div class="flex items-center gap-2 flex-shrink-0">
-        <button type="button" class="order-reject-btn inline-flex items-center gap-1.5 text-sm font-semibold text-error bg-error-soft rounded-xl px-4 py-2 hover:opacity-80 transition-opacity duration-150" data-code="${escapeHtml(order.order_code)}">Reject</button>
-        <button type="button" class="order-accept-btn inline-flex items-center gap-1.5 text-sm font-bold text-white bg-ink rounded-xl px-4 py-2 shadow-accent-glow hover:shadow-lg transition-all duration-150" data-code="${escapeHtml(order.order_code)}">Accept & start</button>
+        <button type="button" class="order-reject-btn btn-destructive btn-sm bg-error-soft text-error hover:bg-error hover:text-white" data-code="${escapeHtml(order.order_code)}">Reject</button>
+        <button type="button" class="order-accept-btn btn-primary btn-sm" data-code="${escapeHtml(order.order_code)}">Accept & start</button>
       </div>
     `;
   }
   if (order.status === "preparing") {
     return `
-      <button type="button" class="order-ready-btn inline-flex items-center gap-1.5 text-sm font-bold text-white bg-ink rounded-xl px-4 py-2 shadow-accent-glow hover:shadow-lg transition-all duration-150 flex-shrink-0" data-code="${escapeHtml(order.order_code)}">Mark ready</button>
+      <button type="button" class="order-ready-btn btn-primary btn-sm flex-shrink-0" data-code="${escapeHtml(order.order_code)}">Mark ready</button>
     `;
   }
   if (order.status === "ready") {
     return `
-      <button type="button" class="order-complete-btn inline-flex items-center gap-1.5 text-sm font-bold text-white bg-ink rounded-xl px-4 py-2 shadow-accent-glow hover:shadow-lg transition-all duration-150 flex-shrink-0" data-code="${escapeHtml(order.order_code)}">Picked up</button>
+      <button type="button" class="order-complete-btn btn-primary btn-sm flex-shrink-0" data-code="${escapeHtml(order.order_code)}">Picked up</button>
     `;
   }
   return "";
@@ -349,7 +349,7 @@ function renderOrderCard(order) {
   // which mark_preparing() sets from scheduled_for when relevant) is the
   // more current signal, so this badge would be redundant there.
   const scheduledBadge = order.scheduled_for && ["placed", "rejected"].includes(order.status)
-    ? `<span class="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-accent-soft text-accent-deep"><span class="w-3 h-3">${ICONS.clock}</span>${escapeHtml(new Date(order.scheduled_for).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }))}</span>`
+    ? `<span class="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-accent-soft text-accent-deep"><span class="w-3 h-3">${ICONS.clock}</span>${escapeHtml(new Date(order.scheduled_for).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }))}</span>`
     : "";
   // Reject triggers an automatic Razorpay refund server-side (see
   // RejectOrderView) — nothing for the owner to do here anymore, just a
@@ -368,8 +368,8 @@ function renderOrderCard(order) {
       <div class="flex items-start justify-between gap-3 flex-wrap">
         <div class="min-w-0">
           <div class="flex items-center gap-2 flex-wrap mb-1">
-            <span class="text-sm font-extrabold text-ink">#${escapeHtml(order.order_code)}</span>
-            <span class="text-[11px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${meta.pillClass}">${meta.label}</span>
+            <span class="text-sm font-black text-ink">#${escapeHtml(order.order_code)}</span>
+            <span class="text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${meta.pillClass}">${meta.label}</span>
             ${scheduledBadge}
           </div>
           <p class="text-xs text-muted">${escapeHtml(order.student_name)}${order.status === "placed" && order.student_phone_number ? ` · ${escapeHtml(order.student_phone_number)}` : ""} · ${timeAgo(order.created_at)}</p>
@@ -406,13 +406,13 @@ function renderTodayStats(orders) {
   el.innerHTML = `
     <div class="flex items-center gap-5 bg-cream-alt rounded-xl px-4 py-3 mb-4">
       <div>
-        <p class="text-xl font-extrabold text-ink leading-none">${todaysOrders.length}</p>
-        <p class="text-[11px] font-semibold text-muted uppercase tracking-wide mt-1">Orders today</p>
+        <p class="text-xl font-black text-ink leading-none">${todaysOrders.length}</p>
+        <p class="text-xs font-semibold text-muted uppercase tracking-wide mt-1">Orders today</p>
       </div>
       <div class="w-px h-8 bg-line"></div>
       <div>
-        <p class="text-xl font-extrabold text-accent-deep leading-none">${escapeHtml(formatPrice(revenue))}</p>
-        <p class="text-[11px] font-semibold text-muted uppercase tracking-wide mt-1">Revenue today</p>
+        <p class="text-xl font-black text-accent-deep leading-none">${escapeHtml(formatPrice(revenue))}</p>
+        <p class="text-xs font-semibold text-muted uppercase tracking-wide mt-1">Revenue today</p>
       </div>
     </div>
   `;
@@ -535,7 +535,7 @@ function startOrderPolling() {
 function renderDashboard() {
   const statusPill = restaurantData.is_open_today
     ? `<span class="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-full bg-accent-soft text-accent-deep"><span class="w-1.5 h-1.5 rounded-full bg-accent"></span>Open today</span>`
-    : `<span class="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-full bg-stone-100 text-muted"><span class="w-1.5 h-1.5 rounded-full bg-muted"></span>Closed today</span>`;
+    : `<span class="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-full bg-cream-alt text-muted"><span class="w-1.5 h-1.5 rounded-full bg-muted"></span>Closed today</span>`;
 
   const items = restaurantData.menu_items || [];
   const availableCount = items.filter((i) => i.is_available_today).length;
@@ -547,7 +547,7 @@ function renderDashboard() {
       <div class="absolute top-0 inset-x-0 h-1 bg-accent"></div>
       <div class="flex flex-wrap items-center justify-between gap-4">
         <div class="flex flex-wrap items-center gap-4">
-          <span class="flex items-center justify-center w-12 h-12 rounded-2xl bg-ink text-white font-extrabold text-lg shadow-accent-glow flex-shrink-0">${escapeHtml(initial)}</span>
+          <span class="flex items-center justify-center w-12 h-12 rounded-2xl bg-ink text-white font-black text-lg shadow-accent-glow flex-shrink-0">${escapeHtml(initial)}</span>
           <div class="flex flex-col gap-1">
             <div class="flex flex-wrap items-center gap-3">
               <h1 class="text-2xl sm:text-3xl font-black tracking-tightest text-ink leading-tight">${escapeHtml(restaurantData.name)}</h1>
@@ -594,7 +594,7 @@ function renderDashboard() {
             ` : ""}
           </div>
         </div>
-        <button type="submit" id="upi-save-btn" class="inline-flex items-center gap-2 rounded-xl bg-ink text-white font-bold text-sm px-5 py-2.5 shadow-accent-glow hover:shadow-lg transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed">Save</button>
+        <button type="submit" id="upi-save-btn" class="btn-primary btn-sm">Save</button>
       </form>
       <p class="text-xs text-muted mt-3">Students pay through the app now, not directly to you — this is just where we send your share of what they've paid.</p>
     </section>
@@ -637,7 +637,7 @@ function renderDashboard() {
           <input type="number" id="item-price" placeholder="Optional" min="0" step="0.01"
             class="rounded-xl border-2 border-line bg-white px-3.5 py-2.5 text-sm text-ink focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150">
         </div>
-        <button type="submit" id="add-item-submit" class="inline-flex items-center gap-2 rounded-xl bg-ink text-white font-bold text-sm px-5 py-2.5 shadow-accent-glow hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0">
+        <button type="submit" id="add-item-submit" class="btn-primary btn-sm">
           <span class="w-3.5 h-3.5">${ICONS.plus}</span>Add item
         </button>
       </form>

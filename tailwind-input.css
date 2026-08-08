@@ -1,3 +1,114 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  /* Replaces the browser-default blue ring with a brand-consistent one —
+     kept visible (never outline-none) since this is the only affordance
+     keyboard/switch users get. Skipped on mouse click via :focus-visible,
+     so it doesn't flash on every tap for touch users either. */
+  :focus-visible {
+    outline: 2px solid theme("colors.accent");
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
+@layer components {
+  /* --- Buttons: one component, four variants, five states. ------------
+     Every button in the app should be one of these four classes plus
+     a size modifier, not a one-off string of rounded/bg/px/py utilities.
+     States (hover/active/disabled) are baked into the variant, not
+     re-specified per call site. */
+  .btn {
+    @apply inline-flex items-center justify-center gap-1.5 font-bold uppercase tracking-wide text-xs rounded-full transition-all duration-150 whitespace-nowrap disabled:opacity-50 disabled:pointer-events-none;
+    min-height: 44px; /* tap target floor, per WCAG 2.5.5 */
+    padding-inline: 1.25rem;
+  }
+  .btn-sm {
+    min-height: 36px;
+    padding-inline: 1rem;
+  }
+  .btn-primary {
+    @apply btn bg-ink text-white hover:bg-accent active:bg-accent-deep;
+  }
+  .btn-secondary {
+    @apply btn bg-white text-ink border-2 border-ink hover:bg-ink hover:text-white;
+  }
+  .btn-ghost {
+    @apply btn bg-transparent text-ink border-0 hover:text-accent-deep px-0 min-h-0;
+  }
+  .btn-destructive {
+    @apply btn bg-error text-white hover:bg-error/85 active:bg-error/70;
+  }
+  .btn-loading {
+    @apply relative text-transparent pointer-events-none;
+  }
+  .btn-loading::after {
+    content: "";
+    position: absolute;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 9999px;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    color: inherit;
+    opacity: 0.9;
+    animation: btn-spin 0.6s linear infinite;
+  }
+  @keyframes btn-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* --- Inputs: one shape everywhere a student or owner types. --------- */
+  .field {
+    @apply w-full rounded-xl border-2 border-line bg-cream-alt px-4 py-3 text-base text-ink placeholder:text-muted focus:outline-none focus:border-ink focus:ring-4 focus:ring-accent-soft focus:bg-white transition-all duration-150;
+    min-height: 44px;
+  }
+
+  /* --- Cards: the one surface pattern for grouped content. ------------ */
+  .card {
+    @apply bg-white border border-line rounded-2xl;
+  }
+  .card-pad {
+    @apply card p-5 sm:p-6;
+  }
+
+  /* --- Badges: status pills. One shape, five semantic fills. ---------- */
+  .badge {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wide;
+  }
+  .badge-accent {
+    @apply badge bg-accent-soft text-accent-deep;
+  }
+  .badge-success {
+    @apply badge bg-success-soft text-success;
+  }
+  .badge-error {
+    @apply badge bg-error-soft text-error;
+  }
+  .badge-muted {
+    @apply badge bg-cream-alt text-muted;
+  }
+  .badge-ink {
+    @apply badge bg-ink text-white;
+  }
+
+  /* --- Skeleton loaders: shape-matched placeholders, never spinners for
+     anything that has a known shape (list rows, cards, images). ------- */
+  .skel {
+    @apply bg-skeleton animate-pulse rounded-2xl;
+  }
+
+  /* --- Empty / error state shell — same wrapper for "no orders yet",
+     "couldn't load", "closed right now", etc.; only the icon/copy/action
+     inside changes per call site. ---------------------------------------- */
+  .state-shell {
+    @apply card text-center px-7 py-14;
+  }
+  .state-icon {
+    @apply flex items-center justify-center w-14 h-14 rounded-full bg-accent-soft text-accent mx-auto mb-4 p-3.5;
+  }
+}

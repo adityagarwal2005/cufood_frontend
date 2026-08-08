@@ -29,8 +29,8 @@ const STATUS_PILL = {
   placed: "bg-accent-soft text-accent-deep",
   preparing: "bg-accent-soft text-accent-deep",
   ready: "bg-accent-soft text-accent-deep",
-  completed: "bg-stone-100 text-muted",
-  rejected: "bg-stone-100 text-muted",
+  completed: "bg-cream-alt text-muted",
+  rejected: "bg-cream-alt text-muted",
 };
 
 const STATUS_LABEL = {
@@ -43,9 +43,9 @@ const STATUS_LABEL = {
 
 function emptyState() {
   pageContent.innerHTML = `
-    <div class="text-center bg-white border border-line rounded-2xl shadow-sm px-7 py-14">
-      <span class="flex items-center justify-center w-14 h-14 rounded-full bg-accent-soft text-accent mx-auto mb-4 p-3.5">${ICONS.cart}</span>
-      <p class="text-muted text-[15px] mb-4">No orders placed from this device yet.</p>
+    <div class="state-shell">
+      <span class="state-icon">${ICONS.cart}</span>
+      <p class="text-muted text-base mb-4">No orders placed from this device yet.</p>
       <a href="location-select.html" class="text-accent-deep font-bold hover:underline">Browse outlets</a>
     </div>
   `;
@@ -53,16 +53,16 @@ function emptyState() {
 
 function renderOrderRow(order, live, index) {
   const status = live ? live.status : null;
-  const pillClass = status ? STATUS_PILL[status] || "bg-stone-100 text-muted" : "bg-stone-100 text-muted";
+  const pillClass = status ? STATUS_PILL[status] || "bg-cream-alt text-muted" : "bg-cream-alt text-muted";
   const label = status ? STATUS_LABEL[status] || status : "Not found";
   return `
     <a href="order-status.html?code=${encodeURIComponent(order.code)}" style="animation-delay:${index * 50}ms" class="opacity-0 animate-fade-in-up block bg-white border border-line rounded-xl px-5 py-4 mb-3 last:mb-0 hover:shadow-md hover:-translate-y-0.5 transition-all duration-150">
       <div class="flex items-center justify-between gap-3">
         <div class="min-w-0">
-          <p class="text-sm font-extrabold text-ink">${escapeHtml(order.restaurantName || "")} <span class="text-muted font-semibold">· #${escapeHtml(order.code)}</span></p>
+          <p class="text-sm font-black text-ink">${escapeHtml(order.restaurantName || "")} <span class="text-muted font-semibold">· #${escapeHtml(order.code)}</span></p>
           ${live ? `<p class="text-sm text-ink mt-1">${escapeHtml(formatPrice(live.total_amount))}</p>` : ""}
         </div>
-        <span class="text-[11px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full flex-shrink-0 ${pillClass}">${escapeHtml(label)}</span>
+        <span class="text-xs font-bold uppercase tracking-wide px-2.5 py-1 rounded-full flex-shrink-0 ${pillClass}">${escapeHtml(label)}</span>
       </div>
     </a>
   `;

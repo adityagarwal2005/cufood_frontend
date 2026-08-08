@@ -37,9 +37,9 @@ function restaurantUrl(slug) {
 
 function renderEmptyState(container, message) {
   container.innerHTML = `
-    <div class="col-span-full text-center bg-white border border-line rounded-2xl shadow-sm px-7 py-14">
-      <span class="flex items-center justify-center w-14 h-14 rounded-full bg-accent-soft text-accent mx-auto mb-4 p-3.5">${ICONS.plate}</span>
-      <p class="text-muted text-[15px] mb-4">${message}</p>
+    <div class="col-span-full state-shell">
+      <span class="state-icon">${ICONS.plate}</span>
+      <p class="text-muted text-base mb-4">${message}</p>
       <a href="location-select.html" class="text-accent-deep font-bold hover:underline">Switch location</a>
     </div>
   `;
@@ -83,7 +83,7 @@ function renderRestaurants(restaurants) {
     const card = document.createElement("a");
     card.href = restaurantUrl(restaurant.slug);
     card.className =
-      "group relative block aspect-[16/10] sm:aspect-[2/1] rounded-2xl overflow-hidden shadow-md ring-1 ring-black/5 hover:shadow-2xl hover:-translate-y-1.5 active:translate-y-0 transition-all duration-150 bg-stone-200 opacity-0 animate-fade-in-up";
+      "group relative block aspect-[16/10] sm:aspect-[2/1] rounded-2xl overflow-hidden shadow-md ring-1 ring-black/5 hover:shadow-2xl hover:-translate-y-1.5 active:translate-y-0 transition-all duration-150 bg-skeleton opacity-0 animate-fade-in-up";
     card.style.animationDelay = `${index * 50}ms`;
 
     const photo = document.createElement("div");
@@ -107,8 +107,8 @@ function renderRestaurants(restaurants) {
 
     const badge = document.createElement("span");
     badge.className = restaurant.is_open_today
-      ? "absolute top-4 left-4 z-10 inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide px-3 py-1.5 rounded-full shadow-sm bg-white/95 backdrop-blur text-accent-deep"
-      : "absolute top-4 left-4 z-10 inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide px-3 py-1.5 rounded-full shadow-sm bg-white/80 backdrop-blur text-muted";
+      ? "absolute top-4 left-4 z-10 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide px-3 py-1.5 rounded-full shadow-sm bg-white/95 backdrop-blur text-accent-deep"
+      : "absolute top-4 left-4 z-10 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide px-3 py-1.5 rounded-full shadow-sm bg-white/80 backdrop-blur text-muted";
     badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full ${restaurant.is_open_today ? "bg-accent" : "bg-muted"}"></span>${restaurant.is_open_today ? "Open" : "Closed today"}`;
 
     const arrowChip = document.createElement("span");
@@ -119,7 +119,7 @@ function renderRestaurants(restaurants) {
     const nameWrap = document.createElement("div");
     nameWrap.className = "absolute bottom-0 inset-x-0 p-5 sm:p-6 flex items-end justify-between gap-3";
     nameWrap.innerHTML = `
-      <h3 class="font-extrabold text-xl sm:text-2xl leading-snug text-white drop-shadow-md">${escapeHtml(restaurant.name)}</h3>
+      <h3 class="font-black text-xl sm:text-2xl leading-snug text-white drop-shadow-md">${escapeHtml(restaurant.name)}</h3>
       <span class="hidden sm:inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wide text-white/80 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-150 whitespace-nowrap">View menu &rarr;</span>
     `;
 
@@ -175,7 +175,7 @@ function renderSearchResults(results) {
     const itemWord = result.matching_item_count === 1 ? "item" : "items";
     item.innerHTML = `
       <span class="flex items-center justify-center w-10 h-10 rounded-xl bg-accent-soft text-accent-deep flex-shrink-0 p-2.5">${ICONS.plate}</span>
-      <span class="flex-1 min-w-0 text-[15px] text-ink">
+      <span class="flex-1 min-w-0 text-base text-ink">
         <strong class="font-bold text-ink">${escapeHtml(result.restaurant_name)}</strong>
         <span class="text-muted"> — ${result.matching_item_count} matching ${itemWord}</span>
       </span>

@@ -75,9 +75,9 @@ function emptyCartView() {
   const goBackHref = backLink ? backLink.href : "location-select.html";
   const goBackLabel = backLink && backLink.href.includes("restaurant.html") ? "Back to menu" : "Browse outlets";
   pageContent.innerHTML = `
-    <div class="text-center bg-white border border-line rounded-2xl shadow-sm px-7 py-14">
-      <span class="flex items-center justify-center w-14 h-14 rounded-full bg-accent-soft text-accent mx-auto mb-4 p-3.5">${ICONS.cart}</span>
-      <p class="text-muted text-[15px] mb-4">Your cart is empty.</p>
+    <div class="state-shell">
+      <span class="state-icon">${ICONS.cart}</span>
+      <p class="text-muted text-base mb-4">Your cart is empty.</p>
       <a href="${escapeHtml(goBackHref)}" class="text-accent-deep font-bold hover:underline">${goBackLabel}</a>
     </div>
   `;
@@ -87,7 +87,7 @@ function renderCartLine(key, line) {
   return `
     <div class="flex items-start justify-between gap-4 py-3 border-b border-line last:border-b-0">
       <div class="min-w-0">
-        <p class="text-[15px] font-semibold text-ink">${escapeHtml(line.name)}${line.sizeLabel ? ` <span class="text-muted font-medium">(${escapeHtml(line.sizeLabel)})</span>` : ""}</p>
+        <p class="text-base font-semibold text-ink">${escapeHtml(line.name)}${line.sizeLabel ? ` <span class="text-muted font-medium">(${escapeHtml(line.sizeLabel)})</span>` : ""}</p>
         <p class="text-xs text-muted">${escapeHtml(formatPrice(line.unitPrice))} each</p>
       </div>
       <div class="flex items-center gap-3 flex-shrink-0">
@@ -100,7 +100,7 @@ function renderCartLine(key, line) {
             <span class="w-3.5 h-3.5 text-ink">${ICONS.plus}</span>
           </button>
         </div>
-        <p class="text-[15px] font-bold text-accent-deep w-16 text-right">${escapeHtml(formatPrice(line.unitPrice * line.quantity))}</p>
+        <p class="text-base font-bold text-accent-deep w-16 text-right">${escapeHtml(formatPrice(line.unitPrice * line.quantity))}</p>
       </div>
     </div>
   `;
@@ -120,7 +120,7 @@ function renderCheckout(cart) {
       <div id="cart-lines">${lines.map(([key, line]) => renderCartLine(key, line)).join("")}</div>
       <div class="flex items-center justify-between pt-4 mt-2 border-t border-line">
         <span class="text-sm font-bold text-muted uppercase tracking-wide">Total</span>
-        <span class="text-xl font-extrabold text-ink">${escapeHtml(formatPrice(total))}</span>
+        <span class="text-xl font-black text-ink">${escapeHtml(formatPrice(total))}</span>
       </div>
     </div>
 
@@ -145,15 +145,15 @@ function renderCheckout(cart) {
         <div class="flex flex-col gap-1.5">
           <label class="text-xs font-semibold text-muted" for="student-name">Name</label>
           <input type="text" id="student-name" required
-            class="rounded-xl border-2 border-line bg-white px-4 py-3 text-[15px] text-ink focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150">
+            class="rounded-xl border-2 border-line bg-white px-4 py-3 text-base text-ink focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150">
         </div>
         <div class="flex flex-col gap-1.5">
           <label class="text-xs font-semibold text-muted" for="student-phone">Your phone number</label>
           <input type="tel" id="student-phone" placeholder="98765 43210" required
-            class="rounded-xl border-2 border-line bg-white px-4 py-3 text-[15px] text-ink focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150">
+            class="rounded-xl border-2 border-line bg-white px-4 py-3 text-base text-ink focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150">
           <p class="text-xs text-muted">So the restaurant can reach you if there's an issue with your order.</p>
         </div>
-        <button type="submit" id="pay-btn" class="inline-flex items-center justify-center gap-2 rounded-xl bg-ink text-white font-bold text-base px-5 py-3.5 shadow-accent-glow hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 mt-1">
+        <button type="submit" id="pay-btn" class="btn-primary w-full text-sm mt-1">
           Continue to pay — ${escapeHtml(formatPrice(total))}
         </button>
         <p class="text-xs text-muted text-center leading-relaxed">${selectedSlot ? `You'll pay securely next. They'll have your order ready around ${escapeHtml(formatSlotTime(selectedSlot))}.` : "You'll pay securely next. The restaurant starts as soon as payment is confirmed."}</p>

@@ -39,16 +39,16 @@ async function loadLocationStat(slug, card) {
     if (open > 0) {
       statusEl.innerHTML = `
         <span class="relative flex w-2 h-2">
-          <span class="absolute inline-flex w-full h-full rounded-full bg-emerald-300 opacity-75 animate-ping"></span>
-          <span class="relative inline-flex w-2 h-2 rounded-full bg-emerald-300"></span>
+          <span class="absolute inline-flex w-full h-full rounded-full bg-success opacity-75 animate-ping"></span>
+          <span class="relative inline-flex w-2 h-2 rounded-full bg-success"></span>
         </span>
         ${open} open now`;
       statusEl.className =
-        "inline-flex items-center gap-1.5 rounded-full bg-white/15 border border-white/25 backdrop-blur px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white";
+        "inline-flex items-center gap-1.5 rounded-full bg-white/15 border border-white/25 backdrop-blur px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-white";
     } else {
       statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-white/50"></span>Closed`;
       statusEl.className =
-        "inline-flex items-center gap-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white/70";
+        "inline-flex items-center gap-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-white/70";
     }
     return { total, open };
   } catch (err) {
@@ -82,7 +82,7 @@ function renderLocations(locations) {
 
     const card = document.createElement("a");
     card.className =
-      `group relative flex flex-col overflow-hidden ${hasPhoto ? "bg-stone-800" : theme} rounded-2xl hover:-translate-y-1.5 active:translate-y-0 transition-all duration-150 p-5 sm:p-6 h-40 sm:h-44 text-inherit no-underline opacity-0 animate-fade-in-up`;
+      `group relative flex flex-col overflow-hidden ${hasPhoto ? "bg-ink" : theme} rounded-2xl hover:-translate-y-1.5 active:translate-y-0 transition-all duration-150 p-5 sm:p-6 h-40 sm:h-44 text-inherit no-underline opacity-0 animate-fade-in-up`;
     card.style.animationDelay = `${index * 60}ms`;
     card.href = `index.html?location=${encodeURIComponent(location.slug)}`;
 
@@ -102,14 +102,14 @@ function renderLocations(locations) {
 
       <span class="relative flex items-start justify-between gap-3">
         <span class="flex items-center justify-center w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-white/15 border border-white/25 backdrop-blur text-xl sm:text-2xl leading-none shadow-inner transition-transform duration-150 group-hover:scale-110">${icon}</span>
-        <span data-location-status class="inline-flex items-center gap-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white/70">
+        <span data-location-status class="inline-flex items-center gap-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-white/70">
           <span class="w-1.5 h-1.5 rounded-full bg-white/40 animate-pulse"></span>Loading
         </span>
       </span>
 
       <span class="relative mt-auto pt-4 flex items-end justify-between gap-3">
         <span class="flex flex-col min-w-0">
-          <span class="text-lg sm:text-xl font-extrabold text-white tracking-tight leading-tight truncate">${escapeHtml(location.name)}</span>
+          <span class="text-lg sm:text-xl font-black text-white tracking-tight leading-tight truncate">${escapeHtml(location.name)}</span>
           <span class="text-xs sm:text-sm font-semibold text-white/70 mt-0.5" data-location-stat>Loading&hellip;</span>
         </span>
         <span class="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/15 border border-white/25 backdrop-blur text-white transition-all duration-150 group-hover:bg-white group-hover:text-accent-deep group-hover:translate-x-0.5 flex-shrink-0">
