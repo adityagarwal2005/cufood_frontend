@@ -83,24 +83,28 @@ function emptyCartView() {
   `;
 }
 
+// Quiet by design: quantity editing is a secondary action here, so it
+// stays small and muted rather than competing with the total/pay button
+// for attention. No card, no shadow — a border-b rule between rows is
+// all the separation a flat list needs.
 function renderCartLine(key, line) {
   return `
-    <div class="flex items-start justify-between gap-4 py-3 border-b border-line last:border-b-0">
+    <div class="flex items-start justify-between gap-4 py-4 border-b border-line last:border-b-0">
       <div class="min-w-0">
-        <p class="text-base font-semibold text-ink">${escapeHtml(line.name)}${line.sizeLabel ? ` <span class="text-muted font-medium">(${escapeHtml(line.sizeLabel)})</span>` : ""}</p>
-        <p class="text-xs text-muted">${escapeHtml(formatPrice(line.unitPrice))} each</p>
+        <p class="text-base font-bold text-ink">${escapeHtml(line.name)}${line.sizeLabel ? ` <span class="text-muted font-medium">(${escapeHtml(line.sizeLabel)})</span>` : ""}</p>
+        <p class="text-xs text-muted mt-0.5">${escapeHtml(formatPrice(line.unitPrice))} each</p>
       </div>
       <div class="flex items-center gap-3 flex-shrink-0">
         <div class="inline-flex items-center gap-1 bg-cream-alt rounded-full pl-1 pr-1 py-1">
-          <button type="button" class="cart-line-remove w-9 h-9 flex items-center justify-center rounded-full hover:bg-white transition-colors duration-150" data-key="${escapeHtml(key)}">
-            <span class="w-3.5 h-3.5 text-ink">${ICONS.minus}</span>
+          <button type="button" class="cart-line-remove w-8 h-8 flex items-center justify-center rounded-full hover:bg-white transition-colors duration-150" data-key="${escapeHtml(key)}">
+            <span class="w-3 h-3 text-muted">${ICONS.minus}</span>
           </button>
           <span class="text-sm font-bold min-w-[1rem] text-center">${line.quantity}</span>
-          <button type="button" class="cart-line-add w-9 h-9 flex items-center justify-center rounded-full hover:bg-white transition-colors duration-150" data-key="${escapeHtml(key)}">
-            <span class="w-3.5 h-3.5 text-ink">${ICONS.plus}</span>
+          <button type="button" class="cart-line-add w-8 h-8 flex items-center justify-center rounded-full hover:bg-white transition-colors duration-150" data-key="${escapeHtml(key)}">
+            <span class="w-3 h-3 text-muted">${ICONS.plus}</span>
           </button>
         </div>
-        <p class="text-base font-bold text-accent-deep w-16 text-right">${escapeHtml(formatPrice(line.unitPrice * line.quantity))}</p>
+        <p class="text-sm font-bold text-muted w-14 text-right">${escapeHtml(formatPrice(line.unitPrice * line.quantity))}</p>
       </div>
     </div>
   `;
@@ -111,54 +115,48 @@ function renderCheckout(cart) {
   const total = getCartTotal(cart);
 
   pageContent.innerHTML = `
-    <h1 class="text-3xl sm:text-4xl font-black tracking-tightest text-ink mb-1">Your order</h1>
-    <p class="text-sm text-muted mb-6">From <span class="font-bold text-ink">${escapeHtml(cart.restaurantName)}</span></p>
+    <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">From ${escapeHtml(cart.restaurantName)}</p>
+    <div class="flex items-end justify-between gap-4 pb-6 mb-6 border-b-2 border-ink">
+      <h1 class="text-2xl sm:text-3xl font-black tracking-tightest text-ink">Your order</h1>
+      <p class="text-3xl sm:text-4xl font-black tracking-tightest text-ink tabular-nums">${escapeHtml(formatPrice(total))}</p>
+    </div>
 
     <div id="error-banner" class="hidden text-sm font-medium text-error bg-error-soft rounded-xl px-4 py-3 mb-5"></div>
 
-    <div class="bg-white border border-line rounded-2xl shadow-sm p-5 sm:p-6 mb-6">
-      <div id="cart-lines">${lines.map(([key, line]) => renderCartLine(key, line)).join("")}</div>
-      <div class="flex items-center justify-between pt-4 mt-2 border-t border-line">
-        <span class="text-sm font-bold text-muted uppercase tracking-wide">Total</span>
-        <span class="text-xl font-black text-ink">${escapeHtml(formatPrice(total))}</span>
-      </div>
-    </div>
+    <div id="cart-lines" class="mb-8">${lines.map(([key, line]) => renderCartLine(key, line)).join("")}</div>
 
-    <div class="bg-white border border-line rounded-2xl shadow-sm p-5 sm:p-6 mb-6">
-      <h2 class="text-xs font-bold uppercase tracking-widest text-muted mb-4">When?</h2>
-      <div class="grid grid-cols-2 gap-2.5 mb-1">
-        <button type="button" id="when-asap-btn" class="rounded-xl border-2 px-4 py-3 text-sm font-bold transition-all duration-150 ${selectedSlot === null ? "border-accent bg-accent-soft text-accent-deep" : "border-line bg-white text-muted hover:border-accent-soft"}">
+    <div class="mb-8">
+      <h2 class="text-xs font-bold uppercase tracking-widest text-muted mb-3">When?</h2>
+      <div class="flex gap-2">
+        <button type="button" id="when-asap-btn" class="flex-1 rounded-xl border-2 px-4 py-3 text-sm font-bold text-left transition-all duration-150 ${selectedSlot === null ? "border-ink bg-ink text-white" : "border-line bg-white text-ink hover:border-ink"}">
           Now
-          <span class="block text-xs font-medium ${selectedSlot === null ? "text-accent-deep/70" : "text-muted"} mt-0.5">Pay now, cooked right away</span>
+          <span class="block text-xs font-medium ${selectedSlot === null ? "text-white/70" : "text-muted"} mt-0.5">Cooked right away</span>
         </button>
-        <button type="button" id="when-schedule-btn" class="rounded-xl border-2 px-4 py-3 text-sm font-bold transition-all duration-150 ${selectedSlot !== null ? "border-accent bg-accent-soft text-accent-deep" : "border-line bg-white text-muted hover:border-accent-soft"}">
+        <button type="button" id="when-schedule-btn" class="flex-1 rounded-xl border-2 px-4 py-3 text-sm font-bold text-left transition-all duration-150 ${selectedSlot !== null ? "border-ink bg-ink text-white" : "border-line bg-white text-ink hover:border-ink"}">
           Schedule
-          <span class="block text-xs font-medium ${selectedSlot !== null ? "text-accent-deep/70" : "text-muted"} mt-0.5">${selectedSlot ? `Pickup ~${escapeHtml(formatSlotTime(selectedSlot))}` : "Pick a pickup time"}</span>
+          <span class="block text-xs font-medium ${selectedSlot !== null ? "text-white/70" : "text-muted"} mt-0.5">${selectedSlot ? `Pickup ~${escapeHtml(formatSlotTime(selectedSlot))}` : "Pick a time"}</span>
         </button>
       </div>
-      <div id="slot-picker" class="${selectedSlot !== null ? "flex" : "hidden"} flex-wrap gap-2 pt-4 mt-3 border-t border-line"></div>
+      <div id="slot-picker" class="${selectedSlot !== null ? "flex" : "hidden"} flex-wrap gap-2 pt-4"></div>
     </div>
 
-    <div class="bg-cream-alt border border-line rounded-2xl shadow-sm p-5 sm:p-6 mb-6">
-      <h2 class="text-xs font-bold uppercase tracking-widest text-muted mb-4">Your details</h2>
-      <form id="checkout-form" class="flex flex-col gap-4">
-        <div class="flex flex-col gap-1.5">
-          <label class="text-xs font-semibold text-muted" for="student-name">Name</label>
-          <input type="text" id="student-name" required
-            class="rounded-xl border-2 border-line bg-white px-4 py-3 text-base text-ink focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150">
-        </div>
-        <div class="flex flex-col gap-1.5">
-          <label class="text-xs font-semibold text-muted" for="student-phone">Your phone number</label>
-          <input type="tel" id="student-phone" placeholder="98765 43210" required
-            class="rounded-xl border-2 border-line bg-white px-4 py-3 text-base text-ink focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150">
-          <p class="text-xs text-muted">So the restaurant can reach you if there's an issue with your order.</p>
-        </div>
-        <button type="submit" id="pay-btn" class="btn-primary w-full text-sm mt-1">
-          Continue to pay — ${escapeHtml(formatPrice(total))}
-        </button>
-        <p class="text-xs text-muted text-center leading-relaxed">${selectedSlot ? `You'll pay securely next. They'll have your order ready around ${escapeHtml(formatSlotTime(selectedSlot))}.` : "You'll pay securely next. The restaurant starts as soon as payment is confirmed."}</p>
-      </form>
-    </div>
+    <form id="checkout-form" class="flex flex-col gap-4 mb-8">
+      <h2 class="text-xs font-bold uppercase tracking-widest text-muted -mb-1">Your details</h2>
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs font-semibold text-muted" for="student-name">Name</label>
+        <input type="text" id="student-name" required class="field">
+      </div>
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs font-semibold text-muted" for="student-phone">Your phone number</label>
+        <input type="tel" id="student-phone" placeholder="98765 43210" required class="field">
+        <p class="text-xs text-muted">So the restaurant can reach you if there's an issue with your order.</p>
+      </div>
+    </form>
+
+    <button type="submit" form="checkout-form" id="pay-btn" class="btn-primary w-full text-base py-4">
+      Pay ${escapeHtml(formatPrice(total))}
+    </button>
+    <p class="text-xs text-muted text-center leading-relaxed mt-3">${selectedSlot ? `You'll pay securely next. They'll have your order ready around ${escapeHtml(formatSlotTime(selectedSlot))}.` : "You'll pay securely next. The restaurant starts as soon as payment is confirmed."}</p>
   `;
 
   renderSlotPicker();
@@ -177,7 +175,7 @@ function renderSlotPicker() {
     .map((slot) => {
       const isSelected = selectedSlot && slot.getTime() === selectedSlot.getTime();
       return `
-        <button type="button" class="slot-btn rounded-full border-2 px-4 py-2 text-sm font-bold transition-all duration-150 ${isSelected ? "border-accent bg-accent text-white" : "border-line bg-white text-ink hover:border-accent-soft"}" data-time="${slot.getTime()}">
+        <button type="button" class="slot-btn rounded-full border-2 px-4 py-2 text-sm font-bold transition-all duration-150 ${isSelected ? "border-ink bg-ink text-white" : "border-line bg-white text-ink hover:border-ink"}" data-time="${slot.getTime()}">
           ${escapeHtml(formatSlotTime(slot))}
         </button>
       `;
@@ -266,7 +264,7 @@ function resetPlaceOrderButton() {
   const cart = getCart();
   if (!payBtn || !cart) return;
   payBtn.disabled = false;
-  payBtn.textContent = `Continue to pay — ${formatPrice(getCartTotal(cart))}`;
+  payBtn.textContent = `Pay ${formatPrice(getCartTotal(cart))}`;
 }
 
 async function handleCheckoutSubmit(event) {
@@ -292,7 +290,7 @@ async function handleCheckoutSubmit(event) {
 
   const payBtn = document.getElementById("pay-btn");
   payBtn.disabled = true;
-  payBtn.textContent = "Placing order...";
+  payBtn.textContent = "Placing order…";
 
   const items = Object.values(cart.items).map((line) => ({
     menu_item_id: line.menuItemId,

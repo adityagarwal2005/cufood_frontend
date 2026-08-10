@@ -31,16 +31,14 @@ function stateMessage({ icon, message }) {
 
 function renderLookupForm(errorMessage) {
   pageContent.innerHTML = `
-    <div class="bg-white border border-line rounded-2xl shadow-sm p-6 sm:p-7">
-      <h1 class="text-2xl font-black tracking-tightest text-ink mb-1">Check your order</h1>
-      <p class="text-sm text-muted mb-5">Enter the 6-character code from your confirmation.</p>
-      ${errorMessage ? `<div class="text-sm font-medium text-error bg-error-soft rounded-xl px-4 py-3 mb-4">${escapeHtml(errorMessage)}</div>` : ""}
-      <form id="lookup-form" class="flex gap-2">
-        <input type="text" id="code-input" maxlength="6" placeholder="ABC123" required
-          class="flex-1 rounded-xl border-2 border-line bg-cream px-4 py-3 text-base font-bold tracking-widest uppercase text-ink focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150">
-        <button type="submit" class="btn-primary">Check</button>
-      </form>
-    </div>
+    <h1 class="text-3xl sm:text-4xl font-black tracking-tightest text-ink mb-2">Check your order</h1>
+    <p class="text-sm text-muted mb-8">Enter the 6-character code from your confirmation.</p>
+    ${errorMessage ? `<div class="text-sm font-medium text-error bg-error-soft rounded-xl px-4 py-3 mb-5">${escapeHtml(errorMessage)}</div>` : ""}
+    <form id="lookup-form" class="flex gap-2">
+      <input type="text" id="code-input" maxlength="6" placeholder="ABC123" required
+        class="field flex-1 text-lg font-bold tracking-widest uppercase text-center">
+      <button type="submit" class="btn-primary">Check</button>
+    </form>
   `;
   const form = document.getElementById("lookup-form");
   form.addEventListener("submit", (event) => {
@@ -128,6 +126,10 @@ function currentStepIndex(status) {
   return index === -1 ? 0 : index;
 }
 
+// The dominant element on this page — everything else (restaurant name,
+// items, total) is supporting detail once an order is actually in
+// progress, so the tracker gets the most vertical space and the largest
+// type on the screen, not a component squeezed inside a card with them.
 function renderStepTracker(order) {
   const activeIndex = currentStepIndex(order.status);
   const fillPercent = (activeIndex / (ORDER_STEPS.length - 1)) * 100;
@@ -136,37 +138,37 @@ function renderStepTracker(order) {
     const done = i < activeIndex;
     const active = i === activeIndex;
     const circleClass = done
-      ? "bg-accent text-white"
+      ? "bg-ink text-white"
       : active
       ? "bg-accent text-white ring-4 ring-accent-soft animate-pulse"
       : "bg-white border-2 border-line text-muted";
     const labelClass = done || active ? "text-ink font-bold" : "text-muted font-medium";
     return `
-      <div class="relative z-10 flex flex-col items-center gap-2 flex-1">
-        <span class="flex items-center justify-center w-9 h-9 rounded-full transition-all duration-150 ${circleClass}">
-          <span class="w-4 h-4">${step.icon}</span>
+      <div class="relative z-10 flex flex-col items-center gap-2.5 flex-1">
+        <span class="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full transition-all duration-150 ${circleClass}">
+          <span class="w-5 h-5 sm:w-6 sm:h-6">${step.icon}</span>
         </span>
-        <span class="text-xs text-center ${labelClass}">${escapeHtml(step.label)}</span>
+        <span class="text-xs sm:text-sm text-center ${labelClass}">${escapeHtml(step.label)}</span>
       </div>
     `;
   }).join("");
 
   return `
-    <div class="relative mb-2">
-      <div class="absolute top-[18px] left-9 right-9 h-1 bg-line rounded-full"></div>
-      <div class="absolute top-[18px] left-9 h-1 bg-accent rounded-full transition-all duration-200" style="width: calc((100% - 4.5rem) * ${fillPercent / 100})"></div>
+    <div class="relative mb-6">
+      <div class="absolute top-6 sm:top-7 left-9 right-9 h-1 bg-line rounded-full"></div>
+      <div class="absolute top-6 sm:top-7 left-9 h-1 bg-accent rounded-full transition-all duration-200" style="width: calc((100% - 4.5rem) * ${fillPercent / 100})"></div>
       <div class="relative flex items-start">${stepsHtml}</div>
     </div>
   `;
 }
 
-function formatScheduledBadge(order) {
+function formatScheduledBadgeInk(order) {
   if (!order.scheduled_for) return "";
   const slot = new Date(order.scheduled_for);
   const label = slot.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
   return `
-    <div class="flex items-center gap-1.5 text-xs font-bold text-white/90 bg-white/15 rounded-full px-3 py-1.5 w-fit mx-auto mt-3">
-      <span class="w-3.5 h-3.5">${ICONS.clock}</span>Scheduled for ${escapeHtml(label)}
+    <div class="badge-muted flex-shrink-0">
+      <span class="w-3.5 h-3.5">${ICONS.clock}</span>${escapeHtml(label)}
     </div>
   `;
 }
@@ -250,57 +252,56 @@ function renderOrder(order) {
   const itemsHtml = order.items
     .map(
       (item) => `
-        <div class="flex items-center justify-between gap-3 py-2.5 border-b border-line last:border-b-0">
+        <div class="flex items-center justify-between gap-3 py-2 border-b border-line last:border-b-0">
           <span class="text-sm text-ink">${item.quantity}x ${escapeHtml(item.name)}${item.size_label ? ` <span class="text-muted">(${escapeHtml(item.size_label)})</span>` : ""}</span>
-          <span class="text-sm font-bold text-ink">${escapeHtml(formatPrice(item.subtotal))}</span>
+          <span class="text-sm font-bold text-muted">${escapeHtml(formatPrice(item.subtotal))}</span>
         </div>
       `
     )
     .join("");
 
   pageContent.innerHTML = `
-    <div class="bg-white border border-line rounded-2xl shadow-lg overflow-hidden mb-6">
-      <div class="bg-ink text-white p-6 sm:p-7 text-center">
-        <p class="text-xs font-bold uppercase tracking-widest text-white/80 mb-2">Pickup code</p>
-        <p class="text-4xl font-black tracking-[0.3em]">${escapeHtml(order.order_code)}</p>
-        ${formatScheduledBadge(order)}
+    <div class="flex items-center justify-between gap-4 mb-8">
+      <div>
+        <p class="text-xs font-bold uppercase tracking-widest text-muted mb-1">Pickup code</p>
+        <p class="text-3xl sm:text-4xl font-black tracking-[0.2em] text-ink">${escapeHtml(order.order_code)}</p>
       </div>
-      <div class="p-6 sm:p-7">
-        ${
-          showTracker
-            ? `
-              ${renderStepTracker(order)}
-              <div class="flex items-center gap-2 mb-4">
-                <p class="text-base font-black text-ink">${meta.label}</p>
-                ${eta ? `<span class="text-xs font-bold text-accent-deep bg-accent-soft rounded-full px-2.5 py-1">Ready ${eta}</span>` : ""}
-              </div>
-            `
-            : `
-              <div class="flex items-center gap-3 mb-4">
-                <span class="flex items-center justify-center w-10 h-10 rounded-full bg-accent-soft ${meta.color} p-2.5 flex-shrink-0">${meta.icon}</span>
-                <div>
-                  <p class="text-base font-black text-ink">${meta.label}</p>
-                  ${eta ? `<p class="text-sm text-muted">Ready ${eta}</p>` : ""}
-                </div>
-              </div>
-            `
-        }
-        ${meta.message ? `<p class="text-sm text-muted mb-4">${escapeHtml(meta.message)}</p>` : ""}
-        <div class="border-t border-line pt-4">
-          <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">${escapeHtml(order.restaurant_name)}</p>
-          <div>${itemsHtml}</div>
-          <div class="flex items-center justify-between pt-3 mt-1 border-t border-line">
-            <span class="text-sm font-bold text-muted uppercase tracking-wide">Total</span>
-            <span class="text-lg font-black text-ink">${escapeHtml(formatPrice(order.total_amount))}</span>
-          </div>
-        </div>
-        ${order.status === "placed" && order.payment_status !== "paid" ? renderPaymentPendingSection(order) : ""}
-        <div class="pt-4 mt-2 border-t border-line text-xs text-muted">
-          ${escapeHtml(order.student_name)}
-        </div>
-      </div>
+      ${formatScheduledBadgeInk(order)}
     </div>
-    <a href="restaurant.html?slug=${encodeURIComponent(order.restaurant_slug)}" class="block text-center text-accent-deep font-bold hover:underline">Order again from ${escapeHtml(order.restaurant_name)}</a>
+
+    ${
+      showTracker
+        ? `
+          ${renderStepTracker(order)}
+          <div class="flex items-center gap-2 mb-1">
+            <p class="text-xl sm:text-2xl font-black tracking-tightest text-ink">${meta.label}</p>
+            ${eta ? `<span class="badge-accent">Ready ${eta}</span>` : ""}
+          </div>
+        `
+        : `
+          <div class="flex items-center gap-3 mb-1">
+            <span class="flex items-center justify-center w-11 h-11 rounded-full bg-accent-soft ${meta.color} p-2.5 flex-shrink-0">${meta.icon}</span>
+            <div>
+              <p class="text-xl sm:text-2xl font-black tracking-tightest text-ink">${meta.label}</p>
+              ${eta ? `<p class="text-sm text-muted">Ready ${eta}</p>` : ""}
+            </div>
+          </div>
+        `
+    }
+    ${meta.message ? `<p class="text-sm text-muted mb-2">${escapeHtml(meta.message)}</p>` : ""}
+    ${order.status === "placed" && order.payment_status !== "paid" ? renderPaymentPendingSection(order) : ""}
+
+    <div class="border-t border-line mt-8 pt-6">
+      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">${escapeHtml(order.restaurant_name)}</p>
+      <div>${itemsHtml}</div>
+      <div class="flex items-center justify-between pt-3 mt-1 border-t border-line">
+        <span class="text-sm font-bold text-muted uppercase tracking-wide">Total</span>
+        <span class="text-lg font-black text-ink">${escapeHtml(formatPrice(order.total_amount))}</span>
+      </div>
+      <p class="text-xs text-muted mt-4">${escapeHtml(order.student_name)}</p>
+    </div>
+
+    <a href="restaurant.html?slug=${encodeURIComponent(order.restaurant_slug)}" class="block text-center text-accent-deep font-bold hover:underline mt-8">Order again from ${escapeHtml(order.restaurant_name)}</a>
   `;
 
   const retryPaymentBtn = document.getElementById("retry-payment-btn");

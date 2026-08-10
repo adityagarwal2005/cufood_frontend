@@ -51,19 +51,21 @@ function emptyState() {
   `;
 }
 
+// A flat list, not a stack of boxed cards — order history reads more like
+// a receipt/ledger than a set of unrelated tiles, so one continuous list
+// with a rule between rows fits it better than each row being its own
+// bordered/shadowed surface.
 function renderOrderRow(order, live, index) {
   const status = live ? live.status : null;
   const pillClass = status ? STATUS_PILL[status] || "bg-cream-alt text-muted" : "bg-cream-alt text-muted";
   const label = status ? STATUS_LABEL[status] || status : "Not found";
   return `
-    <a href="order-status.html?code=${encodeURIComponent(order.code)}" style="animation-delay:${index * 50}ms" class="opacity-0 animate-fade-in-up block bg-white border border-line rounded-xl px-5 py-4 mb-3 last:mb-0 hover:shadow-md hover:-translate-y-0.5 transition-all duration-150">
-      <div class="flex items-center justify-between gap-3">
-        <div class="min-w-0">
-          <p class="text-sm font-black text-ink">${escapeHtml(order.restaurantName || "")} <span class="text-muted font-semibold">· #${escapeHtml(order.code)}</span></p>
-          ${live ? `<p class="text-sm text-ink mt-1">${escapeHtml(formatPrice(live.total_amount))}</p>` : ""}
-        </div>
-        <span class="text-xs font-bold uppercase tracking-wide px-2.5 py-1 rounded-full flex-shrink-0 ${pillClass}">${escapeHtml(label)}</span>
+    <a href="order-status.html?code=${encodeURIComponent(order.code)}" style="animation-delay:${index * 50}ms" class="opacity-0 animate-fade-in-up flex items-center justify-between gap-4 py-5 border-b border-line last:border-b-0 hover:bg-cream-alt -mx-2 px-2 transition-colors duration-150">
+      <div class="min-w-0">
+        <p class="text-lg font-bold text-ink truncate">${escapeHtml(order.restaurantName || "")}</p>
+        <p class="text-xs text-muted mt-0.5">#${escapeHtml(order.code)}${live ? ` &middot; ${escapeHtml(formatPrice(live.total_amount))}` : ""}</p>
       </div>
+      <span class="badge flex-shrink-0 ${pillClass}">${escapeHtml(label)}</span>
     </a>
   `;
 }
