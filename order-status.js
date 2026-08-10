@@ -77,6 +77,14 @@ const STATUS_META = {
 
 function getStatusMeta(order) {
   if (order.status === "placed") {
+    if (order.payment_status === "expired") {
+      return {
+        label: "Order expired",
+        color: "text-muted",
+        icon: ICONS.warning,
+        message: "This checkout wasn't completed in time and has expired — no payment was taken. Place a new order whenever you're ready.",
+      };
+    }
     if (order.payment_status !== "paid") {
       return {
         label: "Waiting for payment",
@@ -232,11 +240,13 @@ async function retryPayment(code) {
     });
     checkout.open();
   } catch (err) {
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = "Didn't finish paying? Try again";
-    }
+    // Most likely to happen here: the order expired in the ~60 minutes
+    // between the page loading and the student clicking this button.
+    // Re-fetching (rather than just resetting the button) picks up that
+    // real state and renders the actual "expired" message instead of
+    // silently handing back a retry button that will just fail again.
     console.error(err);
+    loadOrder(code);
   }
 }
 
@@ -289,7 +299,7 @@ function renderOrder(order) {
         `
     }
     ${meta.message ? `<p class="text-sm text-muted mb-2">${escapeHtml(meta.message)}</p>` : ""}
-    ${order.status === "placed" && order.payment_status !== "paid" ? renderPaymentPendingSection(order) : ""}
+    ${order.status === "placed" && order.payment_status === "pending" ? renderPaymentPendingSection(order) : ""}
 
     <div class="border-t border-line mt-8 pt-6">
       <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">${escapeHtml(order.restaurant_name)}</p>
@@ -328,7 +338,9 @@ async function loadOrder(code) {
     // spinner doesn't sit there for up to 8s after payment actually landed.
     const activeStatuses = ["placed", "preparing", "ready"];
     clearTimeout(pollTimer);
-    if (activeStatuses.includes(order.status)) {
+    // An expired checkout is a dead end — nothing is going to change on
+    // its own from here, so there's nothing left to poll for.
+    if (activeStatuses.includes(order.status) && order.payment_status !== "expired") {
       const interval = order.payment_status === "pending" ? 3000 : 8000;
       pollTimer = setTimeout(() => loadOrder(code), interval);
     }
