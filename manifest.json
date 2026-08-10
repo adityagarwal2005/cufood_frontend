@@ -3,9 +3,10 @@
   "short_name": "CUFood",
   "description": "Live campus food availability and ordering at Chandigarh University",
   "start_url": "location-select.html",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#faf8f6",
-  "theme_color": "#d9531e",
+  "background_color": "#ffffff",
+  "theme_color": "#0a0a0a",
   "icons": [
     {
       "src": "icon-192.png",
