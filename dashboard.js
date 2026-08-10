@@ -603,7 +603,7 @@ function renderDashboard() {
             <input type="text" id="upi-id-input" placeholder="yourname@bank" value="${escapeHtml(restaurantData.upi_id || "")}"
               class="flex-1 rounded-xl border-2 border-line bg-white px-3.5 py-2.5 text-sm text-ink focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150">
             ${restaurantData.upi_id ? `
-              <button type="button" class="copy-btn flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-xl border-2 border-line text-muted hover:text-accent-deep hover:border-accent-soft transition-colors duration-150" data-copy-value="${escapeHtml(restaurantData.upi_id)}" aria-label="Copy UPI ID">
+              <button type="button" class="copy-btn flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full border-2 border-ink text-ink hover:bg-ink hover:text-white transition-colors duration-150" data-copy-value="${escapeHtml(restaurantData.upi_id)}" aria-label="Copy UPI ID">
                 <span class="w-4 h-4 pointer-events-none">${ICONS.copy}</span>
               </button>
             ` : ""}

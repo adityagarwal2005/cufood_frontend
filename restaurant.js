@@ -189,42 +189,48 @@ function renderStaticPrice(item) {
   return `<div class="flex flex-wrap gap-1.5 mt-1 w-full">${pills}</div>`;
 }
 
-// Builds one category "chapter." No card/box/shadow — a chapter is just a
-// numbered heading rule (like a printed menu section), the item rows below
-// it, and nothing containing them. The first chapter starts open
-// (grid-rows-[1fr]); every other one starts collapsed (grid-rows-[0fr]).
+// Builds one collapsible category block. Starts collapsed (grid-rows-[0fr]);
 // toggleCategory()/applyMenuSearch() below mutate these elements directly
 // (never re-render) so the CSS grid-rows transition stays smooth.
-function renderCategoryBlock(category, groupItems, index) {
+// v2 rebuild: the old markup wrapped every category in its own
+// bg-white/border/rounded-2xl/shadow-sm card — the exact "boxed widget"
+// pattern that reads as generic admin UI. Nothing here has product
+// photography to lean on (menu items carry only name/category/price),
+// so the premium feel has to come entirely from typography, rhythm and
+// restraint — closer to a printed menu than a list app. Categories are
+// numbered chapters separated by a single full-bleed rule; items are set
+// name-left/price-right on one baseline, no card, no hover fill.
+function renderCategoryBlock(category, groupItems, categoryIndex, defaultOpen) {
   const canOrder = currentRestaurant && currentRestaurant.is_open_today;
-  const isFirst = index === 0;
   const itemsHtml = groupItems
-    .map((item) => {
+    .map((item, itemIndex) => {
       return `
-        <div class="flex items-start justify-between gap-6 py-4 border-b border-line/70 last:border-b-0" data-menu-item data-item-name="${escapeHtml(item.name.toLowerCase())}">
-          <span class="text-lg sm:text-xl font-bold text-ink leading-snug">${escapeHtml(item.name)}</span>
-          <div class="flex-shrink-0 flex flex-col items-end gap-1">
-            ${canOrder ? "" : renderStaticPrice(item)}
-            ${canOrder ? renderItemVariants(item) : ""}
+        <div class="group py-5 sm:py-6 ${itemIndex > 0 ? "border-t border-line" : ""}" data-menu-item data-item-name="${escapeHtml(item.name.toLowerCase())}">
+          <div class="flex items-start justify-between gap-6">
+            <span class="text-lg sm:text-xl font-bold text-ink leading-snug pr-2 transition-colors duration-150 group-hover:text-accent-deep">${escapeHtml(item.name)}</span>
+            ${canOrder ? "" : `<div class="flex-shrink-0 pt-0.5">${renderStaticPrice(item)}</div>`}
           </div>
+          ${canOrder ? renderItemVariants(item) : ""}
         </div>
       `;
     })
     .join("");
 
+  const number = String(categoryIndex + 1).padStart(2, "0");
+
   return `
-    <div id="cat-${categorySlug(category)}" class="scroll-mt-[130px]" data-category-block data-category-name="${escapeHtml(category.toLowerCase())}">
-      <button type="button" class="w-full flex items-center justify-between gap-4 py-5 border-t-2 border-ink text-left" data-category-toggle>
-        <span class="flex items-baseline gap-4 min-w-0">
-          <span class="text-sm font-black text-muted tabular-nums flex-shrink-0">${String(index + 1).padStart(2, "0")}</span>
+    <div id="cat-${categorySlug(category)}" class="scroll-mt-[150px] ${categoryIndex > 0 ? "mt-12 sm:mt-16 pt-12 sm:pt-16 border-t-2 border-ink" : ""}" data-category-block data-category-name="${escapeHtml(category.toLowerCase())}">
+      <button type="button" class="group w-full flex items-baseline justify-between gap-4 text-left" data-category-toggle>
+        <span class="flex items-baseline gap-3 sm:gap-4 min-w-0">
+          <span class="text-sm sm:text-base font-black text-accent tabular-nums flex-shrink-0">${number}</span>
           <span class="text-2xl sm:text-3xl font-black tracking-tightest text-ink truncate">${escapeHtml(category)}</span>
-          <span class="text-xs font-bold text-muted flex-shrink-0" data-category-count>${groupItems.length}</span>
+          <span class="text-xs font-bold text-muted flex-shrink-0" data-category-count>${groupItems.length} ${groupItems.length === 1 ? "item" : "items"}</span>
         </span>
-        <span class="w-5 h-5 text-muted flex-shrink-0 transition-transform duration-150 ${isFirst ? "rotate-180" : ""}" data-category-chevron>${ICONS.chevronDown}</span>
+        <span class="w-8 h-8 rounded-full border-2 border-ink flex items-center justify-center text-ink flex-shrink-0 transition-transform duration-150 ${defaultOpen ? "rotate-180" : ""}" data-category-chevron>${ICONS.chevronDown}</span>
       </button>
-      <div class="grid ${isFirst ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"} transition-all duration-150 ease-in-out" data-category-panel>
+      <div class="grid ${defaultOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"} transition-all duration-200 ease-in-out" data-category-panel>
         <div class="overflow-hidden">
-          <div class="flex flex-col pb-3" data-category-items>
+          <div class="flex flex-col mt-6" data-category-items>
             ${itemsHtml}
           </div>
         </div>
@@ -233,18 +239,18 @@ function renderCategoryBlock(category, groupItems, index) {
   `;
 }
 
-// Underline tabs for jumping straight to a chapter — matters most on menus
-// with lots of categories (some outlets here run 15-30), where scrolling
-// past everything above the one you want gets old fast.
+// Sticky chip row for jumping straight to a category — matters most on
+// menus with lots of categories (some outlets here run 15-30), where
+// scrolling past everything above the one you want gets old fast.
 function categorySlug(category) {
   return category.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
 
 function renderCategoryQuickNav(groups) {
-  const chips = Array.from(groups.keys())
+  const tabs = Array.from(groups.keys())
     .map(
-      (category, i) => `
-        <button type="button" class="category-nav-chip flex-shrink-0 text-sm font-bold pb-2.5 border-b-2 ${i === 0 ? "border-accent text-ink" : "border-transparent text-muted"} hover:text-ink transition-all duration-150 whitespace-nowrap" data-nav-target="${categorySlug(category)}">
+      (category, index) => `
+        <button type="button" class="category-nav-chip flex-shrink-0 pb-3 border-b-2 ${index === 0 ? "border-ink text-ink" : "border-transparent text-muted"} text-sm font-bold hover:text-ink hover:border-ink transition-all duration-150 whitespace-nowrap" data-nav-target="${categorySlug(category)}">
           ${escapeHtml(category)}
         </button>
       `
@@ -252,8 +258,8 @@ function renderCategoryQuickNav(groups) {
     .join("");
   return `
     <div class="sticky top-[69px] z-10 -mx-6 sm:-mx-8 px-6 sm:px-8 mb-2 bg-cream/95 backdrop-blur-sm border-b border-line">
-      <div class="flex items-center gap-6 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" data-category-nav>
-        ${chips}
+      <div class="flex items-center gap-7 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" data-category-nav>
+        ${tabs}
       </div>
     </div>
   `;
@@ -289,7 +295,7 @@ function renderMenuSection(items) {
 
   let categoryIndex = 0;
   groups.forEach((groupItems, category) => {
-    html += renderCategoryBlock(category, groupItems, categoryIndex);
+    html += renderCategoryBlock(category, groupItems, categoryIndex, categoryIndex === 0);
     categoryIndex += 1;
   });
 
@@ -382,7 +388,7 @@ function initMenuInteractivity() {
       setCategoryExpanded(target, true);
       target.scrollIntoView({ behavior: "smooth", block: "start" });
       categoryNav.querySelectorAll(".category-nav-chip").forEach((c) => {
-        c.classList.toggle("border-accent", c === chip);
+        c.classList.toggle("border-ink", c === chip);
         c.classList.toggle("text-ink", c === chip);
         c.classList.toggle("border-transparent", c !== chip);
         c.classList.toggle("text-muted", c !== chip);
