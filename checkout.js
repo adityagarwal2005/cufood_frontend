@@ -1,7 +1,55 @@
 const API_BASE_URL = "https://cufood-backend.onrender.com";
+// Safe to hardcode — this is the *public* half of the VAPID keypair (see
+// backend settings.py); only the private key is a secret.
+const VAPID_PUBLIC_KEY = "BOsXYYIQK2rY1nET_I-NXr-A6ts9_WDH9kEjZYBUC7mGhcfLqRLy3jbXtD3X72WZU1gaAqI_yOz8pO_6FNhhHqo";
 
 const pageContent = document.getElementById("page-content");
 const backLink = document.getElementById("back-link");
+
+// Standard boilerplate for turning a VAPID public key (base64url) into the
+// Uint8Array format PushManager.subscribe expects.
+function urlBase64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64);
+  return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
+}
+
+// Fired from inside the "Pay" click handler (see handleCheckoutSubmit) so
+// that Notification.requestPermission() — which browsers only allow in
+// direct response to a user gesture — has one to ride on. Without this,
+// a student would have to separately remember to tap "Notify me" on the
+// order-status page for every single order, since there's no account to
+// remember the choice against (see order-status.js's fallback button,
+// still there for anyone who lands on that page without going through
+// checkout first — a reopened link, a different device, etc.).
+// Best-effort and silent: any failure/unsupported-browser/denied-permission
+// just means the student falls back to this page's normal polling.
+async function subscribeToPush(code) {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+  if (typeof Notification === "undefined" || Notification.permission === "denied") return;
+  try {
+    const registration = await navigator.serviceWorker.register("sw.js");
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") return;
+
+    let subscription = await registration.pushManager.getSubscription();
+    if (!subscription) {
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      });
+    }
+
+    await fetch(`${API_BASE_URL}/api/orders/${encodeURIComponent(code)}/subscribe/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(subscription.toJSON()),
+    });
+  } catch (err) {
+    console.error(err);
+  }
+}
 
 // So my-orders.html can list past orders without a student account —
 // read by my-orders.js under the same key.
@@ -324,6 +372,9 @@ async function handleCheckoutSubmit(event) {
     // order-status.html, not by rebuilding a cart.
     rememberMyOrder(data.order_code, cart.restaurantName);
     clearCart();
+    // Fire-and-forget — never block/delay opening Checkout on this, and
+    // never let a permission-prompt hiccup fail the actual payment flow.
+    subscribeToPush(data.order_code);
     openRazorpayCheckout({
       orderCode: data.order_code,
       razorpayOrderId: data.razorpay_order_id,

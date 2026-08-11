@@ -16,16 +16,29 @@ function urlBase64ToUint8Array(base64String) {
   return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
 }
 
-// Hides the button entirely rather than showing it and having it silently
-// fail — "denied" means the browser will never even show the permission
-// prompt again short of the student digging into site settings themselves.
+// Only shown as a fallback for a student who lands on this page without
+// having gone through checkout.js's automatic subscribeToPush() first (a
+// reopened link, a different device/browser, checkout-time permission was
+// skipped, etc.) — if permission is already "granted", renderOrder()
+// below subscribes silently instead of showing this at all, and if it's
+// "denied" there's nothing a button can do about that either.
 function canSubscribeToPush() {
   return (
     "serviceWorker" in navigator &&
     "PushManager" in window &&
     typeof Notification !== "undefined" &&
-    Notification.permission !== "denied"
+    Notification.permission === "default"
   );
+}
+
+// Called automatically (no button, no gesture needed — subscribe() itself
+// doesn't require one once permission is already granted) whenever a
+// student with notifications already enabled from a previous order lands
+// on a fresh one. Same subscribe logic as checkout.js's subscribeToPush(),
+// just triggered on page load instead of the Pay click.
+async function autoSubscribeIfAlreadyGranted(code) {
+  if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
+  await enablePushNotifications(code);
 }
 
 // Best-effort, silent on anything unsupported/denied — this is a bonus on
@@ -436,6 +449,10 @@ async function loadOrder(code) {
 const code = getCodeFromUrl();
 if (code) {
   loadOrder(code.toUpperCase());
+  // Once, not on every poll — renderOrder() re-runs every few seconds
+  // while the order's active, and re-subscribing that often would just
+  // hammer the subscribe endpoint with no benefit.
+  autoSubscribeIfAlreadyGranted(code.toUpperCase());
 } else {
   renderLookupForm();
 }
