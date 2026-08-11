@@ -163,7 +163,7 @@ function getStatusMeta(order) {
         label: "Rejected — refunded",
         color: "text-error",
         icon: ICONS.warning,
-        message: "The restaurant couldn't take this order. Your payment has been refunded automatically — it should reflect in a few days depending on your bank.",
+        message: "The restaurant couldn't take this order. Your payment has been refunded automatically — it typically takes 5–7 business days to reflect, depending on your bank.",
       };
     }
     return {
