@@ -1,7 +1,64 @@
 const API_BASE_URL = "https://cufood-backend.onrender.com";
+// Safe to hardcode — this is the *public* half of the VAPID keypair (see
+// backend settings.py); it's meant to be embedded in client code, only the
+// private key is a secret.
+const VAPID_PUBLIC_KEY = "BOsXYYIQK2rY1nET_I-NXr-A6ts9_WDH9kEjZYBUC7mGhcfLqRLy3jbXtD3X72WZU1gaAqI_yOz8pO_6FNhhHqo";
 
 const pageContent = document.getElementById("page-content");
 let pollTimer = null;
+
+// Standard boilerplate for turning a VAPID public key (base64url) into the
+// Uint8Array format PushManager.subscribe expects.
+function urlBase64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64);
+  return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
+}
+
+// Hides the button entirely rather than showing it and having it silently
+// fail — "denied" means the browser will never even show the permission
+// prompt again short of the student digging into site settings themselves.
+function canSubscribeToPush() {
+  return (
+    "serviceWorker" in navigator &&
+    "PushManager" in window &&
+    typeof Notification !== "undefined" &&
+    Notification.permission !== "denied"
+  );
+}
+
+// Best-effort, silent on anything unsupported/denied — this is a bonus on
+// top of the polling this page already does, never something the page
+// depends on working. iOS only supports this for a PWA added to the home
+// screen (not a regular Safari tab), and plenty of browsers/contexts won't
+// support it at all; all of those just quietly no-op here.
+async function enablePushNotifications(code) {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) return false;
+  try {
+    const registration = await navigator.serviceWorker.register("sw.js");
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") return false;
+
+    let subscription = await registration.pushManager.getSubscription();
+    if (!subscription) {
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      });
+    }
+
+    await fetch(`${API_BASE_URL}/api/orders/${encodeURIComponent(code)}/subscribe/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(subscription.toJSON()),
+    });
+    return true;
+  } catch (err) {
+    console.error(err);
+    return false;
+  }
+}
 
 function escapeHtml(text) {
   const div = document.createElement("div");
@@ -299,6 +356,13 @@ function renderOrder(order) {
         `
     }
     ${meta.message ? `<p class="text-sm text-muted mb-2">${escapeHtml(meta.message)}</p>` : ""}
+    ${
+      canSubscribeToPush() && ["placed", "preparing", "ready"].includes(order.status)
+        ? `<button type="button" id="enable-push-btn" class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-ink bg-cream-alt rounded-full px-3.5 py-2 hover:bg-line transition-colors duration-150 mb-2">
+             <span class="w-3.5 h-3.5">${ICONS.bell}</span>Notify me on updates
+           </button>`
+        : ""
+    }
     ${order.status === "placed" && order.payment_status === "pending" ? renderPaymentPendingSection(order) : ""}
 
     <div class="border-t border-line mt-8 pt-6">
@@ -317,6 +381,22 @@ function renderOrder(order) {
   const retryPaymentBtn = document.getElementById("retry-payment-btn");
   if (retryPaymentBtn) {
     retryPaymentBtn.addEventListener("click", () => retryPayment(order.order_code));
+  }
+
+  const pushBtn = document.getElementById("enable-push-btn");
+  if (pushBtn) {
+    pushBtn.addEventListener("click", async () => {
+      pushBtn.disabled = true;
+      const original = pushBtn.innerHTML;
+      pushBtn.innerHTML = `<span class="w-3.5 h-3.5">${ICONS.bell}</span>Enabling…`;
+      const ok = await enablePushNotifications(order.order_code);
+      if (ok) {
+        pushBtn.innerHTML = `<span class="w-3.5 h-3.5">${ICONS.check}</span>Notifications on`;
+      } else {
+        pushBtn.disabled = false;
+        pushBtn.innerHTML = original;
+      }
+    });
   }
 }
 
