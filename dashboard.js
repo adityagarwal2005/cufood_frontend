@@ -34,25 +34,20 @@ function playNewOrderSound() {
   }
 }
 
-function notifyNewOrder(count) {
-  if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
-  try {
-    new Notification("New order on CUFood", {
-      body: count === 1 ? "You have a new order waiting." : `You have ${count} new orders waiting.`,
-      icon: "icon-192.png",
-    });
-  } catch (err) {
-    console.error(err);
-  }
-}
-
+// The actual system notification for a new order now comes from real Web
+// Push (see subscribeOwnerToPush() below + send_owner_push() on the
+// backend) — that one works even with the dashboard tab closed, which a
+// plain in-page `new Notification(...)` here never could. Keeping that
+// old in-page call around too would just mean a duplicate popup on top
+// of the push one every time the tab happens to be open when an order
+// lands. Sound stays, since it's a distinct while-you're-looking-at-it
+// cue push can't provide.
 function checkForNewOrders(orders) {
   const currentPlaced = new Set(orders.filter((o) => o.status === "placed").map((o) => o.order_code));
   if (hasLoadedOrdersOnce) {
     const newOnes = [...currentPlaced].filter((code) => !seenPlacedCodes.has(code));
     if (newOnes.length > 0) {
       playNewOrderSound();
-      notifyNewOrder(newOnes.length);
     }
   }
   seenPlacedCodes = currentPlaced;
@@ -69,6 +64,53 @@ const TOKEN_KEY = "cufood_owner_token";
 // worked. A token sent as a normal header has no such dependency.
 function authHeaders() {
   return { Authorization: `Token ${localStorage.getItem(TOKEN_KEY)}` };
+}
+
+// Safe to hardcode — this is the *public* half of the VAPID keypair (see
+// backend settings.py); only the private key is a secret.
+const VAPID_PUBLIC_KEY = "BOsXYYIQK2rY1nET_I-NXr-A6ts9_WDH9kEjZYBUC7mGhcfLqRLy3jbXtD3X72WZU1gaAqI_yOz8pO_6FNhhHqo";
+
+// Standard boilerplate for turning a VAPID public key (base64url) into the
+// Uint8Array format PushManager.subscribe expects.
+function urlBase64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64);
+  return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
+}
+
+// Unlike a student's per-order subscription (order-status.js), this
+// attaches to the owner's account via their auth token — one subscription
+// then covers every future order, not just one. Called from the "Enable
+// alerts" button click (see attachEventListeners), so
+// Notification.requestPermission()'s user-gesture requirement is
+// satisfied. See send_owner_push() on the backend for where this actually
+// gets used — fired the instant a new order's payment is confirmed.
+async function subscribeOwnerToPush() {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) return false;
+  try {
+    const registration = await navigator.serviceWorker.register("sw.js");
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") return false;
+
+    let subscription = await registration.pushManager.getSubscription();
+    if (!subscription) {
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      });
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/me/restaurant/subscribe/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify(subscription.toJSON()),
+    });
+    return response.ok;
+  } catch (err) {
+    console.error(err);
+    return false;
+  }
 }
 
 // Escapes for both HTML text-node and attribute-value contexts — the
@@ -664,7 +706,9 @@ function attachEventListeners() {
   const notifyBtn = document.getElementById("enable-notifications-btn");
   if (notifyBtn) {
     notifyBtn.addEventListener("click", () => {
-      Notification.requestPermission().finally(renderDashboard);
+      notifyBtn.disabled = true;
+      notifyBtn.textContent = "Enabling…";
+      subscribeOwnerToPush().finally(renderDashboard);
     });
   }
 
