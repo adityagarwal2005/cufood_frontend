@@ -1,7 +1,7 @@
 {
   "name": "CUFood",
   "short_name": "CUFood",
-  "description": "Live campus food availability and ordering at Chandigarh University",
+  "description": "Live campus food availability and ordering at CU",
   "start_url": "location-select.html",
   "scope": "/",
   "display": "standalone",
