@@ -2,6 +2,13 @@ const API_BASE_URL = "https://cufood-backend.onrender.com";
 // Safe to hardcode — this is the *public* half of the VAPID keypair (see
 // backend settings.py); only the private key is a secret.
 const VAPID_PUBLIC_KEY = "BOsXYYIQK2rY1nET_I-NXr-A6ts9_WDH9kEjZYBUC7mGhcfLqRLy3jbXtD3X72WZU1gaAqI_yOz8pO_6FNhhHqo";
+// Kept in sync with Order.PLATFORM_FEE on the backend — that's the value
+// actually charged (see CreateOrderView), this is purely for showing the
+// right numbers here before that response comes back.
+const PLATFORM_FEE = 1.5;
+function getGrandTotal(cart) {
+  return getCartTotal(cart) + PLATFORM_FEE;
+}
 
 const pageContent = document.getElementById("page-content");
 const backLink = document.getElementById("back-link");
@@ -160,18 +167,27 @@ function renderCartLine(key, line) {
 
 function renderCheckout(cart) {
   const lines = Object.entries(cart.items);
-  const total = getCartTotal(cart);
+  const subtotal = getCartTotal(cart);
+  const grandTotal = subtotal + PLATFORM_FEE;
 
   pageContent.innerHTML = `
     <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">From ${escapeHtml(cart.restaurantName)}</p>
     <div class="flex items-end justify-between gap-4 pb-6 mb-6 border-b-2 border-ink">
       <h1 class="text-2xl sm:text-3xl font-black tracking-tightest text-ink">Your order</h1>
-      <p class="text-3xl sm:text-4xl font-black tracking-tightest text-ink tabular-nums">${escapeHtml(formatPrice(total))}</p>
+      <p class="text-3xl sm:text-4xl font-black tracking-tightest text-ink tabular-nums">${escapeHtml(formatPrice(grandTotal))}</p>
     </div>
 
     <div id="error-banner" class="hidden text-sm font-medium text-error bg-error-soft rounded-xl px-4 py-3 mb-5"></div>
 
-    <div id="cart-lines" class="mb-8">${lines.map(([key, line]) => renderCartLine(key, line)).join("")}</div>
+    <div id="cart-lines" class="mb-2">${lines.map(([key, line]) => renderCartLine(key, line)).join("")}</div>
+    <div class="flex items-center justify-between py-2 text-sm text-muted">
+      <span>Platform fee</span>
+      <span>${escapeHtml(formatPrice(PLATFORM_FEE))}</span>
+    </div>
+    <div class="flex items-center justify-between py-3 mb-8 border-t border-ink font-bold text-ink">
+      <span>Total</span>
+      <span>${escapeHtml(formatPrice(grandTotal))}</span>
+    </div>
 
     <div class="mb-8">
       <h2 class="text-xs font-bold uppercase tracking-widest text-muted mb-3">When?</h2>
@@ -202,7 +218,7 @@ function renderCheckout(cart) {
     </form>
 
     <button type="submit" form="checkout-form" id="pay-btn" class="btn-primary w-full text-base py-4">
-      Pay ${escapeHtml(formatPrice(total))}
+      Pay ${escapeHtml(formatPrice(grandTotal))}
     </button>
     <p class="text-xs text-muted text-center leading-relaxed mt-3">${selectedSlot ? `You'll pay securely next. They'll have your order ready around ${escapeHtml(formatSlotTime(selectedSlot))}.` : "You'll pay securely next. The restaurant starts as soon as payment is confirmed."}</p>
   `;
@@ -312,7 +328,7 @@ function resetPlaceOrderButton() {
   const cart = getCart();
   if (!payBtn || !cart) return;
   payBtn.disabled = false;
-  payBtn.textContent = `Pay ${formatPrice(getCartTotal(cart))}`;
+  payBtn.textContent = `Pay ${formatPrice(getGrandTotal(cart))}`;
 }
 
 async function handleCheckoutSubmit(event) {

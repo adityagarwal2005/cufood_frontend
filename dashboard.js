@@ -416,7 +416,7 @@ function renderOrderCard(order) {
           </div>
           <p class="text-xs text-muted">${escapeHtml(order.student_name)}${order.status === "placed" && order.student_phone_number ? ` · ${escapeHtml(order.student_phone_number)}` : ""} · ${timeAgo(order.created_at)}</p>
           <p class="text-sm text-ink mt-2">${itemsSummary}</p>
-          <p class="text-sm font-bold text-accent-deep mt-1">${escapeHtml(formatPrice(order.total_amount))}</p>
+          <p class="text-sm font-bold text-accent-deep mt-1">${escapeHtml(formatPrice(order.restaurant_payout))} <span class="text-xs font-medium text-muted">your payout</span></p>
           ${etaText}
           ${refundLinkHtml}
         </div>
@@ -444,7 +444,9 @@ function renderTodayStats(orders) {
     return;
   }
 
-  const revenue = todaysOrders.reduce((sum, o) => sum + parseFloat(o.total_amount), 0);
+  // Payout, not total_amount — total_amount is what the student paid,
+  // which includes the platform fee that isn't the restaurant's.
+  const revenue = todaysOrders.reduce((sum, o) => sum + parseFloat(o.restaurant_payout), 0);
   el.innerHTML = `
     <div class="flex items-center gap-5 bg-cream-alt rounded-xl px-4 py-3 mb-4">
       <div>
