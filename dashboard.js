@@ -462,6 +462,92 @@ function renderTodayStats(orders) {
   `;
 }
 
+// Owner-facing sales breakdown for one day at a time. `salesDate` starts
+// null so the first load asks the backend for its own IST-based "today"
+// rather than guessing from the browser's local date, which could disagree
+// with the server near midnight; the returned date then seeds the picker.
+let salesData = null;
+let salesDate = null;
+
+async function loadDailySales(dateStr) {
+  const content = document.getElementById("sales-content");
+  if (content) content.innerHTML = `<div class="h-24 skel"></div>`;
+  try {
+    const qs = dateStr ? `?date=${encodeURIComponent(dateStr)}` : "";
+    const response = await fetch(`${API_BASE_URL}/api/me/orders/daily-sales/${qs}`, {
+      headers: authHeaders(),
+    });
+    if (!response.ok) throw new Error(`Request failed: ${response.status}`);
+    salesData = await response.json();
+    salesDate = salesData.date;
+    renderSalesSection();
+  } catch (err) {
+    console.error(err);
+    if (content) {
+      content.innerHTML = stateMessage({
+        icon: ICONS.warning,
+        message: "Could not load sales data. Please try again.",
+        card: false,
+      });
+    }
+  }
+}
+
+function renderSalesSection() {
+  const dateInput = document.getElementById("sales-date-input");
+  if (dateInput && salesDate) dateInput.value = salesDate;
+
+  const content = document.getElementById("sales-content");
+  if (!content || !salesData) return;
+
+  const { total_orders, total_revenue, most_ordered_item, items } = salesData;
+
+  if (items.length === 0) {
+    content.innerHTML = stateMessage({
+      icon: ICONS.chart,
+      message: "No paid orders on this day yet.",
+      card: false,
+    });
+    return;
+  }
+
+  const mostOrderedHtml = most_ordered_item ? `
+    <div class="flex items-center gap-3.5 bg-accent-soft rounded-xl px-4 py-3.5 mb-4">
+      <span class="flex items-center justify-center w-9 h-9 rounded-full bg-white text-accent-deep flex-shrink-0 p-2">${ICONS.star}</span>
+      <div>
+        <p class="text-xs font-bold text-accent-deep uppercase tracking-wide">Most ordered</p>
+        <p class="text-base font-black text-ink leading-tight">${escapeHtml(most_ordered_item.name)} <span class="text-sm font-semibold text-muted">&times;${most_ordered_item.quantity}</span></p>
+      </div>
+    </div>
+  ` : "";
+
+  const rows = items.map((item) => `
+    <div class="flex items-center justify-between gap-3 py-2.5 border-b border-line last:border-b-0">
+      <span class="text-sm font-semibold text-ink truncate">${escapeHtml(item.name)}</span>
+      <div class="flex items-center gap-4 flex-shrink-0">
+        <span class="text-xs font-semibold text-muted whitespace-nowrap">${item.quantity} sold</span>
+        <span class="text-sm font-bold text-accent-deep w-16 text-right">${escapeHtml(formatPrice(item.revenue))}</span>
+      </div>
+    </div>
+  `).join("");
+
+  content.innerHTML = `
+    <div class="flex items-center gap-5 bg-cream-alt rounded-xl px-4 py-3 mb-4">
+      <div>
+        <p class="text-xl font-black text-ink leading-none">${total_orders}</p>
+        <p class="text-xs font-semibold text-muted uppercase tracking-wide mt-1">Paid orders</p>
+      </div>
+      <div class="w-px h-8 bg-line"></div>
+      <div>
+        <p class="text-xl font-black text-accent-deep leading-none">${escapeHtml(formatPrice(total_revenue))}</p>
+        <p class="text-xs font-semibold text-muted uppercase tracking-wide mt-1">Your payout</p>
+      </div>
+    </div>
+    ${mostOrderedHtml}
+    <div class="bg-white border border-line rounded-xl px-4">${rows}</div>
+  `;
+}
+
 function renderOrders(orders) {
   // null means "not fetched yet" — leave the "Loading orders..." placeholder
   // alone rather than flashing an incorrect "no orders" state.
@@ -634,6 +720,15 @@ function renderDashboard() {
       </div>
     </section>
 
+    <section class="mb-10">
+      <div class="flex items-center justify-between gap-3 mb-5">
+        <h2 class="text-2xl sm:text-3xl font-black tracking-tightest text-ink">Sales</h2>
+        <input type="date" id="sales-date-input" max="${new Date().toISOString().slice(0, 10)}"
+          class="rounded-xl border-2 border-line bg-white px-3 py-2 text-sm font-semibold text-ink focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150">
+      </div>
+      <div id="sales-content"><div class="h-24 skel"></div></div>
+    </section>
+
     <p class="text-xs font-bold uppercase tracking-widest text-muted mb-4 mt-10">Settings</p>
 
     <section class="bg-cream-alt border border-line rounded-2xl p-6 sm:p-7 mb-6">
@@ -697,6 +792,11 @@ function renderDashboard() {
   // would otherwise flash "Loading orders..." on every one of them — repaint
   // the orders section from cache immediately; polling refreshes it for real.
   renderOrders(ordersData);
+  if (salesData) {
+    renderSalesSection();
+  } else {
+    loadDailySales(salesDate);
+  }
 }
 
 function attachEventListeners() {
@@ -704,6 +804,9 @@ function attachEventListeners() {
   document.getElementById("open-toggle").addEventListener("change", handleToggleOpen);
   document.getElementById("add-item-form").addEventListener("submit", handleAddItem);
   document.getElementById("upi-form").addEventListener("submit", handleUpdateUpiId);
+  document.getElementById("sales-date-input").addEventListener("change", (e) => {
+    if (e.target.value) loadDailySales(e.target.value);
+  });
 
   const notifyBtn = document.getElementById("enable-notifications-btn");
   if (notifyBtn) {
