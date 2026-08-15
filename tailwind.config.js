@@ -20,26 +20,27 @@ module.exports = {
     },
     extend: {
       colors: {
-        cream: "#ffffff",
-        "cream-alt": "#f4f4f4",
-        ink: "#0a0a0a",
-        muted: "#6b6b6b",
-        line: "#e6e6e6",
+        // Premium dark system (Uber-careers-site inspired): near-black
+        // canvas throughout, warm off-white text, one saturated accent.
+        // cream/cream-alt keep their old names (page canvas / elevated
+        // surface) but are now the dark end of the ramp — every place that
+        // read "bg-cream = light page background" still does, it's just
+        // that "light" now means near-black. Same for ink: still "the
+        // primary text/ink color," just flipped to a warm off-white so it
+        // reads on the new dark surfaces.
+        cream: "#060605",
+        "cream-alt": "#141311",
+        ink: "#f4f1ea",
+        muted: "#9c988f",
+        line: "#26241f",
         accent: "#d9531e",
-        "accent-deep": "#a83c15",
-        "accent-soft": "#fbe4d8",
-        error: "#b3261e",
-        "error-soft": "#fbe9e7",
-        // Desaturated to sit inside the monochrome-plus-orange world
-        // rather than reading as a generic framework green — used only
-        // for the rare state that's genuinely "succeeded" (paid, order
-        // confirmed), never as a second brand color.
-        success: "#1d7a4c",
-        "success-soft": "#e3f2e9",
-        // One flat neutral for skeleton loaders, replacing the ad-hoc
-        // stone-100/stone-200 that had crept in — keeps loading states on
-        // the same neutral ramp as everything else.
-        skeleton: "#ececec",
+        "accent-deep": "#ff8a5c",
+        "accent-soft": "#2b160c",
+        error: "#ff6152",
+        "error-soft": "#3a1512",
+        success: "#3ecf8e",
+        "success-soft": "#0f2e1f",
+        skeleton: "#171612",
       },
       fontFamily: {
         sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],

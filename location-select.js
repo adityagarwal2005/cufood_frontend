@@ -9,7 +9,7 @@ const LOCATION_ICONS = {
 const DEFAULT_LOCATION_ICON = "🍽️";
 
 // Alternating solid treatments so the grid doesn't look flat/repetitive.
-const CARD_THEMES = ["bg-ink", "bg-accent"];
+const CARD_THEMES = ["bg-cream-alt", "bg-accent"];
 
 // Escapes for both HTML text-node and attribute-value contexts — the
 // div.textContent/innerHTML round-trip alone only escapes &, <, > and
@@ -82,7 +82,7 @@ function renderLocations(locations) {
 
     const card = document.createElement("a");
     card.className =
-      `group relative flex flex-col overflow-hidden ${hasPhoto ? "bg-ink" : theme} rounded-2xl hover:-translate-y-1.5 active:translate-y-0 transition-all duration-150 p-5 sm:p-6 h-40 sm:h-44 text-inherit no-underline opacity-0 animate-fade-in-up`;
+      `group relative flex flex-col overflow-hidden ${hasPhoto ? "bg-cream-alt" : theme} rounded-2xl hover:-translate-y-1.5 active:translate-y-0 transition-all duration-150 p-5 sm:p-6 h-40 sm:h-44 text-inherit no-underline opacity-0 animate-fade-in-up`;
     card.style.animationDelay = `${index * 60}ms`;
     card.href = `index.html?location=${encodeURIComponent(location.slug)}`;
 

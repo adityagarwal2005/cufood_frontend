@@ -150,9 +150,9 @@ async function loadRestaurants() {
 if (openOnlyToggle) {
   openOnlyToggle.addEventListener("click", () => {
     openOnlyFilter = !openOnlyFilter;
-    openOnlyToggle.classList.toggle("bg-ink", openOnlyFilter);
+    openOnlyToggle.classList.toggle("bg-accent", openOnlyFilter);
     openOnlyToggle.classList.toggle("text-white", openOnlyFilter);
-    openOnlyToggle.classList.toggle("bg-white", !openOnlyFilter);
+    openOnlyToggle.classList.toggle("bg-cream-alt", !openOnlyFilter);
     openOnlyToggle.classList.toggle("text-ink", !openOnlyFilter);
     applyRestaurantFilter();
   });
@@ -170,7 +170,7 @@ function renderSearchResults(results) {
   results.forEach((result) => {
     const item = document.createElement("a");
     item.className =
-      "group flex items-center gap-4 rounded-2xl bg-white border border-line shadow-sm hover:shadow-lg hover:-translate-y-0.5 hover:border-accent-soft transition-all duration-150 px-5 py-4";
+      "group flex items-center gap-4 rounded-2xl bg-cream-alt border border-line shadow-sm hover:shadow-lg hover:-translate-y-0.5 hover:border-accent-soft transition-all duration-150 px-5 py-4";
     item.href = restaurantUrl(result.restaurant_slug);
     const itemWord = result.matching_item_count === 1 ? "item" : "items";
     item.innerHTML = `

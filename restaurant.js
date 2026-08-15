@@ -285,7 +285,7 @@ function renderMenuSection(items) {
         id="menu-search-input"
         placeholder="Search this menu…"
         autocomplete="off"
-        class="w-full rounded-full border-2 border-line bg-white pl-14 pr-6 py-4 text-base font-medium text-ink placeholder:text-muted placeholder:font-normal shadow-sm focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150"
+        class="w-full rounded-full border-2 border-line bg-cream-alt pl-14 pr-6 py-4 text-base font-medium text-ink placeholder:text-muted placeholder:font-normal shadow-sm focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150"
       >
     </div>
     <p class="text-xs font-bold uppercase tracking-wide text-muted mb-4">${items.length} ${itemWord} &middot; ${groups.size} ${categoryWord}</p>
@@ -415,7 +415,7 @@ function updateCartBar(bump) {
   const itemWord = count === 1 ? "item" : "items";
   cartBarContainer.innerHTML = `
     <div class="fixed bottom-4 inset-x-4 sm:inset-x-auto sm:right-6 sm:left-6 sm:max-w-md sm:mx-auto z-30">
-      <a href="checkout.html" class="flex items-center justify-between gap-4 bg-ink text-white rounded-2xl shadow-2xl px-5 py-4 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-150">
+      <a href="checkout.html" class="flex items-center justify-between gap-4 bg-accent text-white rounded-2xl shadow-2xl px-5 py-4 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-150">
         <span class="flex items-center gap-3 min-w-0">
           <span class="flex items-center justify-center w-9 h-9 rounded-xl bg-white/15 flex-shrink-0 ${bump ? "animate-cart-bump" : ""}">
             <span class="w-4 h-4">${ICONS.cart}</span>
@@ -517,7 +517,7 @@ function renderRestaurant(restaurant) {
     : `<span class="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-full bg-white/95 backdrop-blur shadow-sm text-muted"><span class="w-1.5 h-1.5 rounded-full bg-muted"></span>Closed &middot; opens 10am&ndash;6pm, Mon&ndash;Fri</span>`;
 
   const callPill = restaurant.contact_number
-    ? `<a href="tel:${escapeHtml(restaurant.contact_number.replace(/\s+/g, ""))}" class="inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-full bg-ink text-white shadow-accent-glow hover:-translate-y-0.5 hover:shadow-lg transition-all duration-150"><span class="w-3 h-3">${ICONS.phone}</span>Call</a>`
+    ? `<a href="tel:${escapeHtml(restaurant.contact_number.replace(/\s+/g, ""))}" class="inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-full bg-accent text-white shadow-accent-glow hover:-translate-y-0.5 hover:shadow-lg transition-all duration-150"><span class="w-3 h-3">${ICONS.phone}</span>Call</a>`
     : "";
 
   pageContent.innerHTML = `

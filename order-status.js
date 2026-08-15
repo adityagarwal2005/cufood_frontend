@@ -216,10 +216,10 @@ function renderStepTracker(order) {
     const done = i < activeIndex;
     const active = i === activeIndex;
     const circleClass = done
-      ? "bg-ink text-white"
+      ? "bg-accent text-white"
       : active
       ? "bg-accent text-white ring-4 ring-accent-soft animate-pulse"
-      : "bg-white border-2 border-line text-muted";
+      : "bg-cream-alt border-2 border-line text-muted";
     const labelClass = done || active ? "text-ink font-bold" : "text-muted font-medium";
     return `
       <div class="relative z-10 flex flex-col items-center gap-2.5 flex-1">
@@ -271,7 +271,7 @@ function renderPaymentPendingSection(order) {
         <span class="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin flex-shrink-0" aria-hidden="true"></span>
         <p class="text-sm text-ink">Confirming your payment of ${escapeHtml(formatPrice(order.total_amount))} — this page updates on its own once it's through.</p>
       </div>
-      <button type="button" id="retry-payment-btn" class="w-full rounded-xl border-2 border-line bg-white text-ink font-bold text-sm px-5 py-3 hover:border-accent-soft transition-all duration-150">Didn't finish paying? Try again</button>
+      <button type="button" id="retry-payment-btn" class="w-full rounded-xl border-2 border-line bg-cream-alt text-ink font-bold text-sm px-5 py-3 hover:border-accent-soft transition-all duration-150">Didn't finish paying? Try again</button>
     </div>
   `;
 }

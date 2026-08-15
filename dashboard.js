@@ -235,7 +235,7 @@ function toggleSwitchHtml({ id, extraInputClasses, checked, dataAttrs }) {
     <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
       <input type="checkbox"${idAttr} class="peer sr-only ${extraInputClasses || ""}" ${dataAttrs || ""} ${checked ? "checked" : ""}>
       <span class="block w-11 h-6 rounded-full bg-line shadow-inner peer-checked:bg-gradient-to-r peer-checked:from-accent peer-checked:to-accent-deep transition-colors duration-150"></span>
-      <span class="absolute left-0.5 top-0.5 w-5 h-5 rounded-full bg-white shadow flex items-center justify-center text-accent-deep p-1 opacity-0 peer-checked:opacity-100 transition-all duration-150 peer-checked:translate-x-5">${ICONS.check}</span>
+      <span class="absolute left-0.5 top-0.5 w-5 h-5 rounded-full bg-cream-alt shadow flex items-center justify-center text-accent-deep p-1 opacity-0 peer-checked:opacity-100 transition-all duration-150 peer-checked:translate-x-5">${ICONS.check}</span>
     </label>
   `;
 }
@@ -262,24 +262,24 @@ function renderEditItemRow(item) {
   // a price field too, matching what the "Add item" form can create.
   const simplePriced = !hasPriceTiers(item) && item.price_half == null && item.price_full == null;
   return `
-    <div class="flex flex-wrap items-end gap-3 bg-white border-2 border-accent-soft rounded-xl px-5 py-4" data-edit-row="${item.id}">
+    <div class="flex flex-wrap items-end gap-3 bg-cream-alt border-2 border-accent-soft rounded-xl px-5 py-4" data-edit-row="${item.id}">
       <div class="flex flex-col gap-1 flex-1 min-w-[140px]">
         <label class="text-xs font-semibold text-muted">Name</label>
-        <input type="text" class="edit-item-name rounded-lg border-2 border-line bg-white px-3 py-2 text-sm text-ink focus:outline-none focus:border-accent" value="${escapeHtml(item.name)}">
+        <input type="text" class="edit-item-name rounded-lg border-2 border-line bg-cream-alt px-3 py-2 text-sm text-ink focus:outline-none focus:border-accent" value="${escapeHtml(item.name)}">
       </div>
       <div class="flex flex-col gap-1 flex-1 min-w-[120px]">
         <label class="text-xs font-semibold text-muted">Category</label>
-        <input type="text" class="edit-item-category rounded-lg border-2 border-line bg-white px-3 py-2 text-sm text-ink focus:outline-none focus:border-accent" value="${escapeHtml(item.category || "")}">
+        <input type="text" class="edit-item-category rounded-lg border-2 border-line bg-cream-alt px-3 py-2 text-sm text-ink focus:outline-none focus:border-accent" value="${escapeHtml(item.category || "")}">
       </div>
       ${simplePriced ? `
         <div class="flex flex-col gap-1 w-24">
           <label class="text-xs font-semibold text-muted">Price</label>
-          <input type="number" min="0" step="0.01" class="edit-item-price rounded-lg border-2 border-line bg-white px-3 py-2 text-sm text-ink focus:outline-none focus:border-accent" value="${item.price !== null ? item.price : ""}">
+          <input type="number" min="0" step="0.01" class="edit-item-price rounded-lg border-2 border-line bg-cream-alt px-3 py-2 text-sm text-ink focus:outline-none focus:border-accent" value="${item.price !== null ? item.price : ""}">
         </div>
       ` : ""}
       <div class="flex items-center gap-2">
-        <button type="button" class="btn-save-edit inline-flex items-center gap-1.5 text-sm font-bold text-white bg-ink rounded-lg px-3.5 py-2" data-item-id="${item.id}">Save</button>
-        <button type="button" class="btn-cancel-edit inline-flex items-center gap-1.5 text-sm font-semibold text-muted bg-white border border-line rounded-lg px-3.5 py-2">Cancel</button>
+        <button type="button" class="btn-save-edit inline-flex items-center gap-1.5 text-sm font-bold text-white bg-accent rounded-lg px-3.5 py-2" data-item-id="${item.id}">Save</button>
+        <button type="button" class="btn-cancel-edit inline-flex items-center gap-1.5 text-sm font-semibold text-muted bg-cream-alt border border-line rounded-lg px-3.5 py-2">Cancel</button>
       </div>
     </div>
   `;
@@ -311,7 +311,7 @@ function renderMenuItemsHtml(items) {
       }
       const tiered = hasPriceTiers(item);
       html += `
-        <div class="flex flex-wrap items-center gap-4 bg-white border border-line border-l-4 border-l-transparent rounded-xl shadow-sm px-5 py-4 hover:shadow-md hover:-translate-y-0.5 hover:border-l-accent transition-all duration-150">
+        <div class="flex flex-wrap items-center gap-4 bg-cream-alt border border-line border-l-4 border-l-transparent rounded-xl shadow-sm px-5 py-4 hover:shadow-md hover:-translate-y-0.5 hover:border-l-accent transition-all duration-150">
           <div class="flex-1 flex flex-wrap items-baseline gap-2 min-w-[140px]">
             <span class="text-base font-semibold text-ink">${escapeHtml(item.name)}</span>
             ${tiered ? renderTierPills(item.price_tiers) : renderItemPrice(item)}
@@ -323,10 +323,10 @@ function renderMenuItemsHtml(items) {
               checked: item.is_available_today,
               dataAttrs: `data-item-id="${item.id}"`,
             })}
-            <button type="button" class="btn-edit inline-flex items-center gap-1.5 text-sm font-semibold text-muted bg-white border border-line rounded-xl px-3.5 py-2 hover:text-accent-deep hover:border-accent-soft hover:bg-accent-soft transition-all duration-150" data-item-id="${item.id}">
+            <button type="button" class="btn-edit inline-flex items-center gap-1.5 text-sm font-semibold text-muted bg-cream-alt border border-line rounded-xl px-3.5 py-2 hover:text-accent-deep hover:border-accent-soft hover:bg-accent-soft transition-all duration-150" data-item-id="${item.id}">
               <span class="w-3.5 h-3.5">${ICONS.edit}</span>Edit
             </button>
-            <button type="button" class="btn-delete inline-flex items-center gap-1.5 text-sm font-semibold text-muted bg-white border border-line rounded-xl px-3.5 py-2 hover:text-error hover:border-error-soft hover:bg-error-soft transition-all duration-150" data-item-id="${item.id}">
+            <button type="button" class="btn-delete inline-flex items-center gap-1.5 text-sm font-semibold text-muted bg-cream-alt border border-line rounded-xl px-3.5 py-2 hover:text-error hover:border-error-soft hover:bg-error-soft transition-all duration-150" data-item-id="${item.id}">
               <span class="w-3.5 h-3.5">${ICONS.trash}</span>Delete
             </button>
           </div>
@@ -406,7 +406,7 @@ function renderOrderCard(order) {
     : "";
 
   return `
-    <div class="border border-line rounded-xl p-4 sm:p-5 mb-3 last:mb-0 bg-white" data-order-card>
+    <div class="border border-line rounded-xl p-4 sm:p-5 mb-3 last:mb-0 bg-cream-alt" data-order-card>
       <div class="flex items-start justify-between gap-3 flex-wrap">
         <div class="min-w-0">
           <div class="flex items-center gap-2 flex-wrap mb-1">
@@ -513,7 +513,7 @@ function renderSalesSection() {
 
   const mostOrderedHtml = most_ordered_item ? `
     <div class="flex items-center gap-3.5 bg-accent-soft rounded-xl px-4 py-3.5 mb-4">
-      <span class="flex items-center justify-center w-9 h-9 rounded-full bg-white text-accent-deep flex-shrink-0 p-2">${ICONS.star}</span>
+      <span class="flex items-center justify-center w-9 h-9 rounded-full bg-cream-alt text-accent-deep flex-shrink-0 p-2">${ICONS.star}</span>
       <div>
         <p class="text-xs font-bold text-accent-deep uppercase tracking-wide">Most ordered</p>
         <p class="text-base font-black text-ink leading-tight">${escapeHtml(most_ordered_item.name)} <span class="text-sm font-semibold text-muted">&times;${most_ordered_item.quantity}</span></p>
@@ -544,7 +544,7 @@ function renderSalesSection() {
       </div>
     </div>
     ${mostOrderedHtml}
-    <div class="bg-white border border-line rounded-xl px-4">${rows}</div>
+    <div class="bg-cream-alt border border-line rounded-xl px-4">${rows}</div>
   `;
 }
 
@@ -675,7 +675,7 @@ function renderDashboard() {
   pageContent.innerHTML = `
     <div class="flex flex-wrap items-center justify-between gap-4 pb-6 mb-8 border-b border-line">
       <div class="flex flex-wrap items-center gap-4">
-        <span class="flex items-center justify-center w-11 h-11 rounded-full bg-ink text-white font-black text-base flex-shrink-0">${escapeHtml(initial)}</span>
+        <span class="flex items-center justify-center w-11 h-11 rounded-full bg-accent text-white font-black text-base flex-shrink-0">${escapeHtml(initial)}</span>
         <div class="flex flex-col gap-1">
           <div class="flex flex-wrap items-center gap-3">
             <h1 class="text-xl sm:text-2xl font-black tracking-tightest text-ink leading-tight">${escapeHtml(restaurantData.name)}</h1>
@@ -724,7 +724,7 @@ function renderDashboard() {
       <div class="flex items-center justify-between gap-3 mb-5">
         <h2 class="text-2xl sm:text-3xl font-black tracking-tightest text-ink">Sales</h2>
         <input type="date" id="sales-date-input" max="${new Date().toISOString().slice(0, 10)}"
-          class="rounded-xl border-2 border-line bg-white px-3 py-2 text-sm font-semibold text-ink focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150">
+          class="rounded-xl border-2 border-line bg-cream-alt px-3 py-2 text-sm font-semibold text-ink focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150">
       </div>
       <div id="sales-content"><div class="h-24 skel"></div></div>
     </section>
@@ -740,9 +740,9 @@ function renderDashboard() {
           <label class="text-xs font-semibold text-muted" for="upi-id-input">Your UPI ID</label>
           <div class="flex items-center gap-2">
             <input type="text" id="upi-id-input" placeholder="yourname@bank" value="${escapeHtml(restaurantData.upi_id || "")}"
-              class="flex-1 rounded-xl border-2 border-line bg-white px-3.5 py-2.5 text-sm text-ink focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150">
+              class="flex-1 rounded-xl border-2 border-line bg-cream-alt px-3.5 py-2.5 text-sm text-ink focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150">
             ${restaurantData.upi_id ? `
-              <button type="button" class="copy-btn flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full border-2 border-ink text-ink hover:bg-ink hover:text-white transition-colors duration-150" data-copy-value="${escapeHtml(restaurantData.upi_id)}" aria-label="Copy UPI ID">
+              <button type="button" class="copy-btn flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full border-2 border-line text-ink hover:bg-accent hover:border-accent hover:text-white transition-colors duration-150" data-copy-value="${escapeHtml(restaurantData.upi_id)}" aria-label="Copy UPI ID">
                 <span class="w-4 h-4 pointer-events-none">${ICONS.copy}</span>
               </button>
             ` : ""}
@@ -761,17 +761,17 @@ function renderDashboard() {
         <div class="flex flex-col gap-1.5 flex-1 min-w-[140px]">
           <label class="text-xs font-semibold text-muted" for="item-name">Name</label>
           <input type="text" id="item-name" required
-            class="rounded-xl border-2 border-line bg-white px-3.5 py-2.5 text-sm text-ink focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150">
+            class="rounded-xl border-2 border-line bg-cream-alt px-3.5 py-2.5 text-sm text-ink focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150">
         </div>
         <div class="flex flex-col gap-1.5 flex-1 min-w-[140px]">
           <label class="text-xs font-semibold text-muted" for="item-category">Category</label>
           <input type="text" id="item-category" placeholder="Optional"
-            class="rounded-xl border-2 border-line bg-white px-3.5 py-2.5 text-sm text-ink focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150">
+            class="rounded-xl border-2 border-line bg-cream-alt px-3.5 py-2.5 text-sm text-ink focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150">
         </div>
         <div class="flex flex-col gap-1.5 flex-1 min-w-[140px]">
           <label class="text-xs font-semibold text-muted" for="item-price">Price</label>
           <input type="number" id="item-price" placeholder="Optional" min="0" step="0.01"
-            class="rounded-xl border-2 border-line bg-white px-3.5 py-2.5 text-sm text-ink focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150">
+            class="rounded-xl border-2 border-line bg-cream-alt px-3.5 py-2.5 text-sm text-ink focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150">
         </div>
         <button type="submit" id="add-item-submit" class="btn-primary btn-sm">
           <span class="w-3.5 h-3.5">${ICONS.plus}</span>Add item

@@ -151,11 +151,11 @@ function renderCartLine(key, line) {
       </div>
       <div class="flex items-center gap-3 flex-shrink-0">
         <div class="inline-flex items-center gap-1 bg-cream-alt rounded-full pl-1 pr-1 py-1">
-          <button type="button" class="cart-line-remove w-8 h-8 flex items-center justify-center rounded-full hover:bg-white transition-colors duration-150" data-key="${escapeHtml(key)}">
+          <button type="button" class="cart-line-remove w-8 h-8 flex items-center justify-center rounded-full hover:bg-cream-alt transition-colors duration-150" data-key="${escapeHtml(key)}">
             <span class="w-3 h-3 text-muted">${ICONS.minus}</span>
           </button>
           <span class="text-sm font-bold min-w-[1rem] text-center">${line.quantity}</span>
-          <button type="button" class="cart-line-add w-8 h-8 flex items-center justify-center rounded-full hover:bg-white transition-colors duration-150" data-key="${escapeHtml(key)}">
+          <button type="button" class="cart-line-add w-8 h-8 flex items-center justify-center rounded-full hover:bg-cream-alt transition-colors duration-150" data-key="${escapeHtml(key)}">
             <span class="w-3 h-3 text-muted">${ICONS.plus}</span>
           </button>
         </div>
@@ -192,11 +192,11 @@ function renderCheckout(cart) {
     <div class="mb-8">
       <h2 class="text-xs font-bold uppercase tracking-widest text-muted mb-3">When?</h2>
       <div class="flex gap-2">
-        <button type="button" id="when-asap-btn" class="flex-1 rounded-xl border-2 px-4 py-3 text-sm font-bold text-left transition-all duration-150 ${selectedSlot === null ? "border-ink bg-ink text-white" : "border-line bg-white text-ink hover:border-ink"}">
+        <button type="button" id="when-asap-btn" class="flex-1 rounded-xl border-2 px-4 py-3 text-sm font-bold text-left transition-all duration-150 ${selectedSlot === null ? "border-ink bg-accent text-white" : "border-line bg-cream-alt text-ink hover:border-ink"}">
           Now
           <span class="block text-xs font-medium ${selectedSlot === null ? "text-white/70" : "text-muted"} mt-0.5">Cooked right away</span>
         </button>
-        <button type="button" id="when-schedule-btn" class="flex-1 rounded-xl border-2 px-4 py-3 text-sm font-bold text-left transition-all duration-150 ${selectedSlot !== null ? "border-ink bg-ink text-white" : "border-line bg-white text-ink hover:border-ink"}">
+        <button type="button" id="when-schedule-btn" class="flex-1 rounded-xl border-2 px-4 py-3 text-sm font-bold text-left transition-all duration-150 ${selectedSlot !== null ? "border-ink bg-accent text-white" : "border-line bg-cream-alt text-ink hover:border-ink"}">
           Schedule
           <span class="block text-xs font-medium ${selectedSlot !== null ? "text-white/70" : "text-muted"} mt-0.5">${selectedSlot ? `Pickup ~${escapeHtml(formatSlotTime(selectedSlot))}` : "Pick a time"}</span>
         </button>
@@ -239,7 +239,7 @@ function renderSlotPicker() {
     .map((slot) => {
       const isSelected = selectedSlot && slot.getTime() === selectedSlot.getTime();
       return `
-        <button type="button" class="slot-btn rounded-full border-2 px-4 py-2 text-sm font-bold transition-all duration-150 ${isSelected ? "border-ink bg-ink text-white" : "border-line bg-white text-ink hover:border-ink"}" data-time="${slot.getTime()}">
+        <button type="button" class="slot-btn rounded-full border-2 px-4 py-2 text-sm font-bold transition-all duration-150 ${isSelected ? "border-ink bg-accent text-white" : "border-line bg-cream-alt text-ink hover:border-ink"}" data-time="${slot.getTime()}">
           ${escapeHtml(formatSlotTime(slot))}
         </button>
       `;

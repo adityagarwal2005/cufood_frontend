@@ -13,10 +13,10 @@
   <meta name="theme-color" content="#0a0a0a">
 </head>
 <body class="font-sans bg-cream text-ink antialiased">
-  <header class="sticky top-0 z-20 bg-white/90 backdrop-blur-md border-b border-line">
+  <header class="sticky top-0 z-20 bg-cream/85 backdrop-blur-md border-b border-line">
     <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3 px-6 sm:px-8 py-5">
       <a href="location-select.html" class="flex items-center gap-3">
-        <span class="flex items-center justify-center w-9 h-9 rounded-full bg-ink text-white font-black text-sm">CU</span>
+        <span class="flex items-center justify-center w-9 h-9 rounded-full bg-accent text-white font-black text-sm">CU</span>
         <span class="flex flex-col leading-tight">
           <span class="text-lg font-black tracking-tightest text-ink">CUFOOD</span>
           <span class="text-xs font-semibold uppercase tracking-widest text-muted hidden sm:block">CU Campus</span>
@@ -25,12 +25,12 @@
       <div class="flex flex-wrap items-center gap-5 sm:gap-7">
         <a href="location-select.html" id="location-indicator" class="text-xs font-bold uppercase tracking-wide text-ink hover:text-accent-deep transition-colors duration-150 whitespace-nowrap">Switch Location</a>
         <a href="my-orders.html" class="text-xs font-bold uppercase tracking-wide text-ink hover:text-accent-deep transition-colors duration-150 whitespace-nowrap">My Orders</a>
-        <a href="restaurant-login.html" class="text-xs font-bold uppercase tracking-wide text-white bg-ink rounded-full px-4 py-2.5 hover:bg-accent transition-colors duration-150 whitespace-nowrap">Restaurant Login</a>
+        <a href="restaurant-login.html" class="text-xs font-bold uppercase tracking-wide text-white bg-accent rounded-full px-4 py-2.5 hover:bg-accent-deep hover:text-ink transition-colors duration-150 whitespace-nowrap">Restaurant Login</a>
       </div>
     </div>
   </header>
 
-  <main class="relative overflow-hidden bg-white">
+  <main class="relative overflow-hidden bg-cream">
     <div class="relative max-w-6xl mx-auto px-6 sm:px-8 py-14 sm:py-24">
       <section class="relative mb-12">
         <p class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted mb-4">
@@ -51,7 +51,7 @@
           id="search-input"
           placeholder="Search for restaurant or dish"
           autocomplete="off"
-          class="w-full rounded-full border-2 border-ink bg-white pl-14 pr-6 py-4 text-base font-medium text-ink placeholder:text-muted placeholder:font-normal focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150"
+          class="w-full rounded-full border-2 border-line bg-cream-alt pl-14 pr-6 py-4 text-base font-medium text-ink placeholder:text-muted placeholder:font-normal focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150"
         >
       </div>
 
@@ -60,7 +60,7 @@
       <section id="restaurant-row-section">
         <div class="flex items-center justify-between gap-3 mb-6 pb-4 border-b border-line">
           <h2 class="text-xs font-bold uppercase tracking-widest text-ink">Outlets</h2>
-          <button type="button" id="open-only-toggle" class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide bg-white text-ink border border-ink rounded-full px-4 py-2 hover:bg-ink hover:text-white transition-all duration-150">
+          <button type="button" id="open-only-toggle" class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide bg-cream-alt text-ink border border-line rounded-full px-4 py-2 hover:border-ink transition-all duration-150">
             <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>Open now
           </button>
         </div>
@@ -74,10 +74,10 @@
     </div>
   </main>
 
-  <footer class="relative border-t border-line bg-white">
+  <footer class="relative border-t border-line bg-cream">
     <div class="max-w-6xl mx-auto px-6 sm:px-8 py-10 flex flex-col sm:flex-row items-center justify-between gap-4">
       <a href="location-select.html" class="flex items-center gap-2.5">
-        <span class="flex items-center justify-center w-8 h-8 rounded-full bg-ink text-white font-black text-xs">CU</span>
+        <span class="flex items-center justify-center w-8 h-8 rounded-full bg-accent text-white font-black text-xs">CU</span>
         <span class="flex flex-col leading-tight">
           <span class="text-sm font-black tracking-tightest text-ink">CUFOOD</span>
           <span class="text-xs font-medium text-muted">Live campus food availability</span>
