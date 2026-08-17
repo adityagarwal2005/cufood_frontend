@@ -58,23 +58,6 @@ async function subscribeToPush(code) {
   }
 }
 
-// So my-orders.html can list past orders without a student account —
-// read by my-orders.js under the same key.
-const MY_ORDERS_KEY = "cufood_my_orders";
-const MAX_TRACKED_ORDERS = 10;
-
-function rememberMyOrder(code, restaurantName) {
-  let list = [];
-  try {
-    list = JSON.parse(localStorage.getItem(MY_ORDERS_KEY)) || [];
-  } catch (err) {
-    list = [];
-  }
-  list = list.filter((entry) => entry.code !== code);
-  list.unshift({ code, restaurantName, placedAt: new Date().toISOString() });
-  localStorage.setItem(MY_ORDERS_KEY, JSON.stringify(list.slice(0, MAX_TRACKED_ORDERS)));
-}
-
 function escapeHtml(text) {
   const div = document.createElement("div");
   div.textContent = text;
@@ -204,20 +187,9 @@ function renderCheckout(cart) {
       <div id="slot-picker" class="${selectedSlot !== null ? "flex" : "hidden"} flex-wrap gap-2 pt-4"></div>
     </div>
 
-    <form id="checkout-form" class="flex flex-col gap-4 mb-8">
-      <h2 class="text-xs font-bold uppercase tracking-widest text-muted -mb-1">Your details</h2>
-      <div class="flex flex-col gap-1.5">
-        <label class="text-xs font-semibold text-muted" for="student-name">Name</label>
-        <input type="text" id="student-name" required class="field">
-      </div>
-      <div class="flex flex-col gap-1.5">
-        <label class="text-xs font-semibold text-muted" for="student-phone">Your phone number</label>
-        <input type="tel" id="student-phone" placeholder="98765 43210" required class="field">
-        <p class="text-xs text-muted">So the restaurant can reach you if there's an issue with your order.</p>
-      </div>
-    </form>
+    <p class="text-xs text-muted mb-3">Ordering as <span class="font-bold text-ink">${escapeHtml(getStudentUsername() || "")}</span></p>
 
-    <button type="submit" form="checkout-form" id="pay-btn" class="btn-primary w-full text-base py-4">
+    <button type="button" id="pay-btn" class="btn-primary w-full text-base py-4">
       Pay ${escapeHtml(formatPrice(grandTotal))}
     </button>
     <p class="text-xs text-muted text-center leading-relaxed mt-3">${selectedSlot ? `You'll pay securely next. They'll have your order ready around ${escapeHtml(formatSlotTime(selectedSlot))}.` : "You'll pay securely next. The restaurant starts as soon as payment is confirmed."}</p>
@@ -298,8 +270,8 @@ function attachCheckoutListeners() {
     });
   });
 
-  const form = document.getElementById("checkout-form");
-  if (form) form.addEventListener("submit", handleCheckoutSubmit);
+  const payBtn = document.getElementById("pay-btn");
+  if (payBtn) payBtn.addEventListener("click", handlePlaceOrder);
 }
 
 function refresh() {
@@ -331,24 +303,12 @@ function resetPlaceOrderButton() {
   payBtn.textContent = `Pay ${formatPrice(getGrandTotal(cart))}`;
 }
 
-async function handleCheckoutSubmit(event) {
-  event.preventDefault();
+async function handlePlaceOrder() {
   hideError();
 
   const cart = getCart();
   if (!cart || getCartItemCount(cart) === 0) {
     refresh();
-    return;
-  }
-
-  const studentName = document.getElementById("student-name").value.trim();
-  const studentPhone = document.getElementById("student-phone").value.trim();
-  if (!studentName) {
-    showError("Please fill in your name.");
-    return;
-  }
-  if (studentPhone.replace(/\D/g, "").length < 10) {
-    showError("Please enter a valid phone number.");
     return;
   }
 
@@ -365,11 +325,9 @@ async function handleCheckoutSubmit(event) {
   try {
     const response = await fetch(`${API_BASE_URL}/api/orders/create/`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...studentAuthHeaders() },
       body: JSON.stringify({
         restaurant_slug: cart.restaurantSlug,
-        student_name: studentName,
-        student_phone_number: studentPhone,
         scheduled_for: selectedSlot ? selectedSlot.toISOString() : null,
         items,
       }),
@@ -386,7 +344,6 @@ async function handleCheckoutSubmit(event) {
     // nothing left for the checkout page to show if the student backs out
     // of paying and returns. Retrying payment for THIS order happens from
     // order-status.html, not by rebuilding a cart.
-    rememberMyOrder(data.order_code, cart.restaurantName);
     clearCart();
     // Fire-and-forget — never block/delay opening Checkout on this, and
     // never let a permission-prompt hiccup fail the actual payment flow.
@@ -396,8 +353,6 @@ async function handleCheckoutSubmit(event) {
       razorpayOrderId: data.razorpay_order_id,
       razorpayKeyId: data.razorpay_key_id,
       restaurantName: cart.restaurantName,
-      studentName,
-      studentPhone,
     });
   } catch (err) {
     showError("Could not reach the server. Please try again.");
@@ -413,7 +368,7 @@ async function handleCheckoutSubmit(event) {
 // anything from this modal directly, since a client-side "success"
 // callback is exactly the kind of self-report this whole flow exists to
 // not rely on.
-function openRazorpayCheckout({ orderCode, razorpayOrderId, razorpayKeyId, restaurantName, studentName, studentPhone }) {
+function openRazorpayCheckout({ orderCode, razorpayOrderId, razorpayKeyId, restaurantName }) {
   const goToStatus = () => {
     window.location.href = `order-status.html?code=${encodeURIComponent(orderCode)}`;
   };
@@ -431,7 +386,10 @@ function openRazorpayCheckout({ orderCode, razorpayOrderId, razorpayKeyId, resta
     name: "CUFood",
     description: `Order from ${restaurantName}`,
     image: `${window.location.origin}/icon-192.png`,
-    prefill: { name: studentName, contact: studentPhone },
+    // No name/contact prefill anymore — Razorpay collects whatever's tied
+    // to however the student actually pays (their own UPI app/card), which
+    // is the real, working contact info, unlike a typed-in phone number.
+    prefill: { name: getStudentUsername() || "" },
     theme: { color: "#d9531e" },
     handler: goToStatus,
     modal: { ondismiss: goToStatus },
@@ -447,4 +405,8 @@ if (backLink) {
     : "location-select.html";
 }
 
-refresh();
+if (!isStudentLoggedIn()) {
+  window.location.href = `student-login.html?next=${encodeURIComponent(window.location.href)}`;
+} else {
+  refresh();
+}
