@@ -1,5 +1,5 @@
 // Kept in sync with the API_BASE_URL constant in app.js.
-const API_BASE_URL = "https://cufood-backend.onrender.com";
+const API_BASE_URL = "https://cufood-backend-832534179056.asia-south1.run.app";
 
 const pageContent = document.getElementById("page-content");
 

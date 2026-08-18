@@ -1,4 +1,4 @@
-const API_BASE_URL = "https://cufood-backend.onrender.com";
+const API_BASE_URL = "https://cufood-backend-832534179056.asia-south1.run.app";
 
 const params = new URLSearchParams(window.location.search);
 const NEXT_URL = params.get("next") || "location-select.html";

@@ -1,4 +1,4 @@
-const API_BASE_URL = "https://cufood-backend.onrender.com";
+const API_BASE_URL = "https://cufood-backend-832534179056.asia-south1.run.app";
 // Safe to hardcode — this is the *public* half of the VAPID keypair (see
 // backend settings.py); it's meant to be embedded in client code, only the
 // private key is a secret.

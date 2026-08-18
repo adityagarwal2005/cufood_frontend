@@ -1,4 +1,4 @@
-const API_BASE_URL = "https://cufood-backend.onrender.com";
+const API_BASE_URL = "https://cufood-backend-832534179056.asia-south1.run.app";
 
 const locationList = document.getElementById("location-list");
 

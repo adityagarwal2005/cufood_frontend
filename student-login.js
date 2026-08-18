@@ -1,5 +1,5 @@
 // Kept in sync with the API_BASE_URL constant in the owner-side files.
-const API_BASE_URL = "https://cufood-backend.onrender.com";
+const API_BASE_URL = "https://cufood-backend-832534179056.asia-south1.run.app";
 
 const params = new URLSearchParams(window.location.search);
 // Where to send the student after a successful sign-in — checkout.js sets

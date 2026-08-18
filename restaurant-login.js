@@ -1,5 +1,5 @@
 // Kept in sync with the API_BASE_URL constant in app.js.
-const API_BASE_URL = "https://cufood-backend.onrender.com";
+const API_BASE_URL = "https://cufood-backend-832534179056.asia-south1.run.app";
 const TOKEN_KEY = "cufood_owner_token";
 
 const loginForm = document.getElementById("login-form");
