@@ -1,4 +1,7 @@
 {
   "buildCommand": "npm run build:css",
-  "outputDirectory": "."
+  "outputDirectory": ".",
+  "rewrites": [
+    { "source": "/admin", "destination": "/admin-login.html" }
+  ]
 }

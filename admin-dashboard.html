@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CUFood — Admin</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <meta name="theme-color" content="#0a0a0a">
+</head>
+<body class="font-sans bg-cream text-ink antialiased">
+  <header class="sticky top-0 z-20 bg-cream/85 backdrop-blur-md border-b border-line">
+    <div class="max-w-5xl mx-auto flex items-center justify-between px-6 sm:px-8 py-5">
+      <div class="flex items-center gap-3">
+        <span class="flex items-center justify-center w-9 h-9 rounded-full bg-accent text-white font-black text-sm">CU</span>
+        <span class="flex flex-col leading-tight">
+          <span class="text-lg font-black tracking-tightest text-ink">CUFOOD</span>
+          <span class="text-xs font-semibold uppercase tracking-widest text-muted">Admin</span>
+        </span>
+      </div>
+      <button type="button" id="logout-btn" class="btn-secondary btn-sm">Log out</button>
+    </div>
+  </header>
+
+  <main class="relative overflow-hidden bg-cream min-h-[calc(100vh-77px)]">
+    <div class="relative max-w-5xl mx-auto px-6 sm:px-8 py-10 sm:py-14">
+      <div id="page-content">
+        <div class="h-32 skel mb-6"></div>
+        <div class="h-48 skel"></div>
+      </div>
+    </div>
+  </main>
+
+  <script src="icons.js"></script>
+  <script src="admin-dashboard.js"></script>
+</body>
+</html>
