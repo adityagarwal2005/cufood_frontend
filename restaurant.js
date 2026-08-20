@@ -437,7 +437,7 @@ function initCartInteractivity() {
   const categoryList = document.querySelector("[data-category-list]");
   if (!categoryList) return;
 
-  categoryList.addEventListener("click", (event) => {
+  categoryList.addEventListener("click", async (event) => {
     const btn = event.target.closest(".cart-add-btn, .cart-remove-btn");
     if (!btn) return;
 
@@ -456,8 +456,9 @@ function initCartInteractivity() {
         existingCart.restaurantSlug !== currentRestaurant.slug &&
         getCartItemCount(existingCart) > 0
       ) {
-        const confirmed = window.confirm(
-          `Your cart has items from ${existingCart.restaurantName}. You can only order from one outlet at a time — adding this will clear that cart. Continue?`
+        const confirmed = await showConfirmModal(
+          `Your cart has items from ${existingCart.restaurantName}. You can only order from one outlet at a time — adding this will clear that cart. Continue?`,
+          { confirmLabel: "Switch outlet" }
         );
         if (!confirmed) return;
         clearCart();

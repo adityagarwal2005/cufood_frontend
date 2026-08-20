@@ -617,8 +617,12 @@ function attachOrderListeners() {
     btn.addEventListener("click", () => handleOrderAction(btn.dataset.code, "accept", btn));
   });
   document.querySelectorAll(".order-reject-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      if (!window.confirm("Reject this order? The student will be refunded automatically.")) return;
+    btn.addEventListener("click", async () => {
+      const confirmed = await showConfirmModal(
+        "Reject this order? The student will be refunded automatically.",
+        { confirmLabel: "Reject", danger: true }
+      );
+      if (!confirmed) return;
       handleOrderAction(btn.dataset.code, "reject", btn);
     });
   });
@@ -979,7 +983,10 @@ async function handleSaveEditItem(itemId) {
 async function handleDeleteItem(itemId) {
   hideError();
   const item = restaurantData.menu_items.find((i) => String(i.id) === String(itemId));
-  const confirmed = window.confirm(`Delete "${item ? item.name : "this item"}"? This cannot be undone.`);
+  const confirmed = await showConfirmModal(
+    `Delete "${item ? item.name : "this item"}"? This cannot be undone.`,
+    { confirmLabel: "Delete", danger: true }
+  );
   if (!confirmed) return;
 
   try {
