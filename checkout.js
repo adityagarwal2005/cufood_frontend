@@ -105,6 +105,12 @@ function generateTimeSlots() {
 // student picks a slot; survives re-render since it's module-level.
 let selectedSlot = null;
 
+// Same module-level-survives-re-render pattern as selectedSlot — kept in
+// sync on every keystroke (see attachCheckoutListeners) rather than only
+// read at submit time, so it isn't lost if quantity buttons or slot
+// selection trigger a re-render while the student is mid-sentence.
+let specialInstructions = "";
+
 function emptyCartView() {
   // backLink is set once at page load from the cart that existed then (see
   // the bottom of this file) and its href doesn't change after — so it's
@@ -185,6 +191,11 @@ function renderCheckout(cart) {
         </button>
       </div>
       <div id="slot-picker" class="${selectedSlot !== null ? "flex" : "hidden"} flex-wrap gap-2 pt-4"></div>
+    </div>
+
+    <div class="mb-8">
+      <label class="text-xs font-bold uppercase tracking-widest text-muted mb-3 block" for="instructions-input">Cooking instructions <span class="normal-case font-medium text-muted">(optional)</span></label>
+      <textarea id="instructions-input" rows="2" maxlength="300" placeholder="e.g. no sugar, extra spicy" class="field resize-none">${escapeHtml(specialInstructions)}</textarea>
     </div>
 
     <p class="text-xs text-muted mb-3">Ordering as <span class="font-bold text-ink">${escapeHtml(getStudentUsername() || "")}</span></p>
@@ -270,6 +281,13 @@ function attachCheckoutListeners() {
     });
   });
 
+  const instructionsInput = document.getElementById("instructions-input");
+  if (instructionsInput) {
+    instructionsInput.addEventListener("input", (e) => {
+      specialInstructions = e.target.value;
+    });
+  }
+
   const payBtn = document.getElementById("pay-btn");
   if (payBtn) payBtn.addEventListener("click", handlePlaceOrder);
 }
@@ -329,6 +347,7 @@ async function handlePlaceOrder() {
       body: JSON.stringify({
         restaurant_slug: cart.restaurantSlug,
         scheduled_for: selectedSlot ? selectedSlot.toISOString() : null,
+        special_instructions: specialInstructions.trim(),
         items,
       }),
     });

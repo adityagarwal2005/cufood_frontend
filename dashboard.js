@@ -404,6 +404,14 @@ function renderOrderCard(order) {
       </div>
     `
     : "";
+  const instructionsHtml = order.special_instructions
+    ? `
+      <div class="mt-2 bg-accent-soft rounded-xl px-3 py-2 flex items-start gap-1.5">
+        <span class="w-3.5 h-3.5 text-accent-deep flex-shrink-0 mt-0.5">${ICONS.edit}</span>
+        <p class="text-xs font-semibold text-accent-deep">${escapeHtml(order.special_instructions)}</p>
+      </div>
+    `
+    : "";
 
   return `
     <div class="border border-line rounded-xl p-4 sm:p-5 mb-3 last:mb-0 bg-cream-alt" data-order-card>
@@ -417,6 +425,7 @@ function renderOrderCard(order) {
           <p class="text-xs text-muted">${escapeHtml(order.student_name)}${order.status === "placed" && order.student_phone_number ? ` · ${escapeHtml(order.student_phone_number)}` : ""} · ${timeAgo(order.created_at)}</p>
           <p class="text-sm text-ink mt-2">${itemsSummary}</p>
           <p class="text-sm font-bold text-accent-deep mt-1">${escapeHtml(formatPrice(order.restaurant_payout))} <span class="text-xs font-medium text-muted">your payout</span></p>
+          ${instructionsHtml}
           ${etaText}
           ${refundLinkHtml}
         </div>

@@ -381,6 +381,7 @@ function renderOrder(order) {
     <div class="border-t border-line mt-8 pt-6">
       <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">${escapeHtml(order.restaurant_name)}</p>
       <div>${itemsHtml}</div>
+      ${order.special_instructions ? `<p class="text-xs text-muted mt-2"><span class="font-bold text-ink">Note:</span> ${escapeHtml(order.special_instructions)}</p>` : ""}
       <div class="flex items-center justify-between pt-3 mt-1 border-t border-line">
         <span class="text-sm font-bold text-muted uppercase tracking-wide">Total</span>
         <span class="text-lg font-black text-ink">${escapeHtml(formatPrice(order.total_amount))}</span>
