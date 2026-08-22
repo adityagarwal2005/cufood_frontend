@@ -52,6 +52,15 @@ function escapeHtmlLocal(text) {
 // Every student-facing header has an empty <span id="account-nav"> where
 // this drops in either "Sign in" or "Hi, <username> · Log out".
 function renderAccountNav() {
+  // Restaurant Login only makes sense to someone who isn't already a
+  // signed-in student — once you're in, that button is just clutter (and
+  // a wrong-audience distraction), so it hides itself instead of a
+  // logged-in student having to ignore it every time.
+  const restaurantLoginLink = document.getElementById("restaurant-login-link");
+  if (restaurantLoginLink) {
+    restaurantLoginLink.classList.toggle("hidden", isStudentLoggedIn());
+  }
+
   const el = document.getElementById("account-nav");
   if (!el) return;
   if (isStudentLoggedIn()) {

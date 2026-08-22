@@ -111,6 +111,14 @@ let selectedSlot = null;
 // selection trigger a re-render while the student is mid-sentence.
 let specialInstructions = "";
 
+// The account's username is the real, permanent, verified identity (used
+// for login, order history, everything that matters) — this is purely a
+// cosmetic override of what's shown to the restaurant on THIS one order
+// (e.g. a nickname instead of a username), never a way to change the
+// account itself. null = use the account's username as-is.
+let displayNameOverride = null;
+let isEditingDisplayName = false;
+
 function emptyCartView() {
   // backLink is set once at page load from the cart that existed then (see
   // the bottom of this file) and its href doesn't change after — so it's
@@ -151,6 +159,32 @@ function renderCartLine(key, line) {
         <p class="text-sm font-bold text-muted w-14 text-right">${escapeHtml(formatPrice(line.unitPrice * line.quantity))}</p>
       </div>
     </div>
+  `;
+}
+
+function getDisplayName() {
+  return displayNameOverride !== null ? displayNameOverride : (getStudentUsername() || "");
+}
+
+// A pencil toggles between showing the name and an inline input to change
+// it — the account's username underneath never changes, this only affects
+// what's printed on this one order (see displayNameOverride's comment).
+function renderOrderingAs() {
+  if (isEditingDisplayName) {
+    return `
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-muted flex-shrink-0">Ordering as</span>
+        <input type="text" id="display-name-input" value="${escapeHtml(getDisplayName())}" maxlength="50"
+          class="text-xs font-bold text-ink bg-cream-alt border border-line rounded-lg px-2 py-1 min-w-0 flex-1 focus:outline-none focus:border-accent">
+        <button type="button" id="save-name-btn" class="text-xs font-bold text-accent-deep flex-shrink-0 hover:underline">Save</button>
+      </div>
+    `;
+  }
+  return `
+    <p class="text-xs text-muted flex items-center gap-1.5">
+      Ordering as <span class="font-bold text-ink">${escapeHtml(getDisplayName())}</span>
+      <button type="button" id="edit-name-btn" class="w-3.5 h-3.5 text-muted hover:text-accent-deep transition-colors duration-150" aria-label="Edit name for this order">${ICONS.edit}</button>
+    </p>
   `;
 }
 
@@ -198,7 +232,7 @@ function renderCheckout(cart) {
       <textarea id="instructions-input" rows="2" maxlength="300" placeholder="e.g. no sugar, extra spicy" class="field resize-none">${escapeHtml(specialInstructions)}</textarea>
     </div>
 
-    <p class="text-xs text-muted mb-3">Ordering as <span class="font-bold text-ink">${escapeHtml(getStudentUsername() || "")}</span></p>
+    <div class="mb-3">${renderOrderingAs()}</div>
 
     <button type="button" id="pay-btn" class="btn-primary w-full text-base py-4">
       Pay ${escapeHtml(formatPrice(grandTotal))}
@@ -288,6 +322,32 @@ function attachCheckoutListeners() {
     });
   }
 
+  const editNameBtn = document.getElementById("edit-name-btn");
+  if (editNameBtn) {
+    editNameBtn.addEventListener("click", () => {
+      isEditingDisplayName = true;
+      renderCheckout(getCart());
+      document.getElementById("display-name-input")?.focus();
+    });
+  }
+  const displayNameInput = document.getElementById("display-name-input");
+  if (displayNameInput) {
+    const commit = () => {
+      const value = displayNameInput.value.trim();
+      displayNameOverride = value || null;
+      isEditingDisplayName = false;
+      renderCheckout(getCart());
+    };
+    document.getElementById("save-name-btn")?.addEventListener("click", commit);
+    displayNameInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") commit();
+      if (e.key === "Escape") {
+        isEditingDisplayName = false;
+        renderCheckout(getCart());
+      }
+    });
+  }
+
   const payBtn = document.getElementById("pay-btn");
   if (payBtn) payBtn.addEventListener("click", handlePlaceOrder);
 }
@@ -348,6 +408,7 @@ async function handlePlaceOrder() {
         restaurant_slug: cart.restaurantSlug,
         scheduled_for: selectedSlot ? selectedSlot.toISOString() : null,
         special_instructions: specialInstructions.trim(),
+        student_name: getDisplayName(),
         items,
       }),
     });
@@ -408,7 +469,7 @@ function openRazorpayCheckout({ orderCode, razorpayOrderId, razorpayKeyId, resta
     // No name/contact prefill anymore — Razorpay collects whatever's tied
     // to however the student actually pays (their own UPI app/card), which
     // is the real, working contact info, unlike a typed-in phone number.
-    prefill: { name: getStudentUsername() || "" },
+    prefill: { name: getDisplayName() },
     theme: { color: "#d9531e" },
     handler: goToStatus,
     modal: { ondismiss: goToStatus },
