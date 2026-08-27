@@ -2,6 +2,13 @@
   "buildCommand": "npm run build:css",
   "outputDirectory": ".",
   "rewrites": [
-    { "source": "/admin", "destination": "/admin-login.html" }
+    {
+      "source": "/admin",
+      "destination": "/admin-login.html"
+    },
+    {
+      "source": "/api/payments/callback/",
+      "destination": "https://cufood-backend-832534179056.asia-south1.run.app/api/payments/callback/"
+    }
   ]
 }

@@ -290,7 +290,7 @@ async function retryPayment(code) {
     if (typeof Razorpay === "undefined") {
       throw new Error("Payment couldn't load. Please check your connection and try again.");
     }
-    const checkout = new Razorpay({
+    const checkout = new Razorpay(withAppPaymentMode({
       key: data.razorpay_key_id,
       order_id: data.razorpay_order_id,
       name: "CUFood",
@@ -307,7 +307,7 @@ async function retryPayment(code) {
           }
         },
       },
-    });
+    }));
     checkout.open();
   } catch (err) {
     // Most likely to happen here: the order expired in the ~60 minutes

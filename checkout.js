@@ -460,7 +460,10 @@ function openRazorpayCheckout({ orderCode, razorpayOrderId, razorpayKeyId, resta
     return;
   }
 
-  const checkout = new Razorpay({
+  // In the installed app this comes back with redirect mode set, which
+  // makes handler/ondismiss below dead weight — Razorpay navigates away
+  // instead of calling them. Both paths still land on order-status.html.
+  const checkout = new Razorpay(withAppPaymentMode({
     key: razorpayKeyId,
     order_id: razorpayOrderId,
     name: "CUFood",
@@ -473,7 +476,7 @@ function openRazorpayCheckout({ orderCode, razorpayOrderId, razorpayKeyId, resta
     theme: { color: "#d9531e" },
     handler: goToStatus,
     modal: { ondismiss: goToStatus },
-  });
+  }));
   checkout.on("payment.failed", goToStatus);
   checkout.open();
 }
