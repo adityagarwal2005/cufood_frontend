@@ -145,6 +145,32 @@ const STATUS_META = {
   },
 };
 
+// How long an order may sit unpaid before this page stops saying
+// "confirming" and admits nothing has arrived. Payment normally confirms
+// within seconds of the webhook firing, so a couple of minutes is already
+// well past the happy path — the student has almost certainly backed out
+// of their UPI app without paying.
+//
+// The wording it switches to stays deliberately non-final, and polling
+// continues regardless: a slow bank can still land after this, in which
+// case the page flips itself to "Payment confirmed" on the next poll.
+const PAYMENT_SILENCE_MS = 120000;
+
+// Set by the backend when Razorpay explicitly reported a failed attempt
+// (see RazorpayCallbackView) — lets the page say so at once instead of
+// waiting out the silence window above. Only ever a display hint; the
+// real payment state always comes from the order itself.
+function paymentDeclaredFailed() {
+  return new URLSearchParams(window.location.search).get("payment") === "failed";
+}
+
+function paymentLooksUnpaid(order) {
+  if (order.payment_status !== "pending") return false;
+  if (paymentDeclaredFailed()) return true;
+  const created = order.created_at ? new Date(order.created_at) : null;
+  return !!created && Date.now() - created.getTime() > PAYMENT_SILENCE_MS;
+}
+
 function getStatusMeta(order) {
   if (order.status === "placed") {
     if (order.payment_status === "expired") {
@@ -156,6 +182,14 @@ function getStatusMeta(order) {
       };
     }
     if (order.payment_status !== "paid") {
+      if (paymentLooksUnpaid(order)) {
+        return {
+          label: "Payment not received",
+          color: "text-error",
+          icon: ICONS.warning,
+          message: "We haven't got confirmation of your payment, so the restaurant hasn't been sent this order. If money did leave your account it'll show up here on its own — otherwise you can try paying again below.",
+        };
+      }
       return {
         label: "Waiting for payment",
         color: "text-accent-deep",
@@ -265,13 +299,34 @@ function formatEta(estimatedReadyAt) {
 // is just "waiting to hear back" plus a way back in if it didn't go
 // through, not a place to pay from directly.
 function renderPaymentPendingSection(order) {
-  return `
-    <div class="border-t border-line pt-4 mt-4">
+  // Two shapes for the same state. A spinner is honest for the first
+  // moments after checkout, but once nothing has arrived for a while it
+  // becomes a lie the student can't act on — so it gives way to a plain
+  // statement and a primary-styled retry button.
+  const unpaid = paymentLooksUnpaid(order);
+
+  const notice = unpaid
+    ? `
+      <div class="flex items-start gap-3 bg-cream-alt rounded-xl p-4 mb-3">
+        <span class="w-5 h-5 text-error flex-shrink-0" aria-hidden="true">${ICONS.warning}</span>
+        <p class="text-sm text-ink">Your payment of ${escapeHtml(formatPrice(order.total_amount))} didn't come through, so nothing has been charged for this order.</p>
+      </div>
+    `
+    : `
       <div class="flex items-center gap-3 bg-cream-alt rounded-xl p-4 mb-3">
         <span class="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin flex-shrink-0" aria-hidden="true"></span>
         <p class="text-sm text-ink">Confirming your payment of ${escapeHtml(formatPrice(order.total_amount))} — this page updates on its own once it's through.</p>
       </div>
-      <button type="button" id="retry-payment-btn" class="w-full rounded-xl border-2 border-line bg-cream-alt text-ink font-bold text-sm px-5 py-3 hover:border-accent-soft transition-all duration-150">Didn't finish paying? Try again</button>
+    `;
+
+  const button = unpaid
+    ? `<button type="button" id="retry-payment-btn" class="w-full rounded-xl bg-accent text-white font-bold text-sm px-5 py-3 hover:bg-accent-deep transition-all duration-150">Pay again</button>`
+    : `<button type="button" id="retry-payment-btn" class="w-full rounded-xl border-2 border-line bg-cream-alt text-ink font-bold text-sm px-5 py-3 hover:border-accent-soft transition-all duration-150">Didn't finish paying? Try again</button>`;
+
+  return `
+    <div class="border-t border-line pt-4 mt-4">
+      ${notice}
+      ${button}
     </div>
   `;
 }
@@ -435,7 +490,11 @@ async function loadOrder(code) {
     // An expired checkout is a dead end — nothing is going to change on
     // its own from here, so there's nothing left to poll for.
     if (activeStatuses.includes(order.status) && order.payment_status !== "expired") {
-      const interval = order.payment_status === "pending" ? 3000 : 8000;
+      // 3s while a webhook could still land at any moment; back off once
+      // we've already told the student it didn't arrive, since we're now
+      // only watching for a late straggler.
+      const interval =
+        order.payment_status === "pending" && !paymentLooksUnpaid(order) ? 3000 : 8000;
       pollTimer = setTimeout(() => loadOrder(code), interval);
     }
   } catch (err) {
