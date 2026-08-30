@@ -96,6 +96,17 @@
     @apply badge bg-accent text-white;
   }
 
+  /* --- Selection chips (admin report date presets). Separate from .btn
+     because these are a selection control, not an action: exactly one is
+     active at a time and the active state is part of the component, not
+     re-specified at each call site. ------------------------------------- */
+  .chip {
+    @apply inline-flex items-center rounded-full border-2 border-line bg-transparent px-4 py-2 text-xs font-bold uppercase tracking-wide text-muted transition-all duration-150 hover:border-ink hover:text-ink;
+  }
+  .chip-active {
+    @apply border-accent bg-accent-soft text-accent-deep hover:border-accent hover:text-accent-deep;
+  }
+
   /* --- Skeleton loaders: shape-matched placeholders, never spinners for
      anything that has a known shape (list rows, cards, images). ------- */
   .skel {
