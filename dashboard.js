@@ -648,7 +648,15 @@ async function handleOrderAction(orderCode, action, triggerBtn) {
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
       showError(data.detail || "Could not update this order. Please try again.");
-      buttons.forEach((b) => (b.disabled = false));
+      // 409 means the order already moved on — another tab, or a second
+      // tap that lost the race. Re-enabling the button would offer an
+      // action that can't succeed, so refresh to show where it actually
+      // got to instead.
+      if (response.status === 409) {
+        await loadOrders();
+      } else {
+        buttons.forEach((b) => (b.disabled = false));
+      }
       return;
     }
     await loadOrders();
