@@ -156,6 +156,10 @@ const STATUS_META = {
 // case the page flips itself to "Payment confirmed" on the next poll.
 const PAYMENT_SILENCE_MS = 120000;
 
+// How often to re-check once the outlet has the order and is cooking.
+// Deliberately much slower than the payment poll — see the call site.
+const PREPARING_POLL_MS = 20000;
+
 // Set by the backend when Razorpay explicitly reported a failed attempt
 // (see RazorpayCallbackView) — lets the page say so at once instead of
 // waiting out the silence window above. Only ever a display hint; the
@@ -490,11 +494,21 @@ async function loadOrder(code) {
     // An expired checkout is a dead end — nothing is going to change on
     // its own from here, so there's nothing left to poll for.
     if (activeStatuses.includes(order.status) && order.payment_status !== "expired") {
-      // 3s while a webhook could still land at any moment; back off once
-      // we've already told the student it didn't arrive, since we're now
-      // only watching for a late straggler.
-      const interval =
-        order.payment_status === "pending" && !paymentLooksUnpaid(order) ? 3000 : 8000;
+      // Two speeds, for two very different waits.
+      //
+      // While payment is confirming the student is watching their money,
+      // and a webhook can land at any moment — 3s keeps that honest and
+      // is not where the traffic goes anyway, because it lasts seconds.
+      //
+      // Once the outlet is preparing the order, the wait is ten to
+      // fifteen minutes. Asking every 8s there produced ~110 requests per
+      // order for no benefit: food does not become ready in 8-second
+      // increments, and accept/ready both fire a push notification the
+      // instant they happen (see send_order_push), so the page is not the
+      // only way a student finds out.
+      const confirmingPayment =
+        order.payment_status === "pending" && !paymentLooksUnpaid(order);
+      const interval = confirmingPayment ? 3000 : PREPARING_POLL_MS;
       pollTimer = setTimeout(() => loadOrder(code), interval);
     }
   } catch (err) {
@@ -513,6 +527,19 @@ if (code) {
   // while the order's active, and re-subscribing that often would just
   // hammer the subscribe endpoint with no benefit.
   autoSubscribeIfAlreadyGranted(code.toUpperCase());
+
+  // Nobody is reading a backgrounded tab, so polling it is pure waste —
+  // and a student who orders and then switches away is the normal case,
+  // not the exception. Stop while hidden, and refresh immediately on
+  // return rather than waiting out the interval, so coming back to the
+  // tab shows current state at once instead of stale state for 20s.
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      clearTimeout(pollTimer);
+    } else {
+      loadOrder(code.toUpperCase());
+    }
+  });
 } else {
   renderLookupForm();
 }

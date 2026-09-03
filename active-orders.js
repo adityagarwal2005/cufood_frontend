@@ -161,3 +161,14 @@ if (document.readyState === "loading") {
 } else {
   loadOrdersPanel();
 }
+
+// Same reasoning as order-status.js: a backgrounded tab has no reader, so
+// polling it spends requests for nothing. Coming back refreshes at once
+// rather than showing stale state until the next tick.
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    clearInterval(ordersPanelTimer);
+  } else {
+    loadOrdersPanel();
+  }
+});
