@@ -80,9 +80,13 @@ function renderActiveOrderCard(order) {
 function renderPastOrderRow(order) {
   // Same vocabulary as my-orders.js — a student shouldn't meet two
   // different words for the same outcome on two different screens.
-  const label = order.status === "rejected"
-    ? (order.payment_status === "refunded" ? "Declined — refunded" : "Declined by outlet")
-    : "Completed";
+  const label = order.status !== "rejected"
+    ? "Completed"
+    : order.auto_declined
+      ? "Not accepted — refunded"
+      : order.payment_status === "refunded"
+        ? "Declined — refunded"
+        : "Declined by outlet";
   return `
     <a href="order-status.html?code=${encodeURIComponent(order.order_code)}"
        class="flex items-center justify-between gap-3 py-2.5 border-b border-line last:border-b-0 hover:opacity-80 transition-opacity duration-150">

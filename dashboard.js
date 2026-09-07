@@ -356,12 +356,32 @@ function timeAgo(isoString) {
   return `${diffHr} hr ago`;
 }
 
+// Seconds left for the outlet to answer, or 0 once the window has closed.
+// The deadline comes from the server (see Order.decision_deadline) rather
+// than being re-derived here, so the countdown can never disagree with the
+// rule the backend actually enforces.
+function secondsToDecide(order) {
+  if (!order.decision_deadline) return null;
+  const left = Math.round((new Date(order.decision_deadline) - Date.now()) / 1000);
+  return Math.max(0, left);
+}
+
 function renderOrderActions(order) {
   if (order.status === "placed") {
+    const left = secondsToDecide(order);
+    // Past the deadline the platform has already refunded the student, so
+    // offering Accept here would be offering to cook something that is no
+    // longer paid for — the server would refuse it anyway. Say what
+    // happened instead of showing a button that cannot work.
+    if (left === 0) {
+      return `
+        <span class="badge-muted flex-shrink-0 whitespace-nowrap">Expired &middot; refunded</span>
+      `;
+    }
     return `
       <div class="flex items-center gap-2 flex-shrink-0">
         <button type="button" class="order-reject-btn btn-destructive btn-sm bg-error-soft text-error hover:bg-error hover:text-white" data-code="${escapeHtml(order.order_code)}">Reject</button>
-        <button type="button" class="order-accept-btn btn-primary btn-sm" data-code="${escapeHtml(order.order_code)}">Accept & start</button>
+        <button type="button" class="order-accept-btn btn-primary btn-sm" data-code="${escapeHtml(order.order_code)}">Accept &amp; start</button>
       </div>
     `;
   }
@@ -393,10 +413,33 @@ function renderOrderCard(order) {
   const scheduledBadge = order.scheduled_for && ["placed", "rejected"].includes(order.status)
     ? `<span class="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-accent-soft text-accent-deep"><span class="w-3 h-3">${ICONS.clock}</span>${escapeHtml(new Date(order.scheduled_for).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }))}</span>`
     : "";
+  // A visible clock on anything still awaiting a decision. The window is
+  // short by design, and an owner glancing at a busy counter needs to see
+  // that this one is about to run out — not discover afterwards that it
+  // expired and the student was refunded.
+  const left = order.status === "placed" ? secondsToDecide(order) : null;
+  const countdownHtml =
+    left === null || left === 0
+      ? ""
+      : `<span class="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${
+          left <= 60 ? "bg-error-soft text-error" : "bg-accent-soft text-accent-deep"
+        }"><span class="w-3 h-3">${ICONS.clock}</span>${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")} left</span>`;
+
+  // An order the platform closed out because nobody answered. Says so
+  // plainly rather than looking like the owner rejected it themselves.
+  const autoDeclinedHtml = order.status === "rejected" && order.auto_declined
+    ? `
+      <div class="mt-2 bg-error-soft rounded-xl px-3 py-2 flex items-start gap-1.5">
+        <span class="w-3.5 h-3.5 text-error flex-shrink-0 mt-0.5">${ICONS.warning}</span>
+        <p class="text-xs font-semibold text-error">Not answered in time — cancelled and refunded to the student automatically.</p>
+      </div>
+    `
+    : "";
+
   // Reject triggers an automatic Razorpay refund server-side (see
   // RejectOrderView) — nothing for the owner to do here anymore, just a
   // confirmation that it happened rather than an action to take.
-  const refundLinkHtml = order.status === "rejected" && order.payment_status === "refunded"
+  const refundLinkHtml = order.status === "rejected" && order.payment_status === "refunded" && !order.auto_declined
     ? `
       <div class="mt-2 bg-error-soft rounded-xl px-3 py-2 flex items-center gap-1.5">
         <span class="w-3.5 h-3.5 text-error flex-shrink-0">${ICONS.check}</span>
@@ -421,6 +464,7 @@ function renderOrderCard(order) {
             <span class="text-sm font-black text-ink">#${escapeHtml(order.order_code)}</span>
             <span class="text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${meta.pillClass}">${meta.label}</span>
             ${scheduledBadge}
+            ${countdownHtml}
           </div>
           <p class="text-xs text-muted">${escapeHtml(order.student_name)}${order.status === "placed" && order.student_phone_number ? ` · ${escapeHtml(order.student_phone_number)}` : ""} · ${timeAgo(order.created_at)}</p>
           <p class="text-sm text-ink mt-2">${itemsSummary}</p>
@@ -428,6 +472,7 @@ function renderOrderCard(order) {
           ${instructionsHtml}
           ${etaText}
           ${refundLinkHtml}
+          ${autoDeclinedHtml}
         </div>
         ${renderOrderActions(order)}
       </div>
@@ -680,7 +725,12 @@ async function loadOrders() {
 
 function startOrderPolling() {
   clearInterval(ordersPollTimer);
-  ordersPollTimer = setInterval(loadOrders, 12000);
+  // 3s. A new paid order has only a few minutes before the platform
+  // refunds it on the outlet's behalf, so the board has to surface it
+  // almost immediately — a 12s gap could burn a sixth of the window
+  // before anyone even sees the order exists. Fifteen outlets polling is
+  // negligible traffic next to thousands of students.
+  ordersPollTimer = setInterval(loadOrders, 3000);
 }
 
 function renderDashboard() {

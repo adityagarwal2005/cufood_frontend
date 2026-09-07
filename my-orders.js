@@ -32,6 +32,13 @@ const OUTCOME = {
   rejected: { label: "Declined by outlet", pill: "badge-error", note: "Refunded to the way you paid." },
 };
 
+// Same row, different story: nobody answered rather than someone said no.
+const AUTO_DECLINED_OUTCOME = {
+  label: "Not accepted",
+  pill: "badge-error",
+  note: "The outlet didn't confirm in time — refunded.",
+};
+
 const ONGOING = ["placed", "preparing", "ready"];
 
 // "Today" / "Yesterday" / "3 Sept" — a student thinks about their orders
@@ -83,7 +90,10 @@ function errorState() {
 // with a rule between rows fits it better than each row being its own
 // bordered/shadowed surface.
 function renderOrderRow(order, index) {
-  const outcome = OUTCOME[order.status] || { label: order.status, pill: "badge-muted", note: null };
+  const outcome =
+    (order.status === "rejected" && order.auto_declined && AUTO_DECLINED_OUTCOME) ||
+    OUTCOME[order.status] ||
+    { label: order.status, pill: "badge-muted", note: null };
   const when = formatWhen(order.created_at);
   const items = (order.items || [])
     .map((i) => `${i.quantity}x ${escapeHtml(i.name)}`)

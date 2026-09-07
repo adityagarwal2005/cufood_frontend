@@ -158,7 +158,7 @@ const PAYMENT_SILENCE_MS = 120000;
 
 // How often to re-check once the outlet has the order and is cooking.
 // Deliberately much slower than the payment poll — see the call site.
-const PREPARING_POLL_MS = 20000;
+const PREPARING_POLL_MS = 25000;
 
 // Set by the backend when Razorpay explicitly reported a failed attempt
 // (see RazorpayCallbackView) — lets the page say so at once instead of
@@ -213,16 +213,29 @@ function getStatusMeta(order) {
       label: "Order placed",
       color: "text-success",
       icon: ICONS.check,
-      message: `Paid — your order is with ${order.restaurant_name || "the outlet"}. They'll confirm it shortly and you'll be notified. If they can't take it, your money comes straight back automatically. Nothing more for you to do.`,
+      message: `Paid — your order is with ${order.restaurant_name || "the outlet"}. They confirm within a couple of minutes and you'll be notified. If they don't, it's cancelled and refunded automatically. Either way, nothing more for you to do.`,
     };
   }
   if (order.status === "rejected") {
-    if (order.payment_status === "refunded") {
+    // Nobody at the outlet answered inside the decision window, so the
+    // platform declined for them. Worth its own wording: the student did
+    // nothing wrong and neither, really, did the outlet — saying "they
+    // declined your order" would be both inaccurate and needlessly harsh
+    // about a counter that was simply busy.
+    if (order.auto_declined) {
       return {
-        label: "Rejected — refunded",
+        label: "Not accepted — refunded",
         color: "text-error",
         icon: ICONS.warning,
-        message: "The restaurant couldn't take this order. Your payment has been refunded automatically — it typically takes 5–7 business days to reflect, depending on your bank.",
+        message: `${order.restaurant_name || "The outlet"} didn't confirm your order in time, so we've cancelled it and sent your money back. Refunds usually land within a few minutes. Sorry about that — nothing was charged for food you won't get.`,
+      };
+    }
+    if (order.payment_status === "refunded") {
+      return {
+        label: "Declined — refunded",
+        color: "text-error",
+        icon: ICONS.warning,
+        message: "The outlet couldn't take this order, so your payment has been sent back automatically. It usually lands within a few minutes, though your bank can occasionally take longer.",
       };
     }
     return {
