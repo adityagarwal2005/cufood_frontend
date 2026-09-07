@@ -46,8 +46,10 @@ function activeOrderStage(order) {
     }
     return { label: "Being prepared", detail: "The outlet is on it.", live: true };
   }
-  // "placed" and paid — the outlet has it but hasn't accepted yet.
-  return { label: "Confirming with the outlet", detail: "Waiting for them to accept.", live: false };
+  // "placed" and paid. Worded as done, not pending, to match
+  // order-status.js: the student has paid and their part is finished —
+  // what's left is the outlet's, and either outcome is handled for them.
+  return { label: "Order placed", detail: "With the outlet — they'll confirm shortly.", live: false };
 }
 
 function renderActiveOrderCard(order) {
@@ -76,9 +78,11 @@ function renderActiveOrderCard(order) {
 }
 
 function renderPastOrderRow(order) {
-  const label = order.payment_status === "refunded"
-    ? "Refunded"
-    : order.status === "rejected" ? "Rejected" : "Completed";
+  // Same vocabulary as my-orders.js — a student shouldn't meet two
+  // different words for the same outcome on two different screens.
+  const label = order.status === "rejected"
+    ? (order.payment_status === "refunded" ? "Declined — refunded" : "Declined by outlet")
+    : "Completed";
   return `
     <a href="order-status.html?code=${encodeURIComponent(order.order_code)}"
        class="flex items-center justify-between gap-3 py-2.5 border-b border-line last:border-b-0 hover:opacity-80 transition-opacity duration-150">

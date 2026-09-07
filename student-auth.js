@@ -61,6 +61,14 @@ function renderAccountNav() {
     restaurantLoginLink.classList.toggle("hidden", isStudentLoggedIn());
   }
 
+  // The mirror image: My Orders is meaningless to someone signed out, and
+  // is the first thing a signed-in student looks for. It starts hidden in
+  // the markup so a signed-out visitor never sees it flash on load.
+  const myOrdersLink = document.getElementById("my-orders-link");
+  if (myOrdersLink) {
+    myOrdersLink.classList.toggle("hidden", !isStudentLoggedIn());
+  }
+
   const el = document.getElementById("account-nav");
   if (!el) return;
   if (isStudentLoggedIn()) {

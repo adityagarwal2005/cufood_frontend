@@ -201,11 +201,19 @@ function getStatusMeta(order) {
         message: "The restaurant sees this order as soon as payment is confirmed.",
       };
     }
+    // Paid and placed. Deliberately framed as finished rather than
+    // pending: the student has done everything asked of them — entered
+    // their UPI PIN, money left their account — and showing a clock with
+    // "waiting for the restaurant" made a completed action feel stuck,
+    // as though their payment were still in limbo. It isn't. What
+    // remains is the outlet's job, not theirs, and either outcome is
+    // handled for them: accepted and they're notified, declined and
+    // they're refunded automatically. So this reads as a green tick.
     return {
-      label: "Payment confirmed",
-      color: "text-accent-deep",
-      icon: ICONS.clock,
-      message: "Waiting for the restaurant to accept. This page updates automatically.",
+      label: "Order placed",
+      color: "text-success",
+      icon: ICONS.check,
+      message: `Paid — your order is with ${order.restaurant_name || "the outlet"}. They'll confirm it shortly and you'll be notified. If they can't take it, your money comes straight back automatically. Nothing more for you to do.`,
     };
   }
   if (order.status === "rejected") {
