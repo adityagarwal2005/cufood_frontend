@@ -201,6 +201,21 @@ function getStatusMeta(order) {
         message: "The restaurant sees this order as soon as payment is confirmed.",
       };
     }
+    // Past the outlet's window but not yet flipped to rejected: the
+    // platform declines and refunds on its next sweep, and if a refund
+    // fails the order can sit here a while. Telling the student "order
+    // placed" through that window would be stale, and promising the
+    // refund is already done would be a guess — so it says what is
+    // actually true: it wasn't accepted, and the money is coming back.
+    if (order.decision_deadline && new Date(order.decision_deadline) < new Date()) {
+      return {
+        label: "Not accepted",
+        color: "text-error",
+        icon: ICONS.warning,
+        message: `${order.restaurant_name || "The outlet"} didn't confirm in time, so this order is being cancelled and your money returned. The refund should land shortly.`,
+      };
+    }
+
     // Paid and placed. Deliberately framed as finished rather than
     // pending: the student has done everything asked of them — entered
     // their UPI PIN, money left their account — and showing a clock with

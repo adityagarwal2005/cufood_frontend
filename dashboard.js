@@ -374,8 +374,16 @@ function renderOrderActions(order) {
     // longer paid for — the server would refuse it anyway. Say what
     // happened instead of showing a button that cannot work.
     if (left === 0) {
+      // Deliberately does NOT claim the refund has happened. The order is
+      // still 'placed' at this point: the platform declines and refunds
+      // it on the next sweep, and if Razorpay rejects that refund (an
+      // account-level hold, say) the order stays here with the money
+      // still taken. Saying "refunded" in that window would be telling
+      // the outlet — and by extension the student who asks them — that
+      // money went back when it did not. Once the refund really lands the
+      // card flips to 'rejected' and says so on its own.
       return `
-        <span class="badge-muted flex-shrink-0 whitespace-nowrap">Expired &middot; refunded</span>
+        <span class="badge-muted flex-shrink-0 whitespace-nowrap">Too late to accept</span>
       `;
     }
     return `
