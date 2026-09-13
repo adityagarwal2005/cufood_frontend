@@ -42,59 +42,62 @@
         <h1 class="text-3xl sm:text-4xl font-black tracking-tightest text-ink leading-[0.95]">Where are you<br class="hidden sm:block"> right now?</h1>
       </div>
 
+      <!-- Install prompt. Hidden by default and revealed by install-app.js
+           only where it can actually work: Android gets the APK, iOS gets
+           Add-to-Home-Screen, and anyone already inside the installed app
+           sees nothing at all.
+
+           It sits above the location grid on purpose. The app is the thing
+           we most want a first-time visitor to leave with, and at the foot
+           of the page almost nobody scrolled far enough to see it. Kept to
+           one compact row — icon, two lines, button — so it announces
+           itself without pushing the locations off a phone screen. -->
+      <section id="install-app" class="hidden max-w-lg mx-auto mb-10 sm:mb-12">
+        <div class="relative overflow-hidden rounded-3xl bg-cream-alt border border-accent/40 p-5 sm:p-6">
+          <!-- Warm bloom behind the icon; purely decorative. -->
+          <span aria-hidden="true" class="absolute -top-16 -right-12 w-52 h-52 rounded-full bg-accent/25 blur-3xl"></span>
+
+          <div class="relative flex items-center gap-4">
+            <span class="flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-cream border border-line shadow-2xl flex-shrink-0 overflow-hidden">
+              <img src="icon-192.png" alt="" class="w-full h-full object-cover">
+            </span>
+            <div class="min-w-0">
+              <p class="text-xs font-bold uppercase tracking-widest text-accent-deep mb-1">Get the app</p>
+              <h2 class="text-lg font-black tracking-tightest text-ink leading-tight">CUFood on your home screen</h2>
+              <p id="install-blurb" class="text-xs text-muted mt-1">Order in two taps, and get a notification the moment your food is ready.</p>
+            </div>
+          </div>
+
+          <a id="install-cta" href="cufood.apk" download
+             class="relative mt-5 w-full inline-flex items-center justify-center gap-2 rounded-full bg-accent text-white font-bold text-sm px-7 py-4 hover:bg-accent-deep hover:text-ink transition-colors duration-150">
+            <span class="w-4 h-4">&#8681;</span>
+            <span id="install-cta-label">Download for Android</span>
+          </a>
+          <p id="install-note" class="relative text-xs text-muted text-center mt-3">Free &middot; 1.1 MB &middot; No Play Store needed</p>
+
+          <!-- Android blocks unknown-source installs by default, and a
+               student who taps download and then hits a scary system
+               warning with no explanation will simply abandon it. -->
+          <details id="install-help" class="relative w-full mt-4 text-left">
+            <summary class="cursor-pointer text-xs font-bold uppercase tracking-wide text-muted hover:text-ink transition-colors duration-150">
+              Phone warns about the file?
+            </summary>
+            <p class="text-xs text-muted leading-relaxed mt-2">
+              That's Android's normal warning for anything not from the Play Store. Tap
+              <span class="text-ink font-semibold">Download anyway</span>, open the file, and allow
+              installs from your browser when asked. It's the same app as this website, just wrapped
+              so it opens from your home screen.
+            </p>
+          </details>
+        </div>
+      </section>
+
       <div id="location-list" class="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
         <div class="skel h-40 sm:h-44"></div>
         <div class="skel h-40 sm:h-44"></div>
       </div>
 
       <p class="text-sm sm:text-base text-muted max-w-md mx-auto text-center mt-8">Pick your spot on campus and see what's cooking — live availability, updated by the outlets themselves.</p>
-
-      <!-- Install prompt. Hidden by default and revealed by install-app.js
-           only where it can actually work: Android gets the APK, iOS gets
-           Add-to-Home-Screen, and anyone already inside the installed app
-           sees nothing at all. -->
-      <section id="install-app" class="hidden max-w-lg mx-auto mt-14">
-        <div class="relative overflow-hidden rounded-3xl bg-cream-alt border border-line p-7 sm:p-8">
-          <!-- Warm bloom behind the icon; purely decorative. -->
-          <span aria-hidden="true" class="absolute -top-16 -right-12 w-52 h-52 rounded-full bg-accent/20 blur-3xl"></span>
-
-          <div class="relative flex flex-col items-center text-center">
-            <span class="flex items-center justify-center w-20 h-20 rounded-3xl bg-cream border border-line shadow-2xl mb-5 overflow-hidden">
-              <img src="icon-192.png" alt="" class="w-full h-full object-cover">
-            </span>
-
-            <p class="text-xs font-bold uppercase tracking-widest text-accent-deep mb-2">Get the app</p>
-            <h2 class="text-2xl sm:text-3xl font-black tracking-tightest text-ink leading-tight mb-2">
-              CUFood on your<br>home screen
-            </h2>
-            <p id="install-blurb" class="text-sm text-muted max-w-xs mb-6">
-              Order in two taps, and get a notification the moment your food is ready.
-            </p>
-
-            <a id="install-cta" href="cufood.apk" download
-               class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full bg-accent text-white font-bold text-sm px-7 py-4 hover:bg-accent-deep hover:text-ink transition-colors duration-150">
-              <span class="w-4 h-4">&#8681;</span>
-              <span id="install-cta-label">Download for Android</span>
-            </a>
-            <p id="install-note" class="text-xs text-muted mt-3">Free &middot; 1.1 MB &middot; No Play Store needed</p>
-
-            <!-- Android blocks unknown-source installs by default, and a
-                 student who taps download and then hits a scary system
-                 warning with no explanation will simply abandon it. -->
-            <details id="install-help" class="w-full mt-5 text-left">
-              <summary class="cursor-pointer text-xs font-bold uppercase tracking-wide text-muted hover:text-ink transition-colors duration-150">
-                Phone warns about the file?
-              </summary>
-              <p class="text-xs text-muted leading-relaxed mt-2">
-                That's Android's normal warning for anything not from the Play Store. Tap
-                <span class="text-ink font-semibold">Download anyway</span>, open the file, and allow
-                installs from your browser when asked. It's the same app as this website, just wrapped
-                so it opens from your home screen.
-              </p>
-            </details>
-          </div>
-        </div>
-      </section>
 
       <div id="stat-bar" class="flex items-stretch justify-center divide-x divide-line border border-line rounded-2xl bg-cream-alt max-w-lg mx-auto mt-8">
         <div class="flex-1 px-4 py-5 text-center">
