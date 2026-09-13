@@ -2,12 +2,17 @@ const API_BASE_URL = "https://cufood-backend-832534179056.asia-south1.run.app";
 // Safe to hardcode — this is the *public* half of the VAPID keypair (see
 // backend settings.py); only the private key is a secret.
 const VAPID_PUBLIC_KEY = "BOsXYYIQK2rY1nET_I-NXr-A6ts9_WDH9kEjZYBUC7mGhcfLqRLy3jbXtD3X72WZU1gaAqI_yOz8pO_6FNhhHqo";
-// Kept in sync with Order.PLATFORM_FEE on the backend — that's the value
-// actually charged (see CreateOrderView), this is purely for showing the
-// right numbers here before that response comes back.
-const PLATFORM_FEE = 1.5;
+// Kept in sync with Order.platform_fee_for on the backend — that's the
+// value actually charged (see CreateOrderView), this is purely for showing
+// the right numbers here before that response comes back. 1% of the food
+// subtotal, rounded to the nearest paisa; computed in whole paise so float
+// error can't nudge it off the server's figure.
+function getPlatformFee(subtotal) {
+  return Math.round(Math.round(subtotal * 100) / 100) / 100;
+}
 function getGrandTotal(cart) {
-  return getCartTotal(cart) + PLATFORM_FEE;
+  const subtotal = getCartTotal(cart);
+  return subtotal + getPlatformFee(subtotal);
 }
 
 const pageContent = document.getElementById("page-content");
@@ -191,7 +196,8 @@ function renderOrderingAs() {
 function renderCheckout(cart) {
   const lines = Object.entries(cart.items);
   const subtotal = getCartTotal(cart);
-  const grandTotal = subtotal + PLATFORM_FEE;
+  const platformFee = getPlatformFee(subtotal);
+  const grandTotal = subtotal + platformFee;
 
   pageContent.innerHTML = `
     <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">From ${escapeHtml(cart.restaurantName)}</p>
@@ -205,7 +211,7 @@ function renderCheckout(cart) {
     <div id="cart-lines" class="mb-2">${lines.map(([key, line]) => renderCartLine(key, line)).join("")}</div>
     <div class="flex items-center justify-between py-2 text-sm text-muted">
       <span>Platform fee</span>
-      <span>${escapeHtml(formatPrice(PLATFORM_FEE))}</span>
+      <span>${escapeHtml(formatPrice(platformFee))}</span>
     </div>
     <div class="flex items-center justify-between py-3 mb-8 border-t border-ink font-bold text-ink">
       <span>Total</span>
