@@ -92,17 +92,30 @@ function renderDay(day, restaurantIndex, dayIndex) {
         </span>
         <span class="flex items-center gap-3 flex-shrink-0">
           <span class="text-xs text-muted tabular-nums">${day.orders} ${orderWord}</span>
-          <span class="text-sm font-bold text-ink tabular-nums">${escapeHtml(formatPrice(day.sales))}</span>
+          <span class="text-sm font-bold text-ink tabular-nums">${escapeHtml(formatPrice(day.payout))}</span>
         </span>
       </button>
-      <div id="${id}" class="hidden pb-3 pl-6">${renderItemRows(day.items)}</div>
+      <div id="${id}" class="hidden pb-3 pl-6">
+        ${renderBreakdown(day.sales, day.commission, day.payout)}
+        ${renderItemRows(day.items)}
+      </div>
     </div>
   `;
 }
 
-// What to send this outlet for the range, and where. The amount comes from
-// the server (accepted orders less the platform fee) so it can never
-// disagree with the sales figures around it.
+// Food sales, less the platform's 1%, equals what the outlet is paid. All
+// three figures come from the server so they always add up.
+function renderBreakdown(food, commission, payout) {
+  return `
+    <p class="text-xs text-muted tabular-nums mb-2">
+      Food ${escapeHtml(formatPrice(food))}
+      &minus; 1% commission ${escapeHtml(formatPrice(commission))}
+      = <span class="font-bold text-ink">pay ${escapeHtml(formatPrice(payout))}</span>
+    </p>
+  `;
+}
+
+// What to send this outlet for the whole range, and where.
 function renderPayout(rest) {
   const upi = rest.upi_id || "";
   return `
@@ -110,6 +123,9 @@ function renderPayout(rest) {
       <div class="min-w-0">
         <p class="text-xs font-bold uppercase tracking-widest text-accent-deep">Pay this outlet</p>
         <p class="text-2xl font-black text-ink tabular-nums leading-tight mt-1">${escapeHtml(formatPrice(rest.payout))}</p>
+        <p class="text-xs text-muted tabular-nums mt-1">
+          Food ${escapeHtml(formatPrice(rest.food_sales))} &minus; 1% commission ${escapeHtml(formatPrice(rest.commission))}
+        </p>
         <p class="text-xs mt-1 break-all ${upi ? "text-muted" : "text-error"}">${
           upi ? escapeHtml(upi) : "No UPI ID on file. Ask the outlet to add one in their dashboard."
         }</p>
@@ -144,8 +160,8 @@ function renderRestaurant(rest, index) {
           ${awaitingBadge}
           ${rejectedBadge}
           <span class="flex flex-col items-end">
-            <span class="text-lg font-black text-ink tabular-nums leading-none">${escapeHtml(formatPrice(rest.total_sales))}</span>
-            <span class="text-xs text-muted mt-1 tabular-nums">${rest.successful_orders} successful</span>
+            <span class="text-lg font-black text-ink tabular-nums leading-none">${escapeHtml(formatPrice(rest.payout))}</span>
+            <span class="text-xs text-muted mt-1 tabular-nums">${rest.successful_orders} orders &middot; to pay</span>
           </span>
         </span>
       </button>
@@ -156,8 +172,8 @@ function renderRestaurant(rest, index) {
           ${statTile("Successful", String(rest.successful_orders), "accent")}
           ${statTile("Picked up", String(rest.picked_up))}
           ${statTile("Rejected", String(rest.rejected_orders), rest.rejected_orders ? "error" : undefined)}
-          ${statTile("Sales", formatPrice(rest.total_sales))}
-          ${statTile("Platform fee", formatPrice(rest.platform_revenue), "accent")}
+          ${statTile("Students paid", formatPrice(rest.total_sales))}
+          ${statTile("You earned", formatPrice(rest.earnings), "accent")}
         </div>
         <h4 class="text-xs font-bold uppercase tracking-widest text-muted mb-1">Day by day</h4>
         ${
@@ -189,9 +205,9 @@ function render(data) {
       </h2>
       <div class="flex flex-wrap gap-3">
         ${statTile("Successful orders", String(t.successful_orders), "accent")}
-        ${statTile("Total sales", formatPrice(t.total_sales))}
+        ${statTile("Students paid", formatPrice(t.total_sales))}
         ${statTile("Owed to outlets", formatPrice(t.payout))}
-        ${statTile("Platform fee", formatPrice(t.platform_revenue), "accent")}
+        ${statTile("You earned (2% + 1%)", formatPrice(t.earnings), "accent")}
         ${statTile("Rejected", String(t.rejected_orders), t.rejected_orders ? "error" : undefined)}
         ${statTile("Refunded", formatPrice(t.refunded_amount), t.rejected_orders ? "error" : undefined)}
       </div>
