@@ -4,11 +4,12 @@ const API_BASE_URL = "https://cufood-backend-832534179056.asia-south1.run.app";
 const VAPID_PUBLIC_KEY = "BOsXYYIQK2rY1nET_I-NXr-A6ts9_WDH9kEjZYBUC7mGhcfLqRLy3jbXtD3X72WZU1gaAqI_yOz8pO_6FNhhHqo";
 // Kept in sync with Order.platform_fee_for on the backend — that's the
 // value actually charged (see CreateOrderView), this is purely for showing
-// the right numbers here before that response comes back. 1% of the food
+// the right numbers here before that response comes back. 2% of the food
 // subtotal, rounded to the nearest paisa; computed in whole paise so float
 // error can't nudge it off the server's figure.
 function getPlatformFee(subtotal) {
-  return Math.round(Math.round(subtotal * 100) / 100) / 100;
+  const paise = Math.round(subtotal * 100);
+  return Math.round((paise * 2) / 100) / 100;
 }
 function getGrandTotal(cart) {
   const subtotal = getCartTotal(cart);
