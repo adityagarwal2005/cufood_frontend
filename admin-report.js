@@ -100,6 +100,25 @@ function renderDay(day, restaurantIndex, dayIndex) {
   `;
 }
 
+// What to send this outlet for the range, and where. The amount comes from
+// the server (accepted orders less the platform fee) so it can never
+// disagree with the sales figures around it.
+function renderPayout(rest) {
+  const upi = rest.upi_id || "";
+  return `
+    <div class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-accent/40 bg-accent-soft px-5 py-4 mb-5">
+      <div class="min-w-0">
+        <p class="text-xs font-bold uppercase tracking-widest text-accent-deep">Pay this outlet</p>
+        <p class="text-2xl font-black text-ink tabular-nums leading-tight mt-1">${escapeHtml(formatPrice(rest.payout))}</p>
+        <p class="text-xs mt-1 break-all ${upi ? "text-muted" : "text-error"}">${
+          upi ? escapeHtml(upi) : "No UPI ID on file. Ask the outlet to add one in their dashboard."
+        }</p>
+      </div>
+      ${upi ? `<button type="button" data-copy="${escapeHtml(upi)}" class="btn-secondary btn-sm">Copy UPI ID</button>` : ""}
+    </div>
+  `;
+}
+
 function renderRestaurant(rest, index) {
   const id = `rest-${index}`;
   // Rejections get a badge only when there are any — a "0 rejected" chip on
@@ -132,6 +151,7 @@ function renderRestaurant(rest, index) {
       </button>
 
       <div id="${id}" class="hidden border-t border-line px-5 py-4">
+        ${renderPayout(rest)}
         <div class="flex flex-wrap gap-3 mb-5">
           ${statTile("Successful", String(rest.successful_orders), "accent")}
           ${statTile("Picked up", String(rest.picked_up))}
@@ -170,6 +190,7 @@ function render(data) {
       <div class="flex flex-wrap gap-3">
         ${statTile("Successful orders", String(t.successful_orders), "accent")}
         ${statTile("Total sales", formatPrice(t.total_sales))}
+        ${statTile("Owed to outlets", formatPrice(t.payout))}
         ${statTile("Platform fee", formatPrice(t.platform_revenue), "accent")}
         ${statTile("Rejected", String(t.rejected_orders), t.rejected_orders ? "error" : undefined)}
         ${statTile("Refunded", formatPrice(t.refunded_amount), t.rejected_orders ? "error" : undefined)}
@@ -193,6 +214,15 @@ function render(data) {
 // One delegated listener for every accordion on the page, rather than
 // rebinding after each render.
 pageContent.addEventListener("click", (event) => {
+  const copyBtn = event.target.closest("[data-copy]");
+  if (copyBtn) {
+    if (!navigator.clipboard) return;
+    navigator.clipboard.writeText(copyBtn.dataset.copy).then(() => {
+      copyBtn.textContent = "Copied";
+      setTimeout(() => (copyBtn.textContent = "Copy UPI ID"), 1500);
+    }).catch(() => {});
+    return;
+  }
   const btn = event.target.closest("[data-toggle]");
   if (!btn) return;
   const id = btn.dataset.toggle;

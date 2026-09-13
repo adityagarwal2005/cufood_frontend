@@ -92,6 +92,35 @@ function renderLocationRow(rows) {
   `;
 }
 
+// Students who paid, got no answer from the outlet, and whose automatic
+// refund has not gone through. Only rendered when there are any: this is
+// an alarm, and an always-present empty box would train you to ignore it.
+function renderStuckRefunds(rows) {
+  if (!rows || rows.length === 0) return "";
+  const owed = rows.reduce((sum, r) => sum + (parseFloat(r.total_amount) || 0), 0);
+  const items = rows.map((r) => `
+    <li class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-2.5 border-b border-line last:border-b-0">
+      <span class="text-sm font-bold text-ink tabular-nums">${escapeHtml(r.order_code)}</span>
+      <span class="flex-1 min-w-[120px] text-sm text-muted truncate">${escapeHtml(r.restaurant_name)}</span>
+      <span class="text-xs text-muted tabular-nums">${escapeHtml(new Date(r.paid_at).toLocaleString())}</span>
+      <span class="text-sm font-bold text-error tabular-nums">${escapeHtml(formatPrice(r.total_amount))}</span>
+    </li>
+  `).join("");
+  return `
+    <div class="bg-error-soft border border-error/40 rounded-2xl p-6 sm:p-7 mb-8">
+      <h2 class="text-xs font-bold uppercase tracking-widest text-error mb-2">
+        Refunds failing &middot; ${rows.length} ${rows.length === 1 ? "student" : "students"} owed ${escapeHtml(formatPrice(owed))}
+      </h2>
+      <p class="text-sm text-ink mb-4">
+        These students paid, the outlet never answered, and the automatic refund did not go through.
+        That almost always means the Razorpay balance is too low. Add funds in Razorpay and they are
+        retried automatically while the site is in use.
+      </p>
+      <ul>${items}</ul>
+    </div>
+  `;
+}
+
 function render(data) {
   pageContent.innerHTML = `
     <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
@@ -99,6 +128,8 @@ function render(data) {
       <input type="date" id="date-input" value="${escapeHtml(data.date)}" max="${new Date().toISOString().slice(0, 10)}"
         class="rounded-xl border-2 border-line bg-cream-alt px-3 py-2 text-sm font-semibold text-ink focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft transition-all duration-150">
     </div>
+
+    ${renderStuckRefunds(data.stuck_refunds)}
 
     <div class="mb-8">
       ${statTile("Total registered students", data.total_registered_students, true)}
