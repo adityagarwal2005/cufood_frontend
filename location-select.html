@@ -20,7 +20,7 @@
         <span class="text-xs font-semibold uppercase tracking-widest text-muted hidden sm:block">CU Campus</span>
       </a>
       <div class="flex flex-wrap items-center justify-end gap-x-4 gap-y-2 sm:gap-x-5">
-        <a href="my-orders.html" id="my-orders-link" class="hidden text-xs font-bold uppercase tracking-wide text-ink hover:text-accent-deep transition-colors duration-150 whitespace-nowrap">My Orders</a>
+        <a href="my-orders.html" id="my-orders-link" class="hidden inline-flex items-center rounded-full bg-accent text-white text-xs font-bold uppercase tracking-wide px-4 py-2 sm:py-2.5 hover:bg-accent-deep hover:text-ink transition-colors duration-150 whitespace-nowrap">My Orders</a>
         <span id="account-nav" class="flex items-center gap-3 whitespace-nowrap"></span>
         <a href="restaurant-login.html" id="restaurant-login-link" class="text-xs font-bold uppercase tracking-wide text-white bg-accent rounded-full px-3.5 sm:px-4 py-2 sm:py-2.5 hover:bg-accent-deep hover:text-ink transition-colors duration-150 whitespace-nowrap">Restaurant Login</a>
       </div>
@@ -29,8 +29,6 @@
 
   <main class="relative min-h-[calc(100vh-77px)] px-6 py-14 sm:py-20 bg-cream overflow-hidden">
     <div class="relative max-w-3xl mx-auto">
-      <div id="active-orders"></div>
-      <div id="push-prompt"></div>
 
       <div class="flex flex-col items-center text-center mb-10 sm:mb-14">
         <span class="inline-flex items-center gap-2 rounded-full border border-ink px-3.5 py-1.5 text-xs font-bold uppercase tracking-widest text-ink mb-5">
@@ -100,6 +98,8 @@
 
       <p class="text-sm sm:text-base text-muted max-w-md mx-auto text-center mt-8">Pick your spot on campus and see what's cooking — live availability, updated by the outlets themselves.</p>
 
+      <div id="push-prompt" class="mt-8"></div>
+
       <div id="stat-bar" class="flex items-stretch justify-center divide-x divide-line border border-line rounded-2xl bg-cream-alt max-w-lg mx-auto mt-8">
         <div class="flex-1 px-4 py-5 text-center">
           <p id="stat-locations" class="text-2xl sm:text-3xl font-black text-ink tabular-nums">—</p>
@@ -135,6 +135,5 @@
   <script src="student-auth.js"></script>
   <script src="location-select.js"></script>
   <script src="install-app.js"></script>
-  <script src="active-orders.js"></script>
 </body>
 </html>
