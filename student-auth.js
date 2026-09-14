@@ -107,9 +107,42 @@ function studentPushKeyBytes() {
   return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
 }
 
+// The app re-registers on every page it opens, which across thousands of
+// students would be tens of thousands of identical writes a day. So a phone
+// that registered this exact subscription for this student in the last 12
+// hours skips the call.
+const STUDENT_PUSH_REGISTERED_KEY = "cufood_push_registered";
+const STUDENT_PUSH_REREGISTER_MS = 12 * 60 * 60 * 1000;
+
+function studentPushRecentlyRegistered(endpoint) {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STUDENT_PUSH_REGISTERED_KEY) || "null");
+    return (
+      Boolean(saved) &&
+      saved.endpoint === endpoint &&
+      saved.user === getStudentUsername() &&
+      Date.now() - saved.at < STUDENT_PUSH_REREGISTER_MS
+    );
+  } catch (err) {
+    return false;
+  }
+}
+
+function rememberStudentPushRegistered(endpoint) {
+  try {
+    localStorage.setItem(
+      STUDENT_PUSH_REGISTERED_KEY,
+      JSON.stringify({ endpoint, user: getStudentUsername(), at: Date.now() })
+    );
+  } catch (err) {
+    // Storage blocked: it simply registers again next time.
+  }
+}
+
 // Asks only when the student hasn't decided yet. Resolves true once this
-// phone is signed up on their account.
-async function enableStudentPush() {
+// phone is signed up on their account. `force` is for the Turn on button,
+// where the student is watching and the call must actually be made.
+async function enableStudentPush(force = false) {
   if (!studentPushSupported() || !isStudentLoggedIn()) return false;
   try {
     const registration = await navigator.serviceWorker.register("sw.js");
@@ -123,11 +156,13 @@ async function enableStudentPush() {
         applicationServerKey: studentPushKeyBytes(),
       });
     }
+    if (!force && studentPushRecentlyRegistered(subscription.endpoint)) return true;
     const response = await fetch(`${API_BASE_URL}/api/students/push/subscribe/`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...studentAuthHeaders() },
       body: JSON.stringify(subscription.toJSON()),
     });
+    if (response.ok) rememberStudentPushRegistered(subscription.endpoint);
     return response.ok;
   } catch (err) {
     console.error(err);
@@ -181,7 +216,7 @@ function renderStudentPushPrompt() {
     const btn = event.currentTarget;
     btn.disabled = true;
     btn.textContent = "Turning on…";
-    await enableStudentPush();
+    await enableStudentPush(true);
     renderStudentPushPrompt();
   });
 }

@@ -41,6 +41,13 @@ function urlBase64ToUint8Array(base64String) {
 async function subscribeToPush(code) {
   if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
   if (typeof Notification === "undefined" || Notification.permission === "denied") return;
+  // In the installed app, Pay is followed at once by the redirect to
+  // Razorpay, which tears a permission dialog down mid-answer — and Chrome
+  // counts each abandoned dialog against the site, blocking the prompt
+  // outright after a few. So the app only signs up a phone that has already
+  // allowed notifications; the asking happens on the home page and the
+  // status page, where nothing navigates away underneath it.
+  if (Notification.permission !== "granted" && typeof isInstalledApp === "function" && isInstalledApp()) return;
   try {
     const registration = await navigator.serviceWorker.register("sw.js");
     const permission = await Notification.requestPermission();
@@ -54,14 +61,15 @@ async function subscribeToPush(code) {
       });
     }
 
-    const studentToken = localStorage.getItem("cufood_student_token");
-    if (studentToken) {
+    if (isStudentLoggedIn() && !studentPushRecentlyRegistered(subscription.endpoint)) {
       fetch(`${API_BASE_URL}/api/students/push/subscribe/`, {
         method: "POST",
         keepalive: true,
-        headers: { "Content-Type": "application/json", Authorization: `Token ${studentToken}` },
+        headers: { "Content-Type": "application/json", ...studentAuthHeaders() },
         body: JSON.stringify(subscription.toJSON()),
-      }).catch(() => {});
+      })
+        .then((r) => r.ok && rememberStudentPushRegistered(subscription.endpoint))
+        .catch(() => {});
     }
 
     await fetch(`${API_BASE_URL}/api/orders/${encodeURIComponent(code)}/subscribe/`, {
