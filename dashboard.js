@@ -766,8 +766,8 @@ function renderAlertsBanner() {
   if (state === "granted") return "";
   if (state === "default") {
     return `
-      <div class="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-accent/40 bg-accent-soft px-5 py-4 mb-6">
-        <div class="min-w-0 flex-1">
+      <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 rounded-2xl border border-accent/40 bg-accent-soft px-5 py-4 mb-6">
+        <div class="min-w-0 sm:flex-1">
           <p class="text-sm font-bold text-ink">Turn on new-order alerts</p>
           <p class="text-xs text-muted mt-1">Get a notification the moment an order is paid, even when this app is closed. You have 3 minutes to accept each one.</p>
         </div>

@@ -54,6 +54,16 @@ async function subscribeToPush(code) {
       });
     }
 
+    const studentToken = localStorage.getItem("cufood_student_token");
+    if (studentToken) {
+      fetch(`${API_BASE_URL}/api/students/push/subscribe/`, {
+        method: "POST",
+        keepalive: true,
+        headers: { "Content-Type": "application/json", Authorization: `Token ${studentToken}` },
+        body: JSON.stringify(subscription.toJSON()),
+      }).catch(() => {});
+    }
+
     await fetch(`${API_BASE_URL}/api/orders/${encodeURIComponent(code)}/subscribe/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

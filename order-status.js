@@ -61,6 +61,16 @@ async function enablePushNotifications(code) {
       });
     }
 
+    const studentToken = localStorage.getItem("cufood_student_token");
+    if (studentToken) {
+      fetch(`${API_BASE_URL}/api/students/push/subscribe/`, {
+        method: "POST",
+        keepalive: true,
+        headers: { "Content-Type": "application/json", Authorization: `Token ${studentToken}` },
+        body: JSON.stringify(subscription.toJSON()),
+      }).catch(() => {});
+    }
+
     await fetch(`${API_BASE_URL}/api/orders/${encodeURIComponent(code)}/subscribe/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -466,9 +476,12 @@ function renderOrder(order) {
     ${meta.message ? `<p class="text-sm text-muted mb-2">${escapeHtml(meta.message)}</p>` : ""}
     ${
       canSubscribeToPush() && ["placed", "preparing", "ready"].includes(order.status)
-        ? `<button type="button" id="enable-push-btn" class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-ink bg-cream-alt rounded-full px-3.5 py-2 hover:bg-line transition-colors duration-150 mb-2">
-             <span class="w-3.5 h-3.5">${ICONS.bell}</span>Notify me on updates
-           </button>`
+        ? `<div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 rounded-2xl border border-accent/40 bg-accent-soft px-5 py-4 my-4">
+             <p class="text-sm text-ink min-w-0 sm:flex-1"><span class="font-bold">Get notified</span> when this order is accepted and ready, even with the app closed.</p>
+             <button type="button" id="enable-push-btn" class="inline-flex items-center justify-center gap-1.5 rounded-full bg-accent text-white font-bold text-sm px-5 py-2.5 hover:bg-accent-deep hover:text-ink transition-colors duration-150 whitespace-nowrap">
+               <span class="w-3.5 h-3.5">${ICONS.bell}</span>Turn on
+             </button>
+           </div>`
         : ""
     }
     ${order.status === "placed" && order.payment_status === "pending" ? renderPaymentPendingSection(order) : ""}
