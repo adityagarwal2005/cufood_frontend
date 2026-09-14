@@ -25,6 +25,50 @@ const signinLink = document.getElementById("signin-link");
 let pendingUsername = null;
 let pendingEmail = null;
 
+// Same reason as the sign-in page: the code is read in Gmail, and the app
+// often reloads the page by the time the student is back. The verify step
+// is remembered for as long as the code works (10 minutes) so they land on
+// it again instead of an empty sign-up form.
+const PENDING_SIGNUP_KEY = "cufood_signup_code_pending";
+const CODE_TTL_MS = 10 * 60 * 1000;
+const restartSignupBtn = document.getElementById("restart-signup-btn");
+
+function savePendingSignup() {
+  try {
+    localStorage.setItem(
+      PENDING_SIGNUP_KEY,
+      JSON.stringify({ username: pendingUsername, email: pendingEmail, at: Date.now() })
+    );
+  } catch (err) {
+    // Storage blocked: the code still works, it just isn't restored.
+  }
+}
+
+function loadPendingSignup() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(PENDING_SIGNUP_KEY) || "null");
+    return saved && Date.now() - saved.at < CODE_TTL_MS ? saved : null;
+  } catch (err) {
+    return null;
+  }
+}
+
+function clearPendingSignup() {
+  try {
+    localStorage.removeItem(PENDING_SIGNUP_KEY);
+  } catch (err) {
+    // Nothing to clear.
+  }
+}
+
+function showVerifyStep() {
+  verifyNotice.textContent = `We've sent a 6-digit code to ${pendingEmail}. Enter it below to finish creating your account.`;
+  registerCard.classList.add("hidden");
+  signinLink.classList.add("hidden");
+  verifyCard.classList.remove("hidden");
+  otpInput.focus();
+}
+
 passwordToggle.innerHTML = ICONS.eye;
 passwordToggle.addEventListener("click", () => {
   const isHidden = passwordInput.type === "password";
@@ -63,11 +107,8 @@ registerForm.addEventListener("submit", async (event) => {
     }
     pendingUsername = username;
     pendingEmail = email;
-    verifyNotice.textContent = `We've sent a 6-digit code to ${email}. Enter it below to finish creating your account.`;
-    registerCard.classList.add("hidden");
-    signinLink.classList.add("hidden");
-    verifyCard.classList.remove("hidden");
-    otpInput.focus();
+    savePendingSignup();
+    showVerifyStep();
   } catch (err) {
     showError("Could not reach the server. Please try again.");
     console.error(err);
@@ -104,6 +145,7 @@ verifyForm.addEventListener("submit", async (event) => {
       verifySubmit.textContent = "Verify & create account";
       return;
     }
+    clearPendingSignup();
     setStudentSession(data.token, data.username);
     window.location.href = NEXT_URL;
   } catch (err) {
@@ -145,4 +187,31 @@ resendOtpBtn.addEventListener("click", async () => {
 
 if (isStudentLoggedIn()) {
   window.location.href = NEXT_URL;
+}
+
+restartSignupBtn.addEventListener("click", () => {
+  clearPendingSignup();
+  pendingUsername = null;
+  pendingEmail = null;
+  otpInput.value = "";
+  verifyError.classList.add("hidden");
+  verifyCard.classList.add("hidden");
+  registerCard.classList.remove("hidden");
+  signinLink.classList.remove("hidden");
+  registerSubmit.disabled = false;
+  registerSubmit.textContent = "Create account";
+});
+
+// Pasted codes keep only their digits; six of them verify straight away.
+otpInput.addEventListener("input", () => {
+  const digits = otpInput.value.replace(/\D/g, "").slice(0, 6);
+  if (otpInput.value !== digits) otpInput.value = digits;
+  if (digits.length === 6 && !verifySubmit.disabled) verifySubmit.click();
+});
+
+const savedSignup = loadPendingSignup();
+if (savedSignup && !isStudentLoggedIn()) {
+  pendingUsername = savedSignup.username;
+  pendingEmail = savedSignup.email;
+  showVerifyStep();
 }
