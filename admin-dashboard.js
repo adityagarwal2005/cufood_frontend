@@ -121,6 +121,34 @@ function renderStuckRefunds(rows) {
   `;
 }
 
+// Which outlets will actually be told about a new order. An outlet with no
+// devices signed up only learns about orders by watching its dashboard, and
+// anything it misses for three minutes is declined and refunded.
+function renderOutletAlerts(rows) {
+  if (!rows || rows.length === 0) return "";
+  const on = rows.filter((r) => r.devices > 0).length;
+  const items = rows.map((r) => `
+    <li class="flex items-center justify-between gap-3 py-2 border-b border-line last:border-b-0">
+      <span class="text-sm text-ink truncate">${escapeHtml(r.restaurant_name)}</span>
+      ${r.devices > 0
+        ? `<span class="text-xs font-bold text-success whitespace-nowrap">On &middot; ${r.devices} ${r.devices === 1 ? "device" : "devices"}</span>`
+        : `<span class="text-xs font-bold text-error whitespace-nowrap">Off</span>`}
+    </li>
+  `).join("");
+  return `
+    <details class="bg-cream-alt border border-line rounded-2xl p-6 sm:p-7 mb-8" ${on < rows.length ? "open" : ""}>
+      <summary class="cursor-pointer text-xs font-bold uppercase tracking-widest ${on < rows.length ? "text-error" : "text-muted"}">
+        New-order alerts &middot; ${on} of ${rows.length} outlets on
+      </summary>
+      <p class="text-sm text-muted mt-3 mb-3">
+        An outlet turns alerts on by opening its dashboard on the phone it uses and tapping
+        <span class="text-ink font-semibold">Turn on alerts</span>.
+      </p>
+      <ul>${items}</ul>
+    </details>
+  `;
+}
+
 function render(data) {
   pageContent.innerHTML = `
     <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
@@ -130,6 +158,7 @@ function render(data) {
     </div>
 
     ${renderStuckRefunds(data.stuck_refunds)}
+    ${renderOutletAlerts(data.outlet_alerts)}
 
     <div class="mb-8">
       ${statTile("Total registered students", data.total_registered_students, true)}
