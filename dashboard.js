@@ -741,6 +741,56 @@ function startOrderPolling() {
   ordersPollTimer = setInterval(loadOrders, 3000);
 }
 
+// Whether this phone will hear about a new order while the app is closed.
+function ownerAlertState() {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window) || typeof Notification === "undefined") {
+    return "unsupported";
+  }
+  return Notification.permission; // "default" | "granted" | "denied"
+}
+
+// A phone that already allows notifications is (re)registered silently on
+// every dashboard load. That covers an owner who allowed them before the
+// button existed, a subscription the browser has rotated, and a new phone —
+// none of which would ever see a button, because there is nothing to ask.
+// Before this, all fifteen outlets had zero devices registered.
+function ensureOwnerAlerts() {
+  if (ownerAlertState() === "granted") subscribeOwnerToPush();
+}
+
+// Missing a new order costs the outlet the sale (it's declined and refunded
+// after three minutes), so anything short of "alerts on" gets a real
+// banner rather than a small chip.
+function renderAlertsBanner() {
+  const state = ownerAlertState();
+  if (state === "granted") return "";
+  if (state === "default") {
+    return `
+      <div class="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-accent/40 bg-accent-soft px-5 py-4 mb-6">
+        <div class="min-w-0 flex-1">
+          <p class="text-sm font-bold text-ink">Turn on new-order alerts</p>
+          <p class="text-xs text-muted mt-1">Get a notification the moment an order is paid, even when this app is closed. You have 3 minutes to accept each one.</p>
+        </div>
+        <button type="button" id="enable-notifications-btn" class="rounded-full bg-accent text-white font-bold text-sm px-5 py-2.5 hover:bg-accent-deep hover:text-ink transition-colors duration-150 whitespace-nowrap">Turn on alerts</button>
+      </div>
+    `;
+  }
+  if (state === "denied") {
+    return `
+      <div class="rounded-2xl border border-error/40 bg-error-soft px-5 py-4 mb-6">
+        <p class="text-sm font-bold text-error">Order alerts are blocked on this phone</p>
+        <p class="text-xs text-ink mt-1">Open Settings &rarr; Apps &rarr; CUFood (or Chrome) &rarr; Notifications and allow them. Until then you only see new orders while this page is open, and any order not accepted within 3 minutes is declined and refunded.</p>
+      </div>
+    `;
+  }
+  return `
+    <div class="rounded-2xl border border-line bg-cream-alt px-5 py-4 mb-6">
+      <p class="text-sm font-bold text-ink">Alerts aren't available in this browser</p>
+      <p class="text-xs text-muted mt-1">Install the CUFood app on Android, or on iPhone add this site to your Home Screen, to get new-order alerts.</p>
+    </div>
+  `;
+}
+
 function renderDashboard() {
   const statusPill = restaurantData.is_open_today
     ? `<span class="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-full bg-accent-soft text-accent-deep"><span class="w-1.5 h-1.5 rounded-full bg-accent"></span>Open today</span>`
@@ -783,13 +833,12 @@ function renderDashboard() {
       </div>
     ` : ""}
 
+    ${renderAlertsBanner()}
+
     <section class="mb-10">
       <div class="flex items-center justify-between gap-3 mb-5">
         <h2 class="text-2xl sm:text-3xl font-black tracking-tightest text-ink">Orders</h2>
         <div class="flex items-center gap-2">
-          ${typeof Notification !== "undefined" && Notification.permission === "default" ? `
-            <button type="button" id="enable-notifications-btn" class="inline-flex items-center gap-1.5 text-xs font-semibold text-accent-deep bg-accent-soft rounded-full px-3 py-1.5 hover:opacity-80 transition-opacity duration-150">Enable alerts</button>
-          ` : ""}
           <span id="orders-pending-badge" class="hidden text-xs font-bold text-white bg-accent rounded-full px-2.5 py-1"></span>
         </div>
       </div>
@@ -1157,6 +1206,7 @@ async function loadDashboard() {
     renderDashboard();
     loadOrders();
     startOrderPolling();
+    ensureOwnerAlerts();
   } catch (err) {
     pageContent.innerHTML = stateMessage({
       icon: ICONS.warning,
