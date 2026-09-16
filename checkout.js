@@ -5,11 +5,13 @@ const VAPID_PUBLIC_KEY = "BOsXYYIQK2rY1nET_I-NXr-A6ts9_WDH9kEjZYBUC7mGhcfLqRLy3j
 // Kept in sync with Order.platform_fee_for on the backend — that's the
 // value actually charged (see CreateOrderView), this is purely for showing
 // the right numbers here before that response comes back. 2% of the food
-// subtotal, rounded to the nearest paisa; computed in whole paise so float
-// error can't nudge it off the server's figure.
+// subtotal, or 2.5% above ₹250, rounded to the nearest paisa; computed in
+// whole paise so float error can't nudge it off the server's figure.
+const PLATFORM_FEE_HIGHER_ABOVE = 250;
 function getPlatformFee(subtotal) {
   const paise = Math.round(subtotal * 100);
-  return Math.round((paise * 2) / 100) / 100;
+  const ratePerThousand = subtotal > PLATFORM_FEE_HIGHER_ABOVE ? 25 : 20;
+  return Math.round((paise * ratePerThousand) / 1000) / 100;
 }
 function getGrandTotal(cart) {
   const subtotal = getCartTotal(cart);
